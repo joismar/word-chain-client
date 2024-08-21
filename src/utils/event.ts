@@ -16,11 +16,11 @@ export class EventSystem {
     return EventSystem.instance;
   }
 
-  public emit<K extends keyof EventMap>(
-    eventName: K,
-    detail: EventMap[K]
+  public emit(
+    eventName: keyof EventMap,
+    detail: EventMap[keyof EventMap]
   ): void {
-    const event = new CustomEvent<K>(eventName, { detail });
+    const event = new CustomEvent(eventName, { detail });
     EventSystem.instance.eventTarget.dispatchEvent(event);
   }
 

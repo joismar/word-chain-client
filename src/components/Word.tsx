@@ -1,6 +1,6 @@
 import React from 'react';
-import { Distance } from '@shared/utils/types';
 import { Letter } from './Letter';
+import { Distance } from '@src/utils/types';
 
 type WordProps = {
   children: string;
