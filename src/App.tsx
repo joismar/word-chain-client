@@ -34,7 +34,7 @@ function App() {
   const connectionStatusBg = connected ? 'bg-green-600' : 'bg-red-600';
 
   return (
-    <div className="flex flex-col items-center h-[100vh] w-[100vw]">
+    <div className="flex flex-col items-center h-full w-[100vw]">
       <div className="flex justify-center items-center h-20 text-neutral-700 w-full px-5">
         <Word autoSize>word chain</Word>
       </div>
