@@ -86,7 +86,7 @@ export function Home() {
     : 'bg-yellow-800' + newWordHover;
 
   return (
-    <div className="flex flex-col justify-center gap-2 h-[100%] w-[100%] p-20">
+    <div className="flex flex-col justify-center gap-2 h-[100%]">
       <div
         className={`${newWrapClassName} overflow-hidden transition-[height]`}
       >

@@ -69,7 +69,7 @@ export function Game() {
   const playerTurn = findTurnPlayer();
 
   return (
-    <div className="flex justify-end items-start flex-col flex-1 px-20 pb-20 pt-10 max-h-[calc(100vh_-_5rem)] w-[100%] max-w-[50rem]">
+    <div className="flex justify-end items-start flex-col flex-1 max-h-[calc(100vh_-_5rem)]">
       {firstWord && (
         <Word
           distance={2}
