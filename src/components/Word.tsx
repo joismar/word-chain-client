@@ -14,6 +14,7 @@ type WordProps = {
   collapseSize?: number;
   letterClassName?: React.HTMLAttributes<HTMLDivElement>['className'];
   wrap?: boolean;
+  autoSize?: boolean;
 } & React.DetailedHTMLProps<
   React.HTMLAttributes<HTMLDivElement>,
   HTMLDivElement
@@ -29,6 +30,7 @@ export function Word({
   letterClassName,
   className,
   wrap,
+  autoSize,
   ...divProps
 }: WordProps) {
   const [letterDistance, setLetterDistance] = React.useState<Distance>(0);
@@ -40,6 +42,7 @@ export function Word({
   }, [distance]);
 
   const distanceClasses = (() => {
+    if (autoSize) return 'space-x-1';
     switch (distance) {
       case 0:
         return 'gap-0';
@@ -73,12 +76,22 @@ export function Word({
 
   const wrapClass = wrap ? 'w-[100%] flex-wrap' : '';
 
+  const gridClasses = autoSize
+    ? 'flex justify-center w-full'
+    : 'flex items-end';
+
   return (
     <div
-      className={`flex items-end ${wrapClass} ${distanceClasses} ${
+      className={`${gridClasses} ${wrapClass} ${distanceClasses} ${
         className || ''
       } transition-[gap] duration-[.5s]`}
       ref={ref}
+      // style={{
+      //   display: 'grid',
+      //   gridColumn: 10,
+      //   width: '100%',
+      //   gridTemplateColumns: 'repeat(10, minmax(0, 1fr))'
+      // }}
       {...divProps}
     >
       {collapseSize > 0 && <Letter distance={letterDistance}>...</Letter>}
@@ -91,6 +104,7 @@ export function Word({
             chained={chained(i + collapseSize)}
             key={i}
             className={letterClassName}
+            autoSize={autoSize}
           >
             {letter}
           </Letter>

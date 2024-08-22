@@ -2,6 +2,7 @@ import { Action } from '@shared/enums';
 import { Word } from '@src/components/Word';
 import { useInputManager } from '@src/hooks/useInputManager';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
+import { useKeyboard } from '@src/providers/KeyboardProvider';
 import React from 'react';
 
 export function Home() {
@@ -17,13 +18,21 @@ export function Home() {
     typeof playerName
   ] = [selection, joinInput, playerName];
   const dependenciesRef = React.useRef(submitDependencyTree);
+  const { setOnSubmit, input, resetInput } = useKeyboard();
 
   React.useEffect(() => {
     dependenciesRef.current = submitDependencyTree;
   }, submitDependencyTree);
 
+  React.useEffect(() => {
+    setValue(input);
+    setOnSubmit(() => () => {
+      onSubmit(input);
+      resetInput();
+    });
+  }, [input]);
+
   function onSubmit(value: string) {
-    console.log(value);
     const [currentSelection, joinInput, playerName] = dependenciesRef.current;
     if (currentSelection) {
       if (currentSelection === Action.JOIN) {
