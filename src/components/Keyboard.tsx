@@ -14,7 +14,7 @@ export function Keyboard() {
       };
 
       function keyBg(key: string) {
-        navigator.vibrate(200)
+        navigator.vibrate(5)
         switch (key) {
             case '': return 'bg-transparent'
             case ' ': return 'bg-transparent'
