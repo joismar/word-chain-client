@@ -46,7 +46,6 @@ export function useGameBloc() {
   };
 
   const isMyTurn = () => {
-    console.log(playerData);
     const playerIndex = gameData.players.findIndex(
       (player) => player.id === playerData.id
     );

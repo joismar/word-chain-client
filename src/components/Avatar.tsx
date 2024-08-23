@@ -30,11 +30,13 @@ export function Avatar({
       case 0:
         return 'w-0 h-0';
       case 1:
-        return 'w-12 h-12';
+        return 'w-10 h-10';
       case 2:
-        return 'w-9 h-9';
+        return 'w-8 h-8';
       case 3:
         return 'w-6 h-6';
+      case 4:
+        return 'w-2 h-2';
     }
   })();
 

@@ -9,6 +9,9 @@ import { useIsOverflowing } from '@src/hooks/useIsOverflowing';
 import { useVerticalScroll } from '@src/hooks/useVerticalScroll';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
 import { Action } from '@shared/enums';
+import { useKeyboard } from '@src/providers/KeyboardProvider';
+import useIsMobile from '@src/hooks/useIsMobile';
+import { Distance } from '@src/utils/types';
 
 export function Game() {
   const { gameData, sendEvent, isMyTurn, findTurnPlayer } =
@@ -21,6 +24,14 @@ export function Game() {
     isLastIndex,
     removeWord,
   } = useWordList();
+  const { setOnSubmit, input, resetInput } = useKeyboard();
+  React.useEffect(() => {
+    setValue(input);
+    setOnSubmit(() => () => {
+      onSubmit(input);
+      resetInput();
+    });
+  }, [input]);
 
   React.useEffect(() => {
     setWords([...gameData.chain, { word: '' }]);
@@ -31,7 +42,7 @@ export function Game() {
 
   const [isWordListHover, setIsWordListHover] = React.useState(false);
 
-  const { isOverflowingH, clientWidth } = useIsOverflowing(
+  const { isOverflowingH } = useIsOverflowing(
     containerRef,
     [containerRef.current, middleWords.length],
     (middleWords.length - 1) * 32 + 52
@@ -67,19 +78,20 @@ export function Game() {
   const [_, setValue] = useInputManager({ onSubmit, onChange });
   const playerCount = gameData.players.length;
   const playerTurn = findTurnPlayer();
+  const wordDistanceSum = useIsMobile() ? 1 : 0
 
   return (
-    <div className="flex justify-end items-start flex-col flex-1 max-h-[calc(100vh_-_5rem)]">
+    <div className="pl-5 flex justify-end items-start flex-col h-full max-h-[calc(100vh_-_5rem)]">
       {firstWord && (
         <Word
-          distance={2}
+          distance={(2 + wordDistanceSum) as Distance}
           chainConfig={{ first: firstWord.first, last: firstWord.last }}
           wrap
         >
           {firstWord.word}
         </Word>
       )}
-      <div className="border-t border-neutral-600 mb-1 mt-3 w-[100%]"></div>
+      {/* <div className="border-t border-neutral-600 mb-1 mt-3 w-[100%]"></div> */}
       <BorderShadow
         direction="b"
         className="ml-[-3.2rem] w-[calc(100%_+_3.2rem)] z-[10]"
@@ -91,7 +103,7 @@ export function Game() {
       />
       <div
         ref={containerRef}
-        className={`flex items-start justify-end hover:justify-start flex-col gap-2 overflow-y-hidden hover:overflow-y-auto py-2 ml-[-3.5rem] pl-[3.5rem] w-[calc(100%_+_3.5rem)] h-max-[calc(100vh_-_22.475rem)]`}
+        className={`flex items-start justify-end hover:justify-start flex-col gap-1 overflow-y-hidden hover:overflow-y-auto py-2 ml-[-3.5rem] pl-[3.5rem] w-[calc(100%_+_3.5rem)] h-max-[calc(100vh_-_22.475rem)]`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsWordListHover(false)}
       >
@@ -99,7 +111,6 @@ export function Game() {
           <WordContainer
             isLastIndex={isLastIndex(i)}
             word={word}
-            containerWidth={clientWidth}
             onDestroy={() => removeWord(word.word)}
             key={word.word}
             showAvatar={i > middleWords.length - 1 - playerCount}
@@ -123,6 +134,7 @@ export function Game() {
           <Word
             chainConfig={{ first: inputWord.first, last: inputWord.last }}
             className="max-w-[100%] justify-end overflow-hidden"
+            distance={(1 + wordDistanceSum) as Distance}
             blink
           >
             {inputWord.word}

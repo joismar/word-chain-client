@@ -10,11 +10,12 @@ type WordProps = {
     last: number;
   };
   blink?: boolean;
-  ref?: React.RefObject<HTMLDivElement>;
   collapseSize?: number;
   letterClassName?: React.HTMLAttributes<HTMLDivElement>['className'];
   wrap?: boolean;
   autoSize?: boolean;
+  getLetterSize?: (size: number) => void; 
+  containerSize?: number;
 } & React.DetailedHTMLProps<
   React.HTMLAttributes<HTMLDivElement>,
   HTMLDivElement
@@ -25,19 +26,21 @@ export function Word({
   distance = 1,
   chainConfig,
   blink,
-  ref,
   collapseSize = 0,
   letterClassName,
   className,
   wrap,
   autoSize,
+  getLetterSize,
   ...divProps
 }: WordProps) {
+  // const isMobile = useIsMobile();
+  // const distance = isMobile ? distanceProp + 1 : distanceProp;
   const [letterDistance, setLetterDistance] = React.useState<Distance>(0);
 
   React.useEffect(() => {
     setTimeout(() => {
-      setLetterDistance(distance);
+      setLetterDistance(distance as Distance);
     }, 500);
   }, [distance]);
 
@@ -52,6 +55,8 @@ export function Word({
         return 'gap-1.5';
       case 3:
         return 'gap-1';
+      case 4:
+        return 'gap-[.125rem]';
     }
   })();
 
@@ -60,11 +65,13 @@ export function Word({
       case 0:
         return 'w-0 h-0';
       case 1:
-        return 'w-2 h-12';
+        return 'w-2 h-10';
       case 2:
-        return 'w-1.5 h-9';
+        return 'w-1.5 h-8';
       case 3:
         return 'w-1 h-6';
+      case 4:
+        return 'w-.5 h-4';
     }
   })();
 
@@ -80,12 +87,13 @@ export function Word({
     ? 'flex justify-center w-full'
     : 'flex items-end';
 
+  console.log(children, collapseSize)
+
   return (
     <div
       className={`${gridClasses} ${wrapClass} ${distanceClasses} ${
         className || ''
       } transition-[gap] duration-[.5s]`}
-      ref={ref}
       // style={{
       //   display: 'grid',
       //   gridColumn: 10,
@@ -105,6 +113,7 @@ export function Word({
             key={i}
             className={letterClassName}
             autoSize={autoSize}
+            {...(i === 0 && { getLetterSize })}
           >
             {letter}
           </Letter>

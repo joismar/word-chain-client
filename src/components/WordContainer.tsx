@@ -4,17 +4,17 @@ import { Word } from './Word';
 import { useEventSystem } from '../hooks/useEventSystem';
 import { Distance, InGameWord } from '../utils/types';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
+import useIsMobile from '@src/hooks/useIsMobile';
+import { useClientSize } from '@src/hooks/useClientSize';
 
 export function WordContainer({
   isLastIndex,
-  containerWidth = 0,
   word,
   onDestroy,
   showAvatar,
 }: {
   isLastIndex: boolean;
   word: InGameWord;
-  containerWidth?: number;
   onDestroy?: () => void;
   showAvatar?: boolean;
 }) {
@@ -22,10 +22,14 @@ export function WordContainer({
   const [lastMargin, setLastMargin] = React.useState('mt-[-.5rem]');
   const [distance, setDistance] = React.useState<Distance>();
   const ref = React.useRef<HTMLDivElement>(null);
-  const wordWidth =
-    (isLastIndex ? 36 : 28) * word.word.length - (isLastIndex ? 6 : 4) + 92;
+  const { clientWidth } = useClientSize(ref);
+  const [letterSize, setLetterSize] = React.useState(0);
+  const wordWidth = (letterSize + 1) * word.word.length;
   const collapseSize =
-    Math.round((wordWidth - containerWidth) / (isLastIndex ? 36 : 28)) + 2;
+    Math.round((wordWidth - clientWidth) / letterSize) + 3;
+
+  // console.log(word.word, clientWidth, letterSize, collapseSize)
+  // console.log(collapseSize)
 
   const { subscribe } = useEventSystem();
 
@@ -48,28 +52,31 @@ export function WordContainer({
   }, []);
 
   const wordPlayer = findPlayerById(word.player_id);
+  const wordDistanceSum = useIsMobile() ? 1 : 0
+  const calculatedDistance = ((isLastIndex ? 2 : 3) + wordDistanceSum) as Distance
 
   return (
     <div
-      className={`relative ${lastMargin} flex flex-row gap-2 transition-[margin] duration-[.5s] delay-[.5s]`}
+      className={`relative ${lastMargin} flex flex-row transition-[margin] duration-[.5s] delay-[.5s] w-[100%]`}
       ref={ref}
     >
       {showAvatar && (
         <Avatar
-          distance={distance != undefined ? distance : isLastIndex ? 2 : 3}
+          distance={distance != undefined ? distance : calculatedDistance}
           points={wordPlayer?.score}
           className={`absolute ${
-            isLastIndex ? 'left-[-3rem]' : 'left-[-2.2rem]'
+            isLastIndex ? 'left-[-1.8rem]' : 'left-[-1rem]'
           }`}
         />
       )}
       <Word
-        distance={distance != undefined ? distance : isLastIndex ? 2 : 3}
+        distance={distance != undefined ? distance : calculatedDistance}
         chainConfig={{ first: word.first, last: word.last }}
         className={`${
           isLastIndex ? 'opacity-100' : 'opacity-50'
         } transition-all duration-[.5s] delay-[.5s]`}
         key={word.word}
+        getLetterSize={(size) => setLetterSize(size)}
         collapseSize={collapseSize > 0 ? collapseSize : 0}
       >
         {word.word}

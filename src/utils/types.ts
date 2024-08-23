@@ -1,4 +1,4 @@
-export type Distance = 0 | 1 | 2 | 3;
+export type Distance = 0 | 1 | 2 | 3 | 4;
 
 export type EventMap = {
   destroyWords: string[];

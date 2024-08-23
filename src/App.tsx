@@ -7,10 +7,12 @@ import { useGameBlocContext } from '@src/providers/GameBlocProvider';
 import { Screens } from '@src/utils/types';
 import { Home } from './screens/Home';
 import { Keyboard } from './components/Keyboard';
+import useIsMobile from './hooks/useIsMobile';
 
 function App() {
   const [screen, setScreen] = React.useState<Screens>('home');
   const { gameData, connected } = useGameBlocContext();
+  const isMobile = useIsMobile();
 
   React.useEffect(() => {
     if (gameData.status === 0) {
@@ -35,14 +37,14 @@ function App() {
 
   return (
     <div className="flex flex-col items-center h-full w-[100vw]">
-      <div className="flex justify-center items-center h-20 text-neutral-700 w-full px-5">
+      <div className="flex justify-center items-center text-neutral-700 w-full p-5">
         <Word autoSize>word chain</Word>
       </div>
       <div className='flex-1 w-full p-5 sm:p-20'>
         {screenComponent}
       </div>
-      <Keyboard />
-      <div className='flex justify-between items-center w-full px-1'>
+      {screen != 'lobby' && isMobile && <Keyboard />}
+      <div className='flex justify-between items-center w-full px-5 pb-1'>
         <div
           className={`px-2 my-1 rounded-full ${connectionStatusBg} text-[.5rem]`}
         >{connected ? 'Online' : 'Offline'}</div>
