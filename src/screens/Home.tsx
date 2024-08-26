@@ -29,9 +29,13 @@ export function Home() {
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  React.useEffect(() => {
+  function handleFocus() {
     if (!inputRef.current) return
     inputRef.current.focus()
+  }
+
+  React.useEffect(() => {
+    handleFocus()
   }, [inputRef.current, selection])
 
   React.useEffect(() => {
@@ -102,7 +106,8 @@ export function Home() {
   return (
     <div className="flex flex-col justify-center gap-2 h-[100%]">
       <div
-        className={`${newWrapClassName} overflow-hidden transition-[height]`}
+        onClick={() => handleFocus()}
+        className={`${newWrapClassName} overflow-hidden transition-[height] w-full`}
       >
         <Word distance={3} blink>
           {value}
@@ -125,13 +130,14 @@ export function Home() {
         {bottomWord}
       </Word>
       <div
-        className={`${joinWrapClassName} overflow-hidden transition-[height]`}
+      onClick={() => handleFocus()}
+        className={`${joinWrapClassName} overflow-hidden transition-[height] w-full`}
       >
         <Word distance={3} blink>
           {value}
         </Word>
       </div>
-      <input ref={inputRef} onChange={e => console.log(e.target.value)} style={{ opacity: 0, position: 'absolute' }}
+      <input ref={inputRef} onChange={e => setValue(e.target.value)} style={{ opacity: 0, position: 'absolute' }}
         aria-hidden="true"/>
     </div>
   );
