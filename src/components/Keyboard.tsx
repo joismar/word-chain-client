@@ -5,8 +5,9 @@ export function Keyboard() {
 
     const rows = [
         ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
-        ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', '⟵'],
-        ['', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '⟶', ''],
+        ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+        ['z', 'x', 'c', 'v', 'b', 'n', 'm', '⟵'],
+        ['', '', '', '', '', '', '', '⟶']
       ];
     
       const handleKeyClick = (key: string) => {
@@ -14,11 +15,11 @@ export function Keyboard() {
         key.length && addKey(key);
       };
 
-      function keyBg(key: string) {
+      function keyClasses(key: string) {
         switch (key) {
-            case '': return 'bg-transparent'
+            case '': return 'bg-transparent h-6'
             case '⟵': return 'bg-orange-700'
-            case '⟶': return 'bg-teal-700'
+            case '⟶': return 'bg-teal-700 !max-w-[16vw] h-6'
             default: return 'bg-neutral-700'
         }
       }
@@ -30,7 +31,7 @@ export function Keyboard() {
           {row.map((key, i) => (
             <button
               key={i}
-              className={`${keyBg(key)} active:opacity-80 text-neutral-100 text-[4vw] font-bold rounded aspect-[3/4] w-full max-w-[10%]`}
+              className={`${keyClasses(key)} active:opacity-80 text-neutral-100 text-[4vw] font-bold rounded aspect-[3/4] w-full max-w-[8vw]`}
               onClick={() => handleKeyClick(key)}
             >
               {key.toUpperCase()}
