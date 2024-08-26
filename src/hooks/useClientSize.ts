@@ -6,6 +6,8 @@ export function useClientSize(
 ) {
   const [clientWidth, setClientWidth] = React.useState(0);
   const [clientHeight, setClientHeight] = React.useState(0);
+  const [scrolltWidth, setScrollWidth] = React.useState(0);
+  const [scrolltHeight, setScrollHeight] = React.useState(0);
 
   React.useEffect(() => {
     const container = ref.current;
@@ -14,6 +16,8 @@ export function useClientSize(
     const resizeObserver = new ResizeObserver(() => {
       setClientWidth(container.clientWidth);
       setClientHeight(container.clientHeight);
+      setScrollWidth(container.scrollWidth);
+      setScrollHeight(container.scrollHeight);
     });
 
     resizeObserver.observe(container);
@@ -26,5 +30,7 @@ export function useClientSize(
   return {
     clientHeight,
     clientWidth,
+    scrolltHeight,
+    scrolltWidth,
   };
 }

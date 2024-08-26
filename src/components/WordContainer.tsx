@@ -8,15 +8,13 @@ import useIsMobile from '@src/hooks/useIsMobile';
 import { useClientSize } from '@src/hooks/useClientSize';
 
 export function WordContainer({
-  isLastIndex,
+  hasScore,
   word,
   onDestroy,
-  showAvatar,
 }: {
-  isLastIndex: boolean;
   word: InGameWord;
   onDestroy?: () => void;
-  showAvatar?: boolean;
+  hasScore?: boolean;
 }) {
   const { findPlayerById } = useGameBlocContext();
   const [lastMargin, setLastMargin] = React.useState('mt-[-.5rem]');
@@ -53,19 +51,19 @@ export function WordContainer({
 
   const wordPlayer = findPlayerById(word.player_id);
   const wordDistanceSum = useIsMobile() ? 1 : 0
-  const calculatedDistance = ((isLastIndex ? 2 : 3) + wordDistanceSum) as Distance
+  const calculatedDistance = ((hasScore ? 2 : 3) + wordDistanceSum) as Distance
 
   return (
     <div
       className={`relative ${lastMargin} flex flex-row transition-[margin] duration-[.5s] delay-[.5s] w-[100%]`}
       ref={ref}
     >
-      {showAvatar && (
+      {hasScore && (
         <Avatar
           distance={distance != undefined ? distance : calculatedDistance}
           points={wordPlayer?.score}
           className={`absolute ${
-            isLastIndex ? 'left-[-1.8rem]' : 'left-[-1rem]'
+            hasScore ? 'left-[-1.8rem]' : 'left-[-1rem]'
           }`}
         />
       )}
@@ -73,7 +71,7 @@ export function WordContainer({
         distance={distance != undefined ? distance : calculatedDistance}
         chainConfig={{ first: word.first, last: word.last }}
         className={`${
-          isLastIndex ? 'opacity-100' : 'opacity-50'
+          hasScore ? 'opacity-100' : 'opacity-50'
         } transition-all duration-[.5s] delay-[.5s]`}
         key={word.word}
         getLetterSize={(size) => setLetterSize(size)}

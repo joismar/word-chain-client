@@ -92,12 +92,6 @@ export function Word({
       className={`${gridClasses} ${wrapClass} ${distanceClasses} ${
         className || ''
       } transition-[gap] duration-[.5s]`}
-      // style={{
-      //   display: 'grid',
-      //   gridColumn: 10,
-      //   width: '100%',
-      //   gridTemplateColumns: 'repeat(10, minmax(0, 1fr))'
-      // }}
       {...divProps}
     >
       {collapseSize > 0 && <Letter distance={letterDistance}>...</Letter>}

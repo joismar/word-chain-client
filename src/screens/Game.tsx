@@ -12,6 +12,8 @@ import { Action } from '@shared/enums';
 import { useKeyboard } from '@src/providers/KeyboardProvider';
 import useIsMobile from '@src/hooks/useIsMobile';
 import { Distance } from '@src/utils/types';
+import { useClientSize } from '@src/hooks/useClientSize';
+import { useContentHeight } from '@src/hooks/useContentHeight';
 
 export function Game() {
   const { gameData, sendEvent, isMyTurn, findTurnPlayer } =
@@ -21,10 +23,10 @@ export function Game() {
     firstWord,
     middleWords,
     inputWord,
-    isLastIndex,
     removeWord,
   } = useWordList();
   const { setOnSubmit, input, resetInput } = useKeyboard();
+
   React.useEffect(() => {
     setValue(input);
     setOnSubmit(() => () => {
@@ -41,12 +43,26 @@ export function Game() {
   const { isTopScrolled, isBottomScrolled } = useVerticalScroll(containerRef);
 
   const [isWordListHover, setIsWordListHover] = React.useState(false);
+  const {contentHeight} = useContentHeight(containerRef, [middleWords.length]);
 
   const { isOverflowingH } = useIsOverflowing(
     containerRef,
-    [containerRef.current, middleWords.length],
-    (middleWords.length - 1) * 32 + 52
+    [containerRef.current, middleWords.length, contentHeight],
+    contentHeight + ((middleWords.length - 1) * 4),
   );
+
+  const [ocupiedHeight, setOcupiedHeight] = React.useState(0);
+  const firstWordRef = React.useRef<HTMLDivElement>(null);
+  const {clientHeight: firstWordHeight} = useClientSize(firstWordRef);
+  const inputRef = React.useRef<HTMLDivElement>(null);
+  const {clientHeight: inputHeight} = useClientSize(inputRef);
+
+  React.useEffect(() => {
+    // console.log(firstWordHeight, inputHeight)
+    setOcupiedHeight(firstWordHeight + inputHeight + 16)
+  }, [firstWordHeight, inputHeight])
+
+  // console.log(isOverflowingH, contentHeight, containerRef.current?.clientHeight)
 
   function handleMouseEnter() {
     if (!isOverflowingH || !containerRef.current) return;
@@ -79,9 +95,11 @@ export function Game() {
   const playerCount = gameData.players.length;
   const playerTurn = findTurnPlayer();
   const wordDistanceSum = useIsMobile() ? 1 : 0
+  const hasScore = (i: number) => i > middleWords.length - 1 - playerCount
 
   return (
-    <div className="pl-5 flex justify-end items-start flex-col h-full max-h-[calc(100vh_-_5rem)]">
+    <div className="pl-5 flex justify-end items-start flex-col h-full">
+      <div ref={firstWordRef}>
       {firstWord && (
         <Word
           distance={(2 + wordDistanceSum) as Distance}
@@ -91,6 +109,7 @@ export function Game() {
           {firstWord.word}
         </Word>
       )}
+      </div>
       {/* <div className="border-t border-neutral-600 mb-1 mt-3 w-[100%]"></div> */}
       <BorderShadow
         direction="b"
@@ -103,17 +122,19 @@ export function Game() {
       />
       <div
         ref={containerRef}
-        className={`flex items-start justify-end hover:justify-start flex-col gap-1 overflow-y-hidden hover:overflow-y-auto py-2 ml-[-3.5rem] pl-[3.5rem] w-[calc(100%_+_3.5rem)] h-max-[calc(100vh_-_22.475rem)]`}
+        className={`flex items-start justify-end hover:justify-start flex-col gap-1 overflow-y-hidden hover:overflow-y-auto py-2 ml-[-3.5rem] pl-[3.5rem] w-[calc(100%_+_3.5rem)]`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsWordListHover(false)}
+        style={{
+          maxHeight: `calc(100% - ${ocupiedHeight}px)`
+        }}
       >
         {middleWords.map((word, i) => (
           <WordContainer
-            isLastIndex={isLastIndex(i)}
             word={word}
             onDestroy={() => removeWord(word.word)}
             key={word.word}
-            showAvatar={i > middleWords.length - 1 - playerCount}
+            hasScore={hasScore(i)}
           />
         ))}
       </div>
@@ -122,9 +143,9 @@ export function Game() {
         className="ml-[-3.2rem] w-[calc(100%_+_3.2rem)] z-[10]"
         isVisible={isWordListHover ? isBottomScrolled : false}
       />
-      <div className="border-t border-neutral-600 mb-3 mt-1 w-[100%]"></div>
+      <div className="border-t border-neutral-600 mb-3 w-[100%]"></div>
       {inputWord && isMyTurn() ? (
-        <div className="flex w-[100%] justify-between">
+        <div className="flex w-[100%] justify-between" ref={inputRef}>
           <BorderShadow
             size="64px"
             direction="r"
