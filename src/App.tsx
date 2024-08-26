@@ -45,6 +45,12 @@ function App() {
   const {clientHeight: footerHeight} = useClientSize(footerRef);
 
   React.useEffect(() => {
+    if ("virtualKeyboard" in navigator) {
+      (navigator as any).virtualKeyboard.overlaysContent = false;
+    }
+  }, [])
+
+  React.useEffect(() => {
     console.log(logoHeight, keyboardHeight, footerHeight)
     setOcupiedHeight(logoHeight + keyboardHeight + footerHeight)
   }, [logoHeight, keyboardHeight, footerHeight])
@@ -60,7 +66,7 @@ function App() {
         {screenComponent}
       </div>
       <div ref={keyboardRef} className='w-[100%]'>
-      {['home', 'game'].includes(screen) && isMobile && <Keyboard />}
+      {['game'].includes(screen) && isMobile && <Keyboard />}
       </div>
       <div ref={footerRef} className='flex justify-between items-center w-full px-5 pb-1'>
         <div

@@ -2,7 +2,6 @@ import { Action } from '@shared/enums';
 import { Word } from '@src/components/Word';
 import { useInputManager } from '@src/hooks/useInputManager';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
-import { useKeyboard } from '@src/providers/KeyboardProvider';
 import React from 'react';
 
 export function Home() {
@@ -18,14 +17,7 @@ export function Home() {
     typeof playerName
   ] = [selection, joinInput, playerName];
   const dependenciesRef = React.useRef(submitDependencyTree);
-  const { setOnSubmit, input, resetInput } = useKeyboard();
-
-  React.useEffect(() => {
-    if ('virtualKeyboard' in navigator) {
-      // Ativa o teclado virtual
-      (navigator as any).virtualKeyboard.show();
-    }
-  }, []);
+  // const { setOnSubmit, input, resetInput } = useKeyboard();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -41,14 +33,6 @@ export function Home() {
   React.useEffect(() => {
     dependenciesRef.current = submitDependencyTree;
   }, submitDependencyTree);
-
-  React.useEffect(() => {
-    setValue(input);
-    setOnSubmit(() => () => {
-      onSubmit(input);
-      resetInput();
-    });
-  }, [input]);
 
   function onSubmit(value: string) {
     const [currentSelection, joinInput, playerName] = dependenciesRef.current;
