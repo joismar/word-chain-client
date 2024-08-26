@@ -87,8 +87,6 @@ export function Word({
     ? 'flex justify-center w-full'
     : 'flex items-end';
 
-  console.log(children, collapseSize)
-
   return (
     <div
       className={`${gridClasses} ${wrapClass} ${distanceClasses} ${

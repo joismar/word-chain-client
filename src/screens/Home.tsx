@@ -21,6 +21,13 @@ export function Home() {
   const { setOnSubmit, input, resetInput } = useKeyboard();
 
   React.useEffect(() => {
+    if ('virtualKeyboard' in navigator) {
+      // Ativa o teclado virtual
+      (navigator as any).virtualKeyboard.show();
+    }
+  }, []);
+
+  React.useEffect(() => {
     dependenciesRef.current = submitDependencyTree;
   }, submitDependencyTree);
 
