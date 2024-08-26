@@ -43,7 +43,7 @@ function App() {
       <div className='flex-1 w-full p-5 sm:p-20'>
         {screenComponent}
       </div>
-      {/* {screen != 'lobby' && isMobile && <Keyboard />} */}
+      {['game'].includes(screen) && isMobile && <Keyboard />}
       <div className='flex justify-between items-center w-full px-5 pb-1'>
         <div
           className={`px-2 my-1 rounded-full ${connectionStatusBg} text-[.5rem]`}
