@@ -27,6 +27,13 @@ export function Home() {
     }
   }, []);
 
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (!inputRef.current) return
+    inputRef.current.focus()
+  }, [inputRef.current, selection])
+
   React.useEffect(() => {
     dependenciesRef.current = submitDependencyTree;
   }, submitDependencyTree);
@@ -124,6 +131,8 @@ export function Home() {
           {value}
         </Word>
       </div>
+      <input ref={inputRef} onChange={e => console.log(e.target.value)} style={{ opacity: 0, position: 'absolute' }}
+        aria-hidden="true"/>
     </div>
   );
 }

@@ -55,7 +55,7 @@ function App() {
         <Word autoSize>word chain</Word>
       </div>
       <div className='flex-1 w-full px-5 pb-3 sm:px-20' style={{
-        maxHeight: `calc(100vh - ${ocupiedHeight}px)`
+        maxHeight: `calc(100dvh - ${ocupiedHeight}px)`
       }}>
         {screenComponent}
       </div>
