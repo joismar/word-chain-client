@@ -5,7 +5,7 @@ import React from 'react';
 type LetterProps = {
   children: string;
   distance: Distance;
-  chained?: 'left' | 'right';
+  chained?: 'left' | 'right' | 'center';
   transparent?: boolean;
   autoSize?: boolean;
   className?: React.HTMLAttributes<HTMLDivElement>['className'];
@@ -51,7 +51,8 @@ export function Letter({
   const colorClasses = (() => {
     if (!children.length || children == ' ' || transparent)
       return '!bg-transparent';
-    if (chained === 'left') return 'bg-orange-800';
+    if (chained === 'center') return 'bg-amber-800'
+    if (chained === 'left') return 'bg-red-800';
     if (chained === 'right') return 'bg-yellow-800';
     return 'bg-neutral-950';
   })();

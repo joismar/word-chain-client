@@ -17,9 +17,9 @@ export function Keyboard() {
 
       function keyClasses(key: string) {
         switch (key) {
-            case '': return 'bg-transparent h-7'
+            case '': return 'bg-transparent h-8'
             case '⟵': return 'bg-orange-700'
-            case '⟶': return 'bg-teal-700 !max-w-[18.5vw] h-7'
+            case '⟶': return 'bg-teal-700 !max-w-[18.5vw] h-8'
             default: return 'bg-neutral-700'
         }
       }

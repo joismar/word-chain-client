@@ -77,6 +77,7 @@ export function Word({
 
   function chained(i: number) {
     if (!chainConfig) return undefined;
+    if (i < chainConfig.first && children.length - 1 - i < chainConfig.last) return 'center';
     if (i < chainConfig.first) return 'left';
     if (children.length - 1 - i < chainConfig.last) return 'right';
   }
