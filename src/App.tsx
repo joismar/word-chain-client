@@ -49,10 +49,10 @@ function App() {
     <div className="flex flex-col items-center w-[100vw]" style={{
       height: visualViewportH ? visualViewportH : '100%'
     }}>
-      <div className="flex justify-center items-center text-neutral-700 w-full p-5 max-w-[25rem]">
-        <Word autoSize>word chain</Word>
+      <div className="flex justify-center items-center text-neutral-700 h-10">
+        <Word distance={3} letterClassName='bg-neutral-300'>word chain</Word>
       </div>
-      <div className='flex-1 w-full px-5 pb-3 sm:px-20'>
+      <div className='flex-1 w-full px-5 pb-3 sm:px-20 max-w-[1000px]'>
         {screenComponent}
       </div>
       <div className='flex justify-between items-center w-full px-5 pb-1'>

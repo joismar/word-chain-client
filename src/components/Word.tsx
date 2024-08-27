@@ -30,7 +30,6 @@ export function Word({
   letterClassName,
   className,
   wrap,
-  autoSize,
   getLetterSize,
   ...divProps
 }: WordProps) {
@@ -45,7 +44,6 @@ export function Word({
   }, [distance]);
 
   const distanceClasses = (() => {
-    if (autoSize) return 'space-x-1';
     switch (distance) {
       case 0:
         return 'gap-0';
@@ -84,9 +82,7 @@ export function Word({
 
   const wrapClass = wrap ? 'w-[100%] flex-wrap' : '';
 
-  const gridClasses = autoSize
-    ? 'flex justify-center w-full'
-    : 'flex items-end';
+  const gridClasses = 'flex items-end';
 
   return (
     <div
@@ -105,7 +101,6 @@ export function Word({
             chained={chained(i + collapseSize)}
             key={i}
             className={letterClassName}
-            autoSize={autoSize}
             {...(i === 0 && { getLetterSize })}
           >
             {letter}

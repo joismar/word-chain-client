@@ -7,7 +7,6 @@ type LetterProps = {
   distance: Distance;
   chained?: 'left' | 'right' | 'center';
   transparent?: boolean;
-  autoSize?: boolean;
   className?: React.HTMLAttributes<HTMLDivElement>['className'];
   getLetterSize?: (size: number) => void; 
 } & React.DetailedHTMLProps<
@@ -21,7 +20,6 @@ export function Letter({
   chained,
   transparent,
   className,
-  autoSize,
   getLetterSize,
   ...divProps
 }: LetterProps) {
@@ -33,7 +31,6 @@ export function Letter({
   }, [clientWidth])
 
   const distanceClasses = (() => {
-    if (autoSize) return 'aspect-square w-full max-w-[10%] text-[4vw]';
     switch (distance) {
       case 0:
         return 'w-0 h-0 text-[0rem]';
@@ -57,7 +54,7 @@ export function Letter({
     return 'bg-neutral-950';
   })();
 
-  const sizeClasses = !autoSize ? 'flex-none flex justify-center items-center' : 'flex justify-center items-center'
+  const sizeClasses = 'flex-none flex justify-center items-center'
 
   return (
     <div
