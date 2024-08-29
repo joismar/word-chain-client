@@ -31,7 +31,7 @@ export function Lobby() {
   }
 
   return (
-    <div className="flex flex-col items-start justify-center gap-2 h-[100%]">
+    <div className="flex flex-col items-start justify-center gap-2 h-[100%] pt-5 pb-10">
       <div className="flex gap-1 self-end">
         <Button distance={3} className="">
           {gameData?.name.toUpperCase()}

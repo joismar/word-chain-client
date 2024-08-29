@@ -98,7 +98,7 @@ export function Game() {
   const hasScore = (i: number) => i > middleWords.length - 1 - playerCount
 
   return (
-    <div className="pl-5 flex justify-end items-start flex-col h-full">
+    <div className="pl-5 flex justify-end items-start flex-col h-full pt-5">
       <div ref={firstWordRef}>
       {firstWord && (
         <Word

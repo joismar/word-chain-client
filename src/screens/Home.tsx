@@ -1,74 +1,60 @@
 import { Action } from '@shared/enums';
+import { Input } from '@src/components/Input';
 import { Word } from '@src/components/Word';
-import { useInputManager } from '@src/hooks/useInputManager';
+import { useSubmit } from '@src/hooks/useSubmit';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
 import React from 'react';
 
 export function Home() {
   const { sendEvent } = useGameBlocContext();
   const [selection, setSelection] = React.useState<'host' | 'join'>();
-  const [joinInput, setJoinInput] = React.useState<'game name' | 'player name'>(
+  const [activeInput, setActiveInput] = React.useState<'game name' | 'player name'>(
     'player name'
   );
   const [playerName, setPlayerName] = React.useState('');
+  const [value, setValue] = React.useState('');
   const submitDependencyTree: [
     typeof selection,
-    typeof joinInput,
-    typeof playerName
-  ] = [selection, joinInput, playerName];
+    typeof activeInput,
+    typeof playerName,
+    typeof value,
+  ] = [selection, activeInput, playerName, value];
   const dependenciesRef = React.useRef(submitDependencyTree);
-  // const { setOnSubmit, input, resetInput } = useKeyboard();
-
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  function handleFocus() {
-    if (!inputRef.current) return
-    inputRef.current.focus()
-  }
-
-  React.useEffect(() => {
-    handleFocus()
-  }, [inputRef.current, selection])
 
   React.useEffect(() => {
     dependenciesRef.current = submitDependencyTree;
   }, submitDependencyTree);
 
-  function onSubmit(value: string) {
-    const [currentSelection, joinInput, playerName] = dependenciesRef.current;
+  function onSubmit(currentSelection: typeof selection, gameName: string, playerName: string) {
+    // const [currentSelection, activeInput, playerName, valueRef] = dependenciesRef.current;
     if (currentSelection) {
       if (currentSelection === Action.JOIN) {
-        if (joinInput === 'player name') {
-          setPlayerName(value);
+        if (activeInput === 'player name') {
           setValue('');
-          setJoinInput('game name');
-        } else if (joinInput === 'game name') {
+          setPlayerName(playerName);
+          setActiveInput('game name');
+        } else if (activeInput === 'game name') {
           sendEvent({
             action: Action.JOIN,
-            data: [value, playerName],
+            data: [gameName, playerName],
           });
         }
       } else if (currentSelection === Action.HOST) {
         sendEvent({
           action: Action.HOST,
-          data: [value],
+          data: [gameName],
         });
       }
     }
   }
 
-  const [value, setValue] = useInputManager({
-    onSubmit,
-  });
-
   function onJoinGame() {
-    setValue('');
+    setActiveInput('player name');
     setSelection('join');
   }
 
   function onNewGame() {
-    setValue('');
-    setJoinInput('player name');
+    setActiveInput('player name');
     setSelection('host');
   }
 
@@ -77,7 +63,7 @@ export function Home() {
   const joinWrapClassName = !joinGameSetted ? 'h-0' : 'h-6';
   const newWrapClassName = !newGameSetted ? 'h-0' : 'h-6';
   const topWord = newGameSetted ? 'player name' : 'new';
-  const bottomWord = joinGameSetted ? joinInput : 'join';
+  const bottomWord = joinGameSetted ? activeInput : 'join';
   const joinWordHover = joinGameSetted ? '' : ' group-hover:bg-orange-700';
   const newWordHover = newGameSetted ? '' : ' group-hover:bg-yellow-700';
   const joinWordClassName = newGameSetted
@@ -87,15 +73,28 @@ export function Home() {
     ? 'bg-neutral-900 text-neutral-600'
     : 'bg-yellow-800' + newWordHover;
 
+  // const [joinValue, setJoinValue] = React.useState('');
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setValue(e.target.value)
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget)
+    console.log(Array.from(formData.entries()))
+  }
+
+  const gameInput = () => <Input name="game-name" value={value} onChange={handleInputChange} distance={3} autoFocus={activeInput === 'game name'}/>
+  const playerInput = () => <Input name="player-name" value={value} onChange={handleInputChange} distance={3} autoFocus={activeInput === 'player name'}/>
+
   return (
+    <form onSubmit={handleSubmit} className='h-full'>
     <div className="flex flex-col justify-center gap-2 h-[100%]">
       <div
-        onClick={() => handleFocus()}
         className={`${newWrapClassName} overflow-hidden transition-[height] w-full`}
-      >
-        <Word distance={3} blink>
-          {value}
-        </Word>
+      >      
+        {newGameSetted && gameInput()}
       </div>
       <Word
         distance={3}
@@ -114,15 +113,12 @@ export function Home() {
         {bottomWord}
       </Word>
       <div
-      onClick={() => handleFocus()}
         className={`${joinWrapClassName} overflow-hidden transition-[height] w-full`}
       >
-        <Word distance={3} blink>
-          {value}
-        </Word>
+        {joinGameSetted && activeInput === 'game name' && gameInput()}
+        {joinGameSetted && activeInput === 'player name' && playerInput()}
       </div>
-      <input ref={inputRef} onChange={e => setValue(e.target.value)} style={{ opacity: 0, position: 'absolute' }}
-        aria-hidden="true"/>
     </div>
+    </form>
   );
 }
