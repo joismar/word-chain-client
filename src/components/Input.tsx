@@ -53,13 +53,13 @@ export function Input({
     return (
         <div
             onClick={() => handleFocus()}
-            className={`relative w-full cursor-text overflow-hidden`}
+            className={`relative w-full h-full cursor-text overflow-hidden`}
         >
             <Word distance={distance} blink={focused} {...wordProps}>
                 {value}
             </Word>
             <input ref={inputRef} className="absolute w-0"
-            aria-hidden="true" {...inputProps}/>
+            aria-hidden="true" autoComplete="off" {...inputProps}/>
         </div>
     )
 }
