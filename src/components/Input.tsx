@@ -9,6 +9,7 @@ type InputProps = {
     ref?: React.RefObject<HTMLInputElement>;
     fixedFocus?: boolean;
     wordProps?: Omit<WordProps, "children">;
+    value: string;
 } & React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>;
 
 export function Input({
@@ -16,6 +17,7 @@ export function Input({
     ref,
     fixedFocus,
     wordProps,
+    value,
     ...inputProps
 }: InputProps) {
     const inputRef = ref || React.useRef<HTMLInputElement>(null);
@@ -65,7 +67,7 @@ export function Input({
             className={`relative w-full cursor-text overflow-hidden`}
         >
             <Word distance={distance} blink={focused} {...wordProps}>
-                {inputRef.current?.value || ''}
+                {value}
             </Word>
             <input ref={inputRef} className="absolute w-0"
             aria-hidden="true" {...inputProps}/>

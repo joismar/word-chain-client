@@ -11,7 +11,7 @@ export function Home() {
     'player name'
   );
   const [joinPlayerValue, setJoinPlayerValue] = React.useState('');
-  const [_, setValue] = React.useState('')
+  const [value, setValue] = React.useState('')
 
   const selectionRef = React.useRef(selection);
 
@@ -75,8 +75,8 @@ export function Home() {
     onSubmit(formData.get('game-name')?.toString(), formData.get('player-name')?.toString())
   }
 
-  const gameInput = () => <Input name="game-name" onChange={handleInputChange} distance={3} fixedFocus/>
-  const playerInput = () => <Input name="player-name" onChange={handleInputChange} distance={3} fixedFocus/>
+  const gameInput = () => <Input name="game-name" value={value} onChange={handleInputChange} distance={3} fixedFocus/>
+  const playerInput = () => <Input name="player-name" value={value} onChange={handleInputChange} distance={3} fixedFocus/>
 
   return (
     <form onSubmit={handleSubmit} className='h-full'>
