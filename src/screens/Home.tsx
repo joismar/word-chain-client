@@ -37,11 +37,13 @@ export function Home() {
   }
 
   function onJoinGame() {
+    setValue('');
     setActiveInput('player name');
     setSelection('join');
   }
 
   function onNewGame() {
+    setValue('');
     setActiveInput('player name');
     setSelection('host');
   }
@@ -75,8 +77,8 @@ export function Home() {
     onSubmit(formData.get('game-name')?.toString(), formData.get('player-name')?.toString())
   }
 
-  const gameInput = () => <Input name="game-name" value={value} onChange={handleInputChange} distance={3} />
-  const playerInput = () => <Input name="player-name" value={value} onChange={handleInputChange} distance={3} />
+  const gameInput = () => <Input name="game-name" value={value} onChange={handleInputChange} distance={3} fixedFocus/>
+  const playerInput = () => <Input name="player-name" value={value} onChange={handleInputChange} distance={3} fixedFocus/>
 
   return (
     <form onSubmit={handleSubmit} className='h-full'>

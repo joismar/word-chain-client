@@ -29,7 +29,6 @@ export function Input({
     function handleFocus() {
         setFocused(true)
         inputRef.current?.focus();
-        inputRef.current?.setSelectionRange(value.length, value.length);
     }
 
     function onFocus() {
@@ -53,13 +52,13 @@ export function Input({
     return (
         <div
             onClick={() => handleFocus()}
-            className={`relative w-full h-full cursor-text overflow-hidden`}
+            className={`w-full h-full cursor-text overflow-hidden`}
         >
             <Word distance={distance} blink={focused} {...wordProps}>
                 {value}
             </Word>
-            <input ref={inputRef} className="absolute w-0"
-            aria-hidden="true" autoComplete="off" {...inputProps}/>
+            <input ref={inputRef} className="absolute opacity-0"
+            aria-hidden="true" autoComplete="off" {...inputProps} />
         </div>
     )
 }
