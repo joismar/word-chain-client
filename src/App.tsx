@@ -50,7 +50,7 @@ function App() {
       height: visualViewportH ? `${visualViewportH}px` : '100dvh'
     }}>
       <div className="flex justify-center items-center text-neutral-700 h-10">
-        <Word distance={3} letterClassName='bg-gray-300'>word chain</Word>
+        <Word distance={3} letterClassName='bg-neutral-300'>word chain</Word>
       </div>
       <div className='flex-1 w-full px-5 pb-3 sm:px-20 max-w-[1000px]'>
         {screenComponent}

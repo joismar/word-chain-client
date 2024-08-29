@@ -1,11 +1,9 @@
 import React from 'react';
 
-export function useSubmit(onSubmit?: () => void) {
+export function useOnPressKey(key: string, callback?: () => void) {
   const handleKeyPress = (event: KeyboardEvent) => {
-    const { key } = event;
-
-    if (key === 'Enter') {
-      onSubmit?.();
+    if (event.key === key) {
+      callback?.();
     }
   };
 

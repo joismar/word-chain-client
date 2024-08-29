@@ -1,7 +1,6 @@
 import { Action } from '@shared/enums';
 import { Input } from '@src/components/Input';
 import { Word } from '@src/components/Word';
-import { useSubmit } from '@src/hooks/useSubmit';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
 import React from 'react';
 
@@ -11,38 +10,27 @@ export function Home() {
   const [activeInput, setActiveInput] = React.useState<'game name' | 'player name'>(
     'player name'
   );
-  const [playerName, setPlayerName] = React.useState('');
-  const [value, setValue] = React.useState('');
-  const submitDependencyTree: [
-    typeof selection,
-    typeof activeInput,
-    typeof playerName,
-    typeof value,
-  ] = [selection, activeInput, playerName, value];
-  const dependenciesRef = React.useRef(submitDependencyTree);
+  const [joinPlayerValue, setJoinPlayerValue] = React.useState('');
+  const [_, setValue] = React.useState('')
+
+  const selectionRef = React.useRef(selection);
 
   React.useEffect(() => {
-    dependenciesRef.current = submitDependencyTree;
-  }, submitDependencyTree);
+    selectionRef.current = selection;
+  }, [selection]);
 
-  function onSubmit(currentSelection: typeof selection, gameName: string, playerName: string) {
-    // const [currentSelection, activeInput, playerName, valueRef] = dependenciesRef.current;
+  function onSubmit(gameName?: string, playerName?: string) {
+    const currentSelection = selectionRef.current;
     if (currentSelection) {
-      if (currentSelection === Action.JOIN) {
-        if (activeInput === 'player name') {
-          setValue('');
-          setPlayerName(playerName);
-          setActiveInput('game name');
-        } else if (activeInput === 'game name') {
-          sendEvent({
-            action: Action.JOIN,
-            data: [gameName, playerName],
-          });
-        }
+      if (currentSelection === Action.JOIN && activeInput === 'game name') {
+        sendEvent({
+          action: Action.JOIN,
+          data: [gameName!, joinPlayerValue!],
+        });
       } else if (currentSelection === Action.HOST) {
         sendEvent({
           action: Action.HOST,
-          data: [gameName],
+          data: [playerName!],
         });
       }
     }
@@ -73,8 +61,6 @@ export function Home() {
     ? 'bg-neutral-900 text-neutral-600'
     : 'bg-yellow-800' + newWordHover;
 
-  // const [joinValue, setJoinValue] = React.useState('');
-
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setValue(e.target.value)
   }
@@ -82,11 +68,15 @@ export function Home() {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget)
-    console.log(Array.from(formData.entries()))
+      if (activeInput === 'player name') {
+      setActiveInput('game name');
+      setJoinPlayerValue(formData.get('player-name')?.toString() || '')
+    }
+    onSubmit(formData.get('game-name')?.toString(), formData.get('player-name')?.toString())
   }
 
-  const gameInput = () => <Input name="game-name" value={value} onChange={handleInputChange} distance={3} autoFocus={activeInput === 'game name'}/>
-  const playerInput = () => <Input name="player-name" value={value} onChange={handleInputChange} distance={3} autoFocus={activeInput === 'player name'}/>
+  const gameInput = () => <Input name="game-name" onChange={handleInputChange} distance={3} fixedFocus/>
+  const playerInput = () => <Input name="player-name" onChange={handleInputChange} distance={3} fixedFocus/>
 
   return (
     <form onSubmit={handleSubmit} className='h-full'>
@@ -94,7 +84,7 @@ export function Home() {
       <div
         className={`${newWrapClassName} overflow-hidden transition-[height] w-full`}
       >      
-        {newGameSetted && gameInput()}
+        {newGameSetted && playerInput()}
       </div>
       <Word
         distance={3}
@@ -115,8 +105,8 @@ export function Home() {
       <div
         className={`${joinWrapClassName} overflow-hidden transition-[height] w-full`}
       >
-        {joinGameSetted && activeInput === 'game name' && gameInput()}
         {joinGameSetted && activeInput === 'player name' && playerInput()}
+        {joinGameSetted && activeInput === 'game name' && gameInput()}
       </div>
     </div>
     </form>

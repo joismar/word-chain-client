@@ -1,44 +1,53 @@
 import * as React from "react";
 import { Word } from "./Word";
 import { Distance } from "@src/utils/types";
+import { useEventSystem } from "@src/hooks/useEventSystem";
 
 type InputProps = {
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    value: string;
     distance?: Distance;
     ref?: React.RefObject<HTMLInputElement>;
-    autoFocus?: boolean;
+    fixedFocus?: boolean;
 } & React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>;
 
 export function Input({
-    value,
     distance,
     ref,
-    autoFocus,
+    fixedFocus,
     ...inputProps
 }: InputProps) {
     const inputRef = ref || React.useRef<HTMLInputElement>(null);
     const [focused, setFocused] = React.useState(false);
+
+    const { subscribe } = useEventSystem();
+
+    React.useEffect(() => {
+        const unsubscribe = subscribe("inputFocus", (name) => {
+            if (name === inputProps.name) handleFocus();
+        })
+
+        return () => unsubscribe();
+    }, [])
+
+    React.useEffect(() => {
+        fixedFocus && handleFocus();
+        inputProps.autoFocus && handleFocus();
+    }, [fixedFocus, inputProps.autoFocus])
 
     function handleFocus() {
         setFocused(true)
         inputRef.current?.focus();
     }
 
-    React.useEffect(() => {
-        autoFocus && handleFocus()
-    }, [autoFocus])
-
     function onFocus() {
         setFocused(true)
     }
 
     function onUnfocus() {
-        autoFocus ? handleFocus() : setFocused(false)
+        fixedFocus ? handleFocus() : setFocused(false)
     }
 
     React.useEffect(() => {
-        handleFocus()
         inputRef.current?.addEventListener('focusin', onFocus)
         inputRef.current?.addEventListener('focusout', onUnfocus)
 
