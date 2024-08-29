@@ -2,7 +2,7 @@ import React from 'react';
 import { Letter } from './Letter';
 import { Distance } from '@src/utils/types';
 
-type WordProps = {
+export type WordProps = {
   children: string;
   distance?: Distance;
   chainConfig?: {

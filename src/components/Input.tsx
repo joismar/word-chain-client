@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Word } from "./Word";
+import { Word, WordProps } from "./Word";
 import { Distance } from "@src/utils/types";
 import { useEventSystem } from "@src/hooks/useEventSystem";
 
@@ -8,12 +8,14 @@ type InputProps = {
     distance?: Distance;
     ref?: React.RefObject<HTMLInputElement>;
     fixedFocus?: boolean;
+    wordProps?: Omit<WordProps, "children">;
 } & React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>;
 
 export function Input({
     distance,
     ref,
     fixedFocus,
+    wordProps,
     ...inputProps
 }: InputProps) {
     const inputRef = ref || React.useRef<HTMLInputElement>(null);
@@ -60,12 +62,12 @@ export function Input({
     return (
         <div
             onClick={() => handleFocus()}
-            className={`w-full cursor-text`}
+            className={`relative w-full cursor-text overflow-hidden`}
         >
-            <Word distance={distance} blink={focused}>
+            <Word distance={distance} blink={focused} {...wordProps}>
                 {inputRef.current?.value || ''}
             </Word>
-            <input ref={inputRef} style={{ opacity: 0, position: 'absolute' }}
+            <input ref={inputRef} className="absolute w-0"
             aria-hidden="true" {...inputProps}/>
         </div>
     )

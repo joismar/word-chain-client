@@ -1,7 +1,6 @@
 import '@src/App.css';
 import { Word } from '@src/components/Word';
 import { useWordList } from '@src/hooks/useWordList';
-import { useInputManager } from '@src/hooks/useInputManager';
 import React from 'react';
 import { BorderShadow } from '@src/components/BorderShadow';
 import { WordContainer } from '@src/components/WordContainer';
@@ -9,11 +8,11 @@ import { useIsOverflowing } from '@src/hooks/useIsOverflowing';
 import { useVerticalScroll } from '@src/hooks/useVerticalScroll';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
 import { Action } from '@shared/enums';
-import { useKeyboard } from '@src/providers/KeyboardProvider';
 import useIsMobile from '@src/hooks/useIsMobile';
 import { Distance } from '@src/utils/types';
 import { useClientSize } from '@src/hooks/useClientSize';
 import { useContentHeight } from '@src/hooks/useContentHeight';
+import { Input } from '@src/components/Input';
 
 export function Game() {
   const { gameData, sendEvent, isMyTurn, findTurnPlayer } =
@@ -25,15 +24,6 @@ export function Game() {
     inputWord,
     removeWord,
   } = useWordList();
-  const { setOnSubmit, input, resetInput } = useKeyboard();
-
-  React.useEffect(() => {
-    setValue(input);
-    setOnSubmit(() => () => {
-      onSubmit(input);
-      resetInput();
-    });
-  }, [input]);
 
   React.useEffect(() => {
     setWords([...gameData.chain, { word: '' }]);
@@ -77,7 +67,7 @@ export function Game() {
       action: Action.WORD,
       data: [value],
     });
-    setValue('');
+    // setValue('');
     setTimeout(() => {
       // emit('destroyWords', ['toto', 'alagamento', 'material', 'tomate']);
     }, 1000);
@@ -91,11 +81,17 @@ export function Game() {
     });
   }
 
-  const [_, setValue] = useInputManager({ onSubmit, onChange });
+  // const [_, setValue] = useInputManager({ onSubmit, onChange });
   const playerCount = gameData.players.length;
   const playerTurn = findTurnPlayer();
   const wordDistanceSum = useIsMobile() ? 1 : 0
   const hasScore = (i: number) => i > middleWords.length - 1 - playerCount
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget)
+    onSubmit(formData.get('word')?.toString() || '')
+  }
 
   return (
     <div className="pl-5 flex justify-end items-start flex-col h-full pt-5">
@@ -152,14 +148,22 @@ export function Game() {
             className="z-[10]"
             isVisible
           />
-          <Word
+          <form onSubmit={handleSubmit} className='w-full'>
+          <Input 
+            wordProps={{
+              chainConfig: { first: inputWord.first, last: inputWord.last },
+              className: "max-w-[100%] justify-end overflow-hidden"
+            }}
+            name="word" value={inputWord.word} onChange={(e) => onChange(e.target.value)} distance={(1 + wordDistanceSum) as Distance} fixedFocus/>
+            </form>
+          {/* <Word
             chainConfig={{ first: inputWord.first, last: inputWord.last }}
             className="max-w-[100%] justify-end overflow-hidden"
             distance={(1 + wordDistanceSum) as Distance}
             blink
           >
             {inputWord.word}
-          </Word>
+          </Word> */}
         </div>
       ) : (
         <div className="flex justify-center items-center h-12 w-[100%] animate-blink">
