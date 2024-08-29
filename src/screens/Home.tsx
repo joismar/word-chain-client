@@ -71,9 +71,10 @@ export function Home() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget)
       if (activeInput === 'player name') {
-      setActiveInput('game name');
-      setJoinPlayerValue(formData.get('player-name')?.toString() || '')
-    }
+        setValue('');
+        setActiveInput('game name');
+        setJoinPlayerValue(formData.get('player-name')?.toString() || '')
+      }
     onSubmit(formData.get('game-name')?.toString(), formData.get('player-name')?.toString())
   }
 
