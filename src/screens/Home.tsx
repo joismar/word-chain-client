@@ -83,35 +83,36 @@ export function Home() {
 
   return (
     <form onSubmit={handleSubmit} className='h-full'>
-    <div className="flex flex-col justify-center gap-2 h-[100%]">
-      <div
-        className={`${newWrapClassName} overflow-hidden transition-[height] w-full`}
-      >      
-        {newGameSetted && playerInput()}
+      <div className="flex flex-col justify-center gap-2 h-[100%]">
+        <div
+          className={`${newWrapClassName} overflow-hidden transition-[height] w-full`}
+        >      
+          {newGameSetted && playerInput()}
+        </div>
+        <Word
+          distance={3}
+          className={`group ${newGameSetted ? '' : 'cursor-pointer'}`}
+          letterClassName={newWordClassName}
+          onClick={onNewGame}
+        >
+          {topWord}
+        </Word>
+        <Word
+          distance={3}
+          className={`group ${joinGameSetted ? '' : 'cursor-pointer'}`}
+          letterClassName={joinWordClassName}
+          onClick={onJoinGame}
+        >
+          {bottomWord}
+        </Word>
+        <div
+          className={`${joinWrapClassName} overflow-hidden transition-[height] w-full`}
+        >
+          {joinGameSetted && activeInput === 'player name' && playerInput()}
+          {joinGameSetted && activeInput === 'game name' && gameInput()}
+        </div>
       </div>
-      <Word
-        distance={3}
-        className={`group ${newGameSetted ? '' : 'cursor-pointer'}`}
-        letterClassName={newWordClassName}
-        onClick={onNewGame}
-      >
-        {topWord}
-      </Word>
-      <Word
-        distance={3}
-        className={`group ${joinGameSetted ? '' : 'cursor-pointer'}`}
-        letterClassName={joinWordClassName}
-        onClick={onJoinGame}
-      >
-        {bottomWord}
-      </Word>
-      <div
-        className={`${joinWrapClassName} overflow-hidden transition-[height] w-full`}
-      >
-        {joinGameSetted && activeInput === 'player name' && playerInput()}
-        {joinGameSetted && activeInput === 'game name' && gameInput()}
-      </div>
-    </div>
+      <input type='submit' hidden />
     </form>
   );
 }
