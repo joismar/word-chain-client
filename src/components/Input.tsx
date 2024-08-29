@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Word, WordProps } from "./Word";
 import { Distance } from "@src/utils/types";
-import { useEventSystem } from "@src/hooks/useEventSystem";
 
 type InputProps = {
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -23,24 +22,14 @@ export function Input({
     const inputRef = ref || React.useRef<HTMLInputElement>(null);
     const [focused, setFocused] = React.useState(false);
 
-    const { subscribe } = useEventSystem();
-
-    React.useEffect(() => {
-        const unsubscribe = subscribe("inputFocus", (name) => {
-            if (name === inputProps.name) handleFocus();
-        })
-
-        return () => unsubscribe();
-    }, [])
-
     React.useEffect(() => {
         fixedFocus && handleFocus();
-        inputProps.autoFocus && handleFocus();
-    }, [fixedFocus, inputProps.autoFocus])
+    }, [fixedFocus])
 
     function handleFocus() {
         setFocused(true)
         inputRef.current?.focus();
+        inputRef.current?.setSelectionRange(value.length, value.length);
     }
 
     function onFocus() {
