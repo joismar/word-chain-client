@@ -26,8 +26,7 @@ export function WordContainer({
   const collapseSize =
     Math.round((wordWidth - clientWidth) / letterSize) + 3;
 
-  // console.log(word.word, clientWidth, letterSize, collapseSize)
-  // console.log(collapseSize)
+  const isMobile = useIsMobile();
 
   const { subscribe } = useEventSystem();
 
@@ -63,7 +62,7 @@ export function WordContainer({
           distance={distance != undefined ? distance : calculatedDistance}
           points={wordPlayer?.score}
           className={`absolute ${
-            hasScore ? 'left-[-1.8rem]' : 'left-[-1rem]'
+            isMobile ? 'left-[-1.8rem]' : 'left-[-2.4rem]'
           }`}
         />
       )}

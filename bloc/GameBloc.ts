@@ -1,6 +1,7 @@
 import { Subject, Observable } from 'rxjs';
 import { SocketWrapper } from '../shared/SocketWrapper';
 import { EventAction, GameData, Player } from '../shared/interfaces';
+import { SocketState } from '@shared/enums';
 
 export class GameBloc {
   private socket: SocketWrapper;
@@ -9,9 +10,11 @@ export class GameBloc {
   private _gameStream: Subject<GameData | any> = new Subject<GameData | any>();
   private _playerStream: Subject<Player> = new Subject<Player>();
   private _errorStream: Subject<Error> = new Subject<Error>();
-  private _connectionStream: Subject<boolean> = new Subject<boolean>();
+  private _connectionStream: Subject<SocketState> = new Subject<SocketState>();
+  private manuallyClosed: boolean = false;
 
   constructor(socket: SocketWrapper) {
+    this._connectionStream.next(SocketState.CONNECTING);
     this.socket = socket;
     this.socket.on('any', (event: any) => {
       const data = JSON.parse(event.data.toString());
@@ -38,10 +41,14 @@ export class GameBloc {
       this._playerStream.next(this.playerData);
     });
     this.socket.on('open', () => {
-      this._connectionStream.next(true);
+      this._connectionStream.next(SocketState.CONNECTED);
     });
     this.socket.on('close', () => {
-      this._connectionStream.next(false);
+      if (!this.manuallyClosed) {
+        console.log('Disconnected, trying to reconnect!')
+        this.reconnect();
+      }
+      this._connectionStream.next(SocketState.DISCONNECTED);
     });
   }
 
@@ -49,7 +56,7 @@ export class GameBloc {
     return this._gameStream.asObservable();
   }
 
-  get connectionStream(): Observable<boolean> {
+  get connectionStream(): Observable<SocketState> {
     return this._connectionStream.asObservable();
   }
 
@@ -61,7 +68,14 @@ export class GameBloc {
     return this._playerStream.asObservable();
   }
 
+  reconnect() {
+    setTimeout(() =>
+      this.socket.connect()
+    , 1000);
+  }
+
   closeConnection() {
+    this.manuallyClosed = true;
     this.socket.close();
   }
 

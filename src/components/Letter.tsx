@@ -45,20 +45,12 @@ export function Letter({
     }
   })();
 
-  const colorClasses = (() => {
-    if (!children.length || children == ' ' || transparent)
-      return '!bg-transparent';
-    if (chained === 'center') return 'bg-amber-800'
-    if (chained === 'left') return 'bg-red-800';
-    if (chained === 'right') return 'bg-yellow-800';
-    return 'bg-neutral-950';
-  })();
-
   const sizeClasses = 'flex-none flex justify-center items-center'
+  const color = (!children.length || children === ' ' || transparent) ? '!bg-transparent' : ''
 
   return (
     <div
-      className={`${distanceClasses} ${colorClasses} ${sizeClasses} font-semibold transition-all duration-[.5s] rounded-[10%] ${
+      className={`${distanceClasses} ${color} ${sizeClasses} font-semibold transition-all duration-[.5s] rounded-[10%] ${
         className || ''
       }`}
       ref={ref}

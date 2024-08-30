@@ -57,8 +57,7 @@ export function Input({
             <Word distance={distance} blink={focused} {...wordProps}>
                 {value}
             </Word>
-            <input ref={inputRef} className="absolute opacity-0"
-            aria-hidden="true" autoComplete="off" {...inputProps} />
+            <input ref={inputRef} className="absolute opacity-0 pointer-events-none" aria-hidden="true" autoComplete="off" value={value} {...inputProps} />
         </div>
     )
 }

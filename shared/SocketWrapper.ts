@@ -1,8 +1,9 @@
 export class SocketWrapper {
-  private socket: WebSocket;
+  private SOCKET_URL = 'wss://h9qktxoj4a.execute-api.sa-east-1.amazonaws.com/dev';
+  public socket: WebSocket;
 
-  constructor(socket: WebSocket) {
-    this.socket = socket;
+  constructor() {
+    this.socket = new WebSocket(this.SOCKET_URL);
   }
 
   on(action: string, callback: (event: any) => any) {
@@ -34,7 +35,12 @@ export class SocketWrapper {
     this.socket.close();
   }
 
+  connect() {
+    this.socket = new WebSocket(this.SOCKET_URL);
+  }
+
   emit(data: any) {
+    console.log('Sended:', JSON.parse(data));
     this.socket.send(data);
   }
 }

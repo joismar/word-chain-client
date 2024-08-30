@@ -11,7 +11,7 @@ export function Home() {
     'player name'
   );
   const [joinPlayerValue, setJoinPlayerValue] = React.useState('');
-  const [value, setValue] = React.useState('')
+  const [value, setValue] = React.useState('');
 
   const selectionRef = React.useRef(selection);
 

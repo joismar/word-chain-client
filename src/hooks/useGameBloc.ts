@@ -2,11 +2,9 @@ import { useEffect, useState } from 'react';
 import { GameBloc } from '@bloc/GameBloc';
 import { SocketWrapper } from '@shared/SocketWrapper';
 import { EventAction, GameData, Player } from '@shared/interfaces';
+import { SocketState } from '@shared/enums';
 
-const webSocket = new WebSocket(
-  'wss://h9qktxoj4a.execute-api.sa-east-1.amazonaws.com/dev'
-);
-const socket = new SocketWrapper(webSocket);
+const socket = new SocketWrapper();
 const gameBloc = new GameBloc(socket);
 
 export function useGameBloc() {
@@ -16,20 +14,20 @@ export function useGameBloc() {
   const [connected, setConnected] = useState<boolean>(false);
 
   useEffect(() => {
-    const game = gameBloc.gameStream.subscribe((data: any) => {
+    const game = gameBloc.gameStream.subscribe((data) => {
       setGameData(data);
     });
 
-    const player = gameBloc.playerStream.subscribe((data: any) => {
+    const player = gameBloc.playerStream.subscribe((data) => {
       setPlayerData(data);
     });
 
-    const error = gameBloc.errorStream.subscribe((data: any) => {
+    const error = gameBloc.errorStream.subscribe((data) => {
       setErrorData(data);
     });
 
-    const connection = gameBloc.connectionStream.subscribe((data: any) => {
-      setConnected(data);
+    const connection = gameBloc.connectionStream.subscribe((data) => {
+      setConnected(data === SocketState.CONNECTED);
     });
 
     return () => {
@@ -37,7 +35,7 @@ export function useGameBloc() {
       player.unsubscribe();
       connection.unsubscribe();
       error.unsubscribe();
-      if (webSocket.readyState === 1) gameBloc.closeConnection();
+      socket.socket.readyState === 1 && gameBloc.closeConnection();
     };
   }, []);
 
@@ -57,7 +55,7 @@ export function useGameBloc() {
   };
 
   const sendEvent = (event: EventAction) => {
-    console.log('Sended:', event);
+    event.data = event.data.map(value => value.toLowerCase());
     gameBloc.sendEvent(event);
   };
 

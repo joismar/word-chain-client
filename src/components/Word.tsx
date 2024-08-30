@@ -81,8 +81,13 @@ export function Word({
   }
 
   const wrapClass = wrap ? 'w-[100%] flex-wrap' : '';
-
   const gridClasses = 'flex items-end';
+  const colorClasses = (i: number) => {
+    if (chained(i) === 'center') return 'bg-amber-800'
+    if (chained(i) === 'left') return 'bg-red-800';
+    if (chained(i) === 'right') return 'bg-yellow-800';
+    return 'bg-neutral-950';
+  };
 
   return (
     <div
@@ -100,7 +105,7 @@ export function Word({
             distance={letterDistance}
             chained={chained(i + collapseSize)}
             key={i}
-            className={letterClassName}
+            className={`${letterClassName} ${colorClasses(i)}`}
             {...(i === 0 && { getLetterSize })}
           >
             {letter}

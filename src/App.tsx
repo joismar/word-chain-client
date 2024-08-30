@@ -6,11 +6,12 @@ import { Game } from '@src/screens/Game';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
 import { Screens } from '@src/utils/types';
 import { Home } from './screens/Home';
+import useIsMobile from './hooks/useIsMobile';
 
 function App() {
   const [screen, setScreen] = React.useState<Screens>('home');
   const { gameData, connected } = useGameBlocContext();
-  // const isMobile = useIsMobile();
+  const isMobile = useIsMobile();
 
   React.useEffect(() => {
     if (gameData.status === 0) {
@@ -45,12 +46,14 @@ function App() {
     }
   }, [])
 
+  const logoHeight = isMobile ? 'h-10' : 'h-14'
+
   return (
     <div className="flex flex-col items-center w-[100vw]" style={{
       height: visualViewportH ? `${visualViewportH}px` : '100dvh'
     }}>
-      <div className="flex justify-center items-center text-neutral-700 h-10">
-        <Word distance={3} letterClassName='bg-neutral-300'>word chain</Word>
+      <div className={`flex justify-center items-center text-neutral-700 ${logoHeight}`}>
+        <Word distance={isMobile ? 4 : 3} letterClassName='bg-neutral-300'>word chain</Word>
       </div>
       <div className='flex-1 w-full px-5 pb-3 sm:px-20 max-w-[1000px]'>
         {screenComponent}

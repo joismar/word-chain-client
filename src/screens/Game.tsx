@@ -67,21 +67,19 @@ export function Game() {
       action: Action.WORD,
       data: [value],
     });
-    // setValue('');
     setTimeout(() => {
       // emit('destroyWords', ['toto', 'alagamento', 'material', 'tomate']);
     }, 1000);
   }
 
-  function onChange(value: string) {
+  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     setWords((prevWords) => {
       const updatedWords = [...prevWords];
-      updatedWords[updatedWords.length - 1] = { word: value };
+      updatedWords[updatedWords.length - 1] = { word: e.target.value };
       return updatedWords;
     });
   }
 
-  // const [_, setValue] = useInputManager({ onSubmit, onChange });
   const playerCount = gameData.players.length;
   const playerTurn = findTurnPlayer();
   const wordDistanceSum = useIsMobile() ? 1 : 0
@@ -91,6 +89,7 @@ export function Game() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget)
     onSubmit(formData.get('word')?.toString() || '')
+    formData.delete('word')
   }
 
   return (
@@ -154,16 +153,14 @@ export function Game() {
               chainConfig: { first: inputWord.first, last: inputWord.last },
               className: "max-w-[100%] justify-end overflow-hidden"
             }}
-            name="word" value={inputWord.word} onChange={(e) => onChange(e.target.value)} distance={(1 + wordDistanceSum) as Distance} fixedFocus/>
-            </form>
-          {/* <Word
-            chainConfig={{ first: inputWord.first, last: inputWord.last }}
-            className="max-w-[100%] justify-end overflow-hidden"
-            distance={(1 + wordDistanceSum) as Distance}
-            blink
-          >
-            {inputWord.word}
-          </Word> */}
+            name="word" 
+            value={inputWord.word} 
+            onChange={onChange} 
+            distance={(1 + wordDistanceSum) as Distance} 
+            fixedFocus
+          />
+          <input type='submit' hidden />
+          </form>
         </div>
       ) : (
         <div className="flex justify-center items-center h-12 w-[100%] animate-blink">
