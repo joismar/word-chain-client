@@ -33,8 +33,6 @@ export function Word({
   getLetterSize,
   ...divProps
 }: WordProps) {
-  // const isMobile = useIsMobile();
-  // const distance = isMobile ? distanceProp + 1 : distanceProp;
   const [letterDistance, setLetterDistance] = React.useState<Distance>(0);
 
   React.useEffect(() => {
@@ -86,7 +84,7 @@ export function Word({
     if (chained(i) === 'center') return 'bg-amber-800'
     if (chained(i) === 'left') return 'bg-red-800';
     if (chained(i) === 'right') return 'bg-yellow-800';
-    return 'bg-neutral-950';
+    return '';
   };
 
   return (
