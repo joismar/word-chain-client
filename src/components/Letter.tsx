@@ -8,7 +8,8 @@ type LetterProps = {
   chained?: 'left' | 'right' | 'center';
   transparent?: boolean;
   className?: React.HTMLAttributes<HTMLDivElement>['className'];
-  getLetterSize?: (size: number) => void; 
+  color?: string;
+  getLetterSize?: (size: number) => void;
 } & React.DetailedHTMLProps<
 React.HTMLAttributes<HTMLDivElement>,
 HTMLDivElement
@@ -21,6 +22,7 @@ export function Letter({
   transparent,
   className,
   getLetterSize,
+  color = 'bg-neutral-950',
   ...divProps
 }: LetterProps) {
   const ref = React.useRef<HTMLDivElement>(null);
@@ -46,11 +48,11 @@ export function Letter({
   })();
 
   const sizeClasses = 'flex-none flex justify-center items-center'
-  const color = (!children.length || children === ' ' || transparent) ? '!bg-transparent' : ''
+  const colorClasss = (!children.length || children === ' ' || transparent) ? '!bg-transparent' : color
 
   return (
     <div
-      className={`${distanceClasses} ${color} ${sizeClasses} font-semibold transition-all duration-[.5s] rounded-[10%] ${
+      className={`${distanceClasses} ${colorClasss} ${sizeClasses} font-semibold transition-all duration-[.5s] rounded-[10%] ${
         className || ''
       }`}
       ref={ref}

@@ -16,6 +16,7 @@ export type WordProps = {
   autoSize?: boolean;
   getLetterSize?: (size: number) => void; 
   containerSize?: number;
+  color?: string;
 } & React.DetailedHTMLProps<
   React.HTMLAttributes<HTMLDivElement>,
   HTMLDivElement
@@ -31,6 +32,7 @@ export function Word({
   className,
   wrap,
   getLetterSize,
+  color,
   ...divProps
 }: WordProps) {
   const [letterDistance, setLetterDistance] = React.useState<Distance>(0);
@@ -80,11 +82,11 @@ export function Word({
 
   const wrapClass = wrap ? 'w-[100%] flex-wrap' : '';
   const gridClasses = 'flex items-end';
-  const colorClasses = (i: number) => {
+  const getColor = (i: number) => {
+    if (color) return color;
     if (chained(i) === 'center') return 'bg-amber-800'
     if (chained(i) === 'left') return 'bg-red-800';
     if (chained(i) === 'right') return 'bg-yellow-800';
-    return '';
   };
 
   return (
@@ -103,7 +105,8 @@ export function Word({
             distance={letterDistance}
             chained={chained(i + collapseSize)}
             key={i}
-            className={`${letterClassName} ${colorClasses(i)}`}
+            className={letterClassName}
+            color={getColor(i)}
             {...(i === 0 && { getLetterSize })}
           >
             {letter}
