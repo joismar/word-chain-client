@@ -13,10 +13,12 @@ import { Distance } from '@src/utils/types';
 import { useClientSize } from '@src/hooks/useClientSize';
 import { useContentHeight } from '@src/hooks/useContentHeight';
 import { Input } from '@src/components/Input';
+import { useVisualViewportH } from '@src/hooks/useVisualViewportH';
 
 export function Game() {
   const { gameData, sendEvent, isMyTurn, findTurnPlayer } =
     useGameBlocContext();
+
   const {
     setWords,
     firstWord,
@@ -41,18 +43,17 @@ export function Game() {
     contentHeight + ((middleWords.length - 1) * 4),
   );
 
+  const isMobile = useIsMobile();
+
   const [ocupiedHeight, setOcupiedHeight] = React.useState(0);
-  const firstWordRef = React.useRef<HTMLDivElement>(null);
-  const {clientHeight: firstWordHeight} = useClientSize(firstWordRef);
-  const inputRef = React.useRef<HTMLDivElement>(null);
-  const {clientHeight: inputHeight} = useClientSize(inputRef);
+  const {ref: firstWordRef, clientHeight: firstWordHeight} = useClientSize();
+  const {ref: inputRef, clientHeight: inputHeight} = useClientSize();
 
   React.useEffect(() => {
-    // console.log(firstWordHeight, inputHeight)
-    setOcupiedHeight(firstWordHeight + inputHeight + 16)
+    const footerHeight = 24;
+    const marginsAndPaddings = isMobile ? 48 : 68;
+    setOcupiedHeight(firstWordHeight + inputHeight + footerHeight + marginsAndPaddings)
   }, [firstWordHeight, inputHeight])
-
-  // console.log(isOverflowingH, contentHeight, containerRef.current?.clientHeight)
 
   function handleMouseEnter() {
     if (!isOverflowingH || !containerRef.current) return;
@@ -82,7 +83,7 @@ export function Game() {
 
   const playerCount = gameData.players.length;
   const playerTurn = findTurnPlayer();
-  const wordDistanceSum = useIsMobile() ? 1 : 0
+  const wordDistanceSum = isMobile ? 1 : 0
   const hasScore = (i: number) => i > middleWords.length - 1 - playerCount
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -92,8 +93,12 @@ export function Game() {
     formData.delete('word')
   }
 
+  const visualViewportH = useVisualViewportH();
+  const wordListMaxHeight = visualViewportH - ocupiedHeight;
+  const paddingBottom = isMobile ? 'pb-0' : 'pb-5'
+
   return (
-    <div className="pl-5 flex justify-end items-start flex-col h-full pt-5">
+    <div className={`pl-5 flex justify-end items-start flex-col h-full pt-5 ${paddingBottom}`}>
       <div ref={firstWordRef}>
       {firstWord && (
         <Word
@@ -121,7 +126,7 @@ export function Game() {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsWordListHover(false)}
         style={{
-          maxHeight: `calc(100% - ${ocupiedHeight}px)`
+          maxHeight: `${wordListMaxHeight}px`
         }}
       >
         {middleWords.map((word, i) => (

@@ -1,9 +1,10 @@
 import React from 'react';
 
 export function useClientSize(
-  ref: React.RefObject<HTMLDivElement>,
+  refProp?: React.RefObject<HTMLDivElement>,
   depArray?: any[],
 ) {
+  const ref = refProp || React.useRef<HTMLDivElement>(null);
   const [clientWidth, setClientWidth] = React.useState(0);
   const [clientHeight, setClientHeight] = React.useState(0);
   const [scrolltWidth, setScrollWidth] = React.useState(0);
@@ -28,6 +29,7 @@ export function useClientSize(
   }, depArray);
 
   return {
+    ref,
     clientHeight,
     clientWidth,
     scrolltHeight,

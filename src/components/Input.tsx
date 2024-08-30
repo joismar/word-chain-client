@@ -17,6 +17,7 @@ export function Input({
     fixedFocus,
     wordProps,
     value,
+    onChange: userOnChange,
     ...inputProps
 }: InputProps) {
     const inputRef = ref || React.useRef<HTMLInputElement>(null);
@@ -39,6 +40,11 @@ export function Input({
         fixedFocus ? handleFocus() : setFocused(false)
     }
 
+    function onChange(e: React.ChangeEvent<HTMLInputElement>) {
+        e.target.value = e.target.value.toLowerCase();
+        userOnChange?.(e);
+    }
+
     React.useEffect(() => {
         inputRef.current?.addEventListener('focusin', onFocus)
         inputRef.current?.addEventListener('focusout', onUnfocus)
@@ -57,7 +63,14 @@ export function Input({
             <Word distance={distance} blink={focused} {...wordProps}>
                 {value}
             </Word>
-            <input ref={inputRef} className="absolute opacity-0 pointer-events-none" aria-hidden="true" autoComplete="off" value={value} {...inputProps} />
+            <input 
+                ref={inputRef} 
+                className="absolute opacity-0 pointer-events-none" 
+                aria-hidden="true" autoComplete="off" 
+                value={value}
+                onChange={onChange} 
+                {...inputProps} 
+            />
         </div>
     )
 }
