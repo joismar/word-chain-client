@@ -14,10 +14,22 @@ export enum Action {
   START = 'start',
   WORD = 'word',
   JOIN = 'join',
+  PASS = 'pass',
 }
 
 export enum SocketState {
   CONNECTED,
   DISCONNECTED,
   CONNECTING,
+}
+
+export enum PlayerColor {
+  RED,
+  BLUE,
+  GREEN,
+  YELLOW,
+  PURPLE,
+  ORANGE,
+  PINK,
+  BROWN,
 }

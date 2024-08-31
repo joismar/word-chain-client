@@ -5,6 +5,7 @@ type AvatarProps = {
   distance: Distance;
   points?: number;
   ref?: React.RefObject<HTMLDivElement>;
+  color?: string;
 } & React.DetailedHTMLProps<
   React.HTMLAttributes<HTMLDivElement>,
   HTMLDivElement
@@ -15,6 +16,7 @@ export function Avatar({
   points,
   ref,
   className,
+  color,
   ...divProps
 }: AvatarProps) {
   const [avatarDistance, setAvatarDistance] = React.useState<Distance>(0);
@@ -42,20 +44,6 @@ export function Avatar({
 
   const chipClasses = avatarDistance === 0 ? 'opacity-0' : 'opacity-100';
 
-  const colors = [
-    'bg-pink-300',
-    'bg-blue-300',
-    'bg-green-300',
-    'bg-yellow-300',
-    'bg-cyan-300',
-    'bg-purple-300',
-  ];
-
-  const randomColorPicker = React.useMemo(
-    () => colors[Math.floor(Math.random() * colors.length)],
-    []
-  );
-
   return (
     <div
       className={`inline-block ${distanceClasses} transition-all duration-[.5s] ${
@@ -64,7 +52,7 @@ export function Avatar({
       ref={ref}
       {...divProps}
     >
-      <div className={`w-full h-full rounded-full ${randomColorPicker}`} />
+      <div className={`w-full h-full rounded-full ${color || 'bg-neutral-300'}`} />
       {points ? (
         <span
           className={`absolute top-0 left-0 transform -translate-x-1/4 -translate-y-1/4 bg-red-500 text-white text-xs font-bold px-1 rounded-full ${chipClasses} transition-opacity duration-[.5s]`}

@@ -4,6 +4,7 @@ import { Letter } from '@src/components/Letter';
 import { Word } from '@src/components/Word';
 import { ClipboardIcon } from '@src/images/ClipboardIcon';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
+import { getCSSPlayerColor } from '@src/utils/helpers';
 
 export function Lobby() {
   const { sendEvent, gameData } = useGameBlocContext();
@@ -56,7 +57,7 @@ export function Lobby() {
             >
               {playerReady(player.status) ? '✓' : '✕'}
             </Letter>
-            <Word distance={3}>{player.name}</Word>
+            <Word distance={3} color={getCSSPlayerColor(player.color)}>{player.name}</Word>
           </div>
         ))}
       </div>

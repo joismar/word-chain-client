@@ -3,6 +3,7 @@ import { GameBloc } from '@bloc/GameBloc';
 import { SocketWrapper } from '@shared/SocketWrapper';
 import { EventAction, GameData, Player } from '@shared/interfaces';
 import { SocketState } from '@shared/enums';
+import { useEventSystem } from './useEventSystem';
 
 const socket = new SocketWrapper();
 const gameBloc = new GameBloc(socket);
@@ -12,7 +13,8 @@ export function useGameBloc() {
   const [playerData, setPlayerData] = useState<Player>({} as Player);
   const [errorData, setErrorData] = useState<any>({});
   const [connected, setConnected] = useState<boolean>(false);
-
+  const { emit } = useEventSystem();
+  
   useEffect(() => {
     const game = gameBloc.gameStream.subscribe((data) => {
       setGameData(data);
@@ -23,6 +25,7 @@ export function useGameBloc() {
     });
 
     const error = gameBloc.errorStream.subscribe((data) => {
+      emit('errorToast', data.message);
       setErrorData(data);
     });
 
@@ -68,5 +71,6 @@ export function useGameBloc() {
     findPlayerById,
     isMyTurn,
     findTurnPlayer,
+    socket,
   };
 }

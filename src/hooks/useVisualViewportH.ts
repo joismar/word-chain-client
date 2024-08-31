@@ -5,11 +5,11 @@ export function useVisualViewportH() {
 
     React.useEffect(() => {
         const handleResize = () => {
-        setVisualViewportH(window.visualViewport?.height || 0);
+            setVisualViewportH(window.visualViewport?.height || 0);
         }
         window.addEventListener('resize', handleResize);
         return () => {
-        window.removeEventListener('resize', handleResize);
+            window.removeEventListener('resize', handleResize);
         }
     }, [])
 

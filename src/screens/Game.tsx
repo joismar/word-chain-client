@@ -14,6 +14,7 @@ import { useClientSize } from '@src/hooks/useClientSize';
 import { useContentHeight } from '@src/hooks/useContentHeight';
 import { Input } from '@src/components/Input';
 import { useVisualViewportH } from '@src/hooks/useVisualViewportH';
+import { CircularTimer } from '@src/components/CircularTimer';
 
 export function Game() {
   const { gameData, sendEvent, isMyTurn, findTurnPlayer } =
@@ -68,9 +69,9 @@ export function Game() {
       action: Action.WORD,
       data: [value],
     });
-    setTimeout(() => {
-      // emit('destroyWords', ['toto', 'alagamento', 'material', 'tomate']);
-    }, 1000);
+    // setTimeout(() => {
+    //   emit('destroyWords', ['toto', 'alagamento', 'material', 'tomate']);
+    // }, 1000);
   }
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -97,8 +98,17 @@ export function Game() {
   const wordListMaxHeight = visualViewportH - ocupiedHeight;
   const paddingBottom = isMobile ? 'pb-0' : 'pb-5'
 
+  function onEndTurn() {
+    sendEvent({
+      action: Action.PASS,
+      data: [],
+    });
+  }
+
   return (
     <div className={`pl-5 flex justify-end items-start flex-col h-full pt-5 ${paddingBottom}`}>
+      {gameData.players.length > 1 && isMyTurn() && <CircularTimer duration={10} onEnd={onEndTurn} />}
+      <div className="border-t border-neutral-600 mb-3 w-[100%]"></div>
       <div ref={firstWordRef}>
       {firstWord && (
         <Word
@@ -110,7 +120,6 @@ export function Game() {
         </Word>
       )}
       </div>
-      {/* <div className="border-t border-neutral-600 mb-1 mt-3 w-[100%]"></div> */}
       <BorderShadow
         direction="b"
         className="ml-[-3.2rem] w-[calc(100%_+_3.2rem)] z-[10]"
@@ -126,7 +135,7 @@ export function Game() {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsWordListHover(false)}
         style={{
-          maxHeight: `${wordListMaxHeight}px`
+          maxHeight: visualViewportH ? `${wordListMaxHeight}px` : "100dvh"
         }}
       >
         {middleWords.map((word, i) => (

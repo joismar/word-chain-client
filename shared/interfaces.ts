@@ -1,6 +1,7 @@
-import { Action, GameStatus, PlayerStatus } from './enums';
+import { Action, GameStatus, PlayerColor, PlayerStatus } from './enums';
 
 export interface Player {
+  color: PlayerColor;
   id: string;
   session_id: string | null;
   name: string;

@@ -11,14 +11,13 @@ export class GameBloc {
   private _playerStream: Subject<Player> = new Subject<Player>();
   private _errorStream: Subject<Error> = new Subject<Error>();
   private _connectionStream: Subject<SocketState> = new Subject<SocketState>();
-  private manuallyClosed: boolean = false;
 
   constructor(socket: SocketWrapper) {
     this._connectionStream.next(SocketState.CONNECTING);
     this.socket = socket;
     this.socket.on('any', (event: any) => {
       const data = JSON.parse(event.data.toString());
-      if (data.error || data.data.error) {
+      if (data?.error || data?.data?.error) {
         this._errorStream.next(data);
         return;
       }
@@ -44,10 +43,6 @@ export class GameBloc {
       this._connectionStream.next(SocketState.CONNECTED);
     });
     this.socket.on('close', () => {
-      if (!this.manuallyClosed) {
-        console.log('Disconnected, trying to reconnect!')
-        this.reconnect();
-      }
       this._connectionStream.next(SocketState.DISCONNECTED);
     });
   }
@@ -68,14 +63,7 @@ export class GameBloc {
     return this._playerStream.asObservable();
   }
 
-  reconnect() {
-    setTimeout(() =>
-      this.socket.connect()
-    , 1000);
-  }
-
   closeConnection() {
-    this.manuallyClosed = true;
     this.socket.close();
   }
 
