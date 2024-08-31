@@ -1,4 +1,4 @@
-import { Action } from '@shared/enums';
+import { Action, PlayerColor } from '@shared/enums';
 import { EventAction } from '@shared/interfaces';
 
 export function stringToEvent(input: string): EventAction {
@@ -44,4 +44,17 @@ export function countOverlapStartEnd(word1: string, word2: string) {
   }
 
   return maxOverlap;
+}
+
+export function getCSSPlayerColor(color: PlayerColor) {
+  return {
+    [PlayerColor.RED]: 'bg-red-700',
+    [PlayerColor.BLUE]: 'bg-blue-700',
+    [PlayerColor.GREEN]: 'bg-green-700',
+    [PlayerColor.YELLOW]: 'bg-yellow-700',
+    [PlayerColor.PURPLE]: 'bg-purple-700',
+    [PlayerColor.ORANGE]: 'bg-orange-700',
+    [PlayerColor.PINK]: 'bg-pink-700',
+    [PlayerColor.BROWN]: 'bg-brown-700',
+  }[color];
 }

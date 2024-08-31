@@ -11,7 +11,7 @@ import { useVisualViewportH } from './hooks/useVisualViewportH';
 
 function App() {
   const [screen, setScreen] = React.useState<Screens>('home');
-  const { gameData, connected } = useGameBlocContext();
+  const { gameData, connected, socket } = useGameBlocContext();
   const isMobile = useIsMobile();
 
   React.useEffect(() => {
@@ -51,8 +51,10 @@ function App() {
       </div>
       <div className='flex justify-between items-center w-full px-5 pb-1'>
         <div
-          className={`px-2 my-1 rounded-full ${connectionStatusBg} text-[.5rem]`}
-        >{connected ? 'Online' : 'Offline'}</div>
+          className={`cursor-pointer px-2 my-1 rounded-full ${connectionStatusBg} text-[.5rem]`}
+          onClick={() => socket.connect()}
+        >
+          {connected ? 'Online' : 'Offline'}</div>
         <div className='text-[.5rem]'>WordChain ©️ Developed with ❤️ by @Joismar</div>
       </div>
     </div>

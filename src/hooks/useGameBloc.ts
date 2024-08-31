@@ -12,7 +12,7 @@ export function useGameBloc() {
   const [playerData, setPlayerData] = useState<Player>({} as Player);
   const [errorData, setErrorData] = useState<any>({});
   const [connected, setConnected] = useState<boolean>(false);
-
+  
   useEffect(() => {
     const game = gameBloc.gameStream.subscribe((data) => {
       setGameData(data);
@@ -68,5 +68,6 @@ export function useGameBloc() {
     findPlayerById,
     isMyTurn,
     findTurnPlayer,
+    socket,
   };
 }

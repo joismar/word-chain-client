@@ -126,7 +126,7 @@ export function Game() {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsWordListHover(false)}
         style={{
-          maxHeight: `${wordListMaxHeight}px`
+          maxHeight: visualViewportH ? `${wordListMaxHeight}px` : "100dvh"
         }}
       >
         {middleWords.map((word, i) => (

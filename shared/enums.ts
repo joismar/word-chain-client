@@ -21,3 +21,14 @@ export enum SocketState {
   DISCONNECTED,
   CONNECTING,
 }
+
+export enum PlayerColor {
+  RED,
+  BLUE,
+  GREEN,
+  YELLOW,
+  PURPLE,
+  ORANGE,
+  PINK,
+  BROWN,
+}

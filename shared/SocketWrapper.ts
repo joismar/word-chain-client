@@ -9,7 +9,10 @@ export class SocketWrapper {
   on(action: string, callback: (event: any) => any) {
     switch (action) {
       case 'open':
-        this.socket.addEventListener('open', (event) => callback(event));
+        this.socket.addEventListener('open', (event) => {
+          console.log('Connected!');
+          callback(event)
+        });
         break;
       case 'close':
         this.socket.addEventListener('close', (event) => callback(event));
@@ -33,10 +36,6 @@ export class SocketWrapper {
 
   close() {
     this.socket.close();
-  }
-
-  connect() {
-    this.socket = new WebSocket(this.SOCKET_URL);
   }
 
   emit(data: any) {

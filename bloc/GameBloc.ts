@@ -44,10 +44,6 @@ export class GameBloc {
       this._connectionStream.next(SocketState.CONNECTED);
     });
     this.socket.on('close', () => {
-      if (!this.manuallyClosed) {
-        console.log('Disconnected, trying to reconnect!')
-        this.reconnect();
-      }
       this._connectionStream.next(SocketState.DISCONNECTED);
     });
   }
@@ -66,12 +62,6 @@ export class GameBloc {
 
   get playerStream(): Observable<Player> {
     return this._playerStream.asObservable();
-  }
-
-  reconnect() {
-    setTimeout(() =>
-      this.socket.connect()
-    , 1000);
   }
 
   closeConnection() {
