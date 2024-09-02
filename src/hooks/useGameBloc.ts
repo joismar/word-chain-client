@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { GameBloc } from '@bloc/GameBloc';
 import { SocketWrapper } from '@shared/SocketWrapper';
 import { EventAction, GameData, Player } from '@shared/interfaces';
-import { SocketState } from '@shared/enums';
+import { Action, PlayerStatus, SocketState } from '@shared/enums';
 import { useEventSystem } from './useEventSystem';
 
 const socket = new SocketWrapper();
@@ -13,6 +13,14 @@ export function useGameBloc() {
   const [playerData, setPlayerData] = useState<Player>({} as Player);
   const [errorData, setErrorData] = useState<any>({});
   const [connected, setConnected] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<{
+    [key in Action]: boolean
+  }>(Object.fromEntries(Object.values(Action).map((action) => [action, false])) as any);
+
+  function updateLoadingState(action: Action, state: boolean) {
+    setIsLoading((prev) => ({ ...prev, [action]: state }));
+  }
+
   const { emit } = useEventSystem();
   
   useEffect(() => {
@@ -25,7 +33,7 @@ export function useGameBloc() {
     });
 
     const error = gameBloc.errorStream.subscribe((data) => {
-      emit('errorToast', data.message);
+      emit('infoToast', data.message);
       setErrorData(data);
     });
 
@@ -33,34 +41,52 @@ export function useGameBloc() {
       setConnected(data === SocketState.CONNECTED);
     });
 
+    const actionState = gameBloc.actionStateStream.subscribe((data) => {
+      updateLoadingState(data, false);
+    });
+
     return () => {
       game.unsubscribe();
       player.unsubscribe();
       connection.unsubscribe();
       error.unsubscribe();
+      actionState.unsubscribe();
       socket.socket.readyState === 1 && gameBloc.closeConnection();
     };
   }, []);
 
-  const findPlayerById = (id: string) => {
+  function findPlayerById(id: string) {
     return gameData.players.find((player) => player.id === id);
   };
 
-  const isMyTurn = () => {
+  function isMyTurn() {
     const playerIndex = gameData.players.findIndex(
       (player) => player.id === playerData.id
     );
     return playerIndex === gameData.turn;
   };
 
-  const findTurnPlayer = () => {
+  function findTurnPlayer() {
     return gameData.players[gameData.turn];
   };
 
-  const sendEvent = (event: EventAction) => {
+  async function sendEvent(event: EventAction) {
+    updateLoadingState(event.action, true);
     event.data = event.data.map(value => value.toLowerCase());
     gameBloc.sendEvent(event);
   };
+
+  function playerReady(status: PlayerStatus) {
+    return status === PlayerStatus.READY;
+  } 
+
+  function isHost() {
+    return playerData.id === playerData.session_id;
+  }
+
+  function isLoadingAction(action: Action) {
+    return isLoading[action];
+  }
 
   return {
     gameData,
@@ -72,5 +98,8 @@ export function useGameBloc() {
     isMyTurn,
     findTurnPlayer,
     socket,
+    playerReady,
+    isHost,
+    isLoadingAction,
   };
 }

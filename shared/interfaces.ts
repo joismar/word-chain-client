@@ -29,7 +29,7 @@ export interface Error {
 }
 
 export interface EventAction {
-  action: Action | null;
+  action: Action;
   data: string[];
 }
 

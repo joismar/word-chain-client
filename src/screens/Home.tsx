@@ -1,14 +1,15 @@
 import { Action } from '@shared/enums';
 import { Input } from '@src/components/Input';
+import { Spinner } from '@src/components/Spinner';
 import { Word } from '@src/components/Word';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
 import React from 'react';
 
 export function Home() {
-  const { sendEvent } = useGameBlocContext();
+  const { sendEvent, isLoadingAction } = useGameBlocContext();
   const [selection, setSelection] = React.useState<'host' | 'join'>();
-  const [activeInput, setActiveInput] = React.useState<'game name' | 'player name'>(
-    'player name'
+  const [activeInput, setActiveInput] = React.useState<'game' | 'player'>(
+    'player'
   );
   const [joinPlayerValue, setJoinPlayerValue] = React.useState('');
   const [value, setValue] = React.useState('');
@@ -22,7 +23,7 @@ export function Home() {
   function onSubmit(gameName?: string, playerName?: string) {
     const currentSelection = selectionRef.current;
     if (currentSelection) {
-      if (currentSelection === Action.JOIN && activeInput === 'game name') {
+      if (currentSelection === Action.JOIN && activeInput === 'game') {
         sendEvent({
           action: Action.JOIN,
           data: [gameName!, joinPlayerValue!],
@@ -38,13 +39,13 @@ export function Home() {
 
   function onJoinGame() {
     setValue('');
-    setActiveInput('player name');
+    setActiveInput('player');
     setSelection('join');
   }
 
   function onNewGame() {
     setValue('');
-    setActiveInput('player name');
+    setActiveInput('player');
     setSelection('host');
   }
 
@@ -52,8 +53,11 @@ export function Home() {
   const newGameSetted = selection === 'host';
   const joinWrapClassName = !joinGameSetted ? 'h-0' : 'h-6';
   const newWrapClassName = !newGameSetted ? 'h-0' : 'h-6';
-  const topWord = newGameSetted ? 'player name' : 'new';
-  const bottomWord = joinGameSetted ? activeInput : 'join';
+  const topWord = newGameSetted ? 'apelido' : 'novo';
+  const bottomWord = joinGameSetted ? {
+    'player': 'apelido',
+    'game': 'jogo',
+  }[activeInput] : 'entrar';
   const joinWordHover = joinGameSetted ? '' : ' group-hover:bg-orange-700';
   const newWordHover = newGameSetted ? '' : ' group-hover:bg-yellow-700';
   const joinWordClassName = newGameSetted
@@ -70,9 +74,9 @@ export function Home() {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget)
-      if (activeInput === 'player name') {
+      if (activeInput === 'player') {
         setValue('');
-        setActiveInput('game name');
+        setActiveInput('game');
         setJoinPlayerValue(formData.get('player-name')?.toString() || '')
       }
     onSubmit(formData.get('game-name')?.toString(), formData.get('player-name')?.toString())
@@ -81,8 +85,11 @@ export function Home() {
   const gameInput = () => <Input name="game-name" value={value} onChange={handleInputChange} distance={3} fixedFocus/>
   const playerInput = () => <Input name="player-name" value={value} onChange={handleInputChange} distance={3} fixedFocus/>
 
+  const isLoading = isLoadingAction(Action.HOST) || isLoadingAction(Action.JOIN);
+
   return (
     <form onSubmit={handleSubmit} className='h-full'>
+      {isLoading && <Spinner />}
       <div className="flex flex-col justify-center gap-2 h-[100%]">
         <div
           className={`${newWrapClassName} overflow-hidden transition-[height] w-full`}
@@ -108,8 +115,8 @@ export function Home() {
         <div
           className={`${joinWrapClassName} overflow-hidden transition-[height] w-full`}
         >
-          {joinGameSetted && activeInput === 'player name' && playerInput()}
-          {joinGameSetted && activeInput === 'game name' && gameInput()}
+          {joinGameSetted && activeInput === 'player' && playerInput()}
+          {joinGameSetted && activeInput === 'game' && gameInput()}
         </div>
       </div>
       <input type='submit' hidden />
