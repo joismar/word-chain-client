@@ -12,22 +12,9 @@ export function Button({
   className,
   ...divProps
 }: ButtonProps) {
-  const distanceClasses = (() => {
-    switch (distance) {
-      case 0:
-        return 'h-0 text-[0rem]';
-      case 1:
-        return 'h-12 text-[2rem]';
-      case 2:
-        return 'h-9 text-[1.5rem]';
-      case 3:
-        return 'h-6 text-[1rem]';
-    }
-  })();
-
   return (
     <div
-      className={`${distanceClasses} px-2 bg-neutral-950 flex-none flex justify-center items-center font-bold rounded-[.2rem] transition-all ${
+      className={`px-4 py-2 bg-neutral-900 flex-none flex justify-center items-center font-bold rounded transition-all ${
         className || ''
       }`}
       {...divProps}
