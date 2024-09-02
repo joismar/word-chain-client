@@ -14,7 +14,8 @@ import { useClientSize } from '@src/hooks/useClientSize';
 import { useContentHeight } from '@src/hooks/useContentHeight';
 import { Input } from '@src/components/Input';
 import { useVisualViewportH } from '@src/hooks/useVisualViewportH';
-import { CircularTimer } from '@src/components/CircularTimer';
+import { Timer } from '@src/components/Timer';
+// import { useSchedule } from '@src/hooks/useSchedule';
 
 export function Game() {
   const { gameData, sendEvent, isMyTurn, findTurnPlayer } =
@@ -28,10 +29,6 @@ export function Game() {
     removeWord,
   } = useWordList();
 
-  React.useEffect(() => {
-    setWords([...gameData.chain, { word: '' }]);
-  }, [gameData]);
-
   const containerRef = React.useRef<HTMLDivElement>(null);
   const { isTopScrolled, isBottomScrolled } = useVerticalScroll(containerRef);
 
@@ -44,6 +41,8 @@ export function Game() {
     contentHeight + ((middleWords.length - 1) * 4),
   );
 
+  // const isActive = useSchedule(1725318240);
+
   const isMobile = useIsMobile();
 
   const [ocupiedHeight, setOcupiedHeight] = React.useState(0);
@@ -52,15 +51,24 @@ export function Game() {
 
   React.useEffect(() => {
     const footerHeight = 24;
-    const marginsAndPaddings = isMobile ? 48 : 68;
+    const marginsAndPaddings = isMobile ? 84 : 104;
     setOcupiedHeight(firstWordHeight + inputHeight + footerHeight + marginsAndPaddings)
   }, [firstWordHeight, inputHeight])
 
-  function handleMouseEnter() {
+  function scrollToBottom() {
     if (!isOverflowingH || !containerRef.current) return;
     containerRef.current.scrollTop = containerRef.current?.clientHeight;
+  }
+
+  function handleMouseEnter() {
+    scrollToBottom();
     setIsWordListHover(true);
   }
+
+  React.useEffect(() => {
+    scrollToBottom();
+    setWords([...gameData.chain, { word: '' }]);
+  }, [gameData]);
 
   // const { emit } = useEventSystem();
 
@@ -84,7 +92,7 @@ export function Game() {
 
   const playerCount = gameData.players.length;
   const playerTurn = findTurnPlayer();
-  const wordDistanceSum = isMobile ? 1 : 0
+  const wordDistanceSum = isMobile ? 1 : 0;
   const hasScore = (i: number) => i > middleWords.length - 1 - playerCount
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -107,7 +115,10 @@ export function Game() {
 
   return (
     <div className={`pl-5 flex justify-end items-start flex-col h-full pt-5 ${paddingBottom}`}>
-      {gameData.players.length > 1 && isMyTurn() && <CircularTimer duration={10} onEnd={onEndTurn} />}
+      <div className='w-full flex gap-5'>
+        {/* {isActive && <Timer onlyTime duration={300}/>} */}
+        {isMyTurn() && <Timer duration={15} onEnd={onEndTurn} />}
+      </div>
       <div className="border-t border-neutral-600 mb-3 w-[100%]"></div>
       <div ref={firstWordRef}>
       {firstWord && (
