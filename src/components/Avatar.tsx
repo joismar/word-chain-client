@@ -38,7 +38,7 @@ export function Avatar({
       case 3:
         return 'w-6 h-6';
       case 4:
-        return 'w-2 h-2';
+        return 'w-4 h-4';
     }
   })();
 

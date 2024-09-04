@@ -1,37 +1,4 @@
-import { Action, PlayerColor } from '@shared/enums';
-import { EventAction } from '@shared/interfaces';
-
-export function stringToEvent(input: string): EventAction {
-  const regex = /\/(\w+)\s*([\w\W\s-]*)/;
-  const matches = input.match(regex);
-
-  if (matches) {
-    const [, action, args] = matches;
-    const data = args.split(' ').filter((arg) => arg !== '');
-
-    return {
-      action: action as Action,
-      data,
-    };
-  }
-
-  return {
-    action: null,
-    data: [],
-  };
-}
-
-export function removeArgs(input: string): string {
-  const regex = /(\\\w+)\s*/;
-  const matches = input.match(regex);
-
-  if (matches) {
-    const [, action, _] = matches;
-    return action + ' ';
-  }
-
-  return '';
-}
+import { PlayerColor } from '@shared/enums';
 
 export function countOverlapStartEnd(word1: string, word2: string) {
   let maxOverlap = 0;

@@ -15,11 +15,11 @@ import { useContentHeight } from '@src/hooks/useContentHeight';
 import { Input } from '@src/components/Input';
 import { useVisualViewportH } from '@src/hooks/useVisualViewportH';
 import { Timer } from '@src/components/Timer';
-// import { useSchedule } from '@src/hooks/useSchedule';
+import { useSchedule } from '@src/hooks/useSchedule';
+import { Spinner } from '@src/components/Spinner';
 
 export function Game() {
-  const { gameData, sendEvent, isMyTurn, findTurnPlayer } =
-    useGameBlocContext();
+  const { gameData, sendEvent, isMyTurn, findTurnPlayer, isHost } = useGameBlocContext();
 
   const {
     setWords,
@@ -41,9 +41,9 @@ export function Game() {
     contentHeight + ((middleWords.length - 1) * 4),
   );
 
-  // const isActive = useSchedule(1725318240);
-
+  const isActive = useSchedule(gameData.started_at);
   const isMobile = useIsMobile();
+  const [running, setRunning] = React.useState(true);
 
   const [ocupiedHeight, setOcupiedHeight] = React.useState(0);
   const {ref: firstWordRef, clientHeight: firstWordHeight} = useClientSize();
@@ -113,11 +113,20 @@ export function Game() {
     });
   }
 
+  function onEndGame() {
+    setRunning(false);
+    isHost() && sendEvent({
+      action: Action.END,
+      data: [],
+    });
+  }
+
   return (
     <div className={`pl-5 flex justify-end items-start flex-col h-full pt-5 ${paddingBottom}`}>
+      {!isActive && !running && <Spinner />}
       <div className='w-full flex gap-5'>
-        {/* {isActive && <Timer onlyTime duration={300}/>} */}
-        {isMyTurn() && <Timer duration={15} onEnd={onEndTurn} />}
+        {isActive && <Timer onlyTime duration={180} onEnd={onEndGame}/>}
+        {isActive && gameData.players.length > 1 && isMyTurn() && <Timer duration={15} onEnd={onEndTurn} />}
       </div>
       <div className="border-t border-neutral-600 mb-3 w-[100%]"></div>
       <div ref={firstWordRef}>

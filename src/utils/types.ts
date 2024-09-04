@@ -7,7 +7,7 @@ export type EventMap = {
   errorToast: string;
 };
 
-export type Screens = 'home' | 'lobby' | 'game';
+export type Screens = 'home' | 'lobby' | 'game' | 'end';
 
 export type InGameWord = {
   word: string;

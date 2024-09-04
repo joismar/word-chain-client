@@ -21,6 +21,7 @@ export interface GameData {
   chain: Word[];
   players: Player[];
   turn: number;
+  started_at: number;
 }
 
 export interface Error {
