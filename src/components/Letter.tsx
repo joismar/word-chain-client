@@ -37,13 +37,13 @@ export function Letter({
       case 0:
         return 'w-0 h-0 text-[0rem]';
       case 1:
-        return 'w-10 h-10 text-[1.2rem]';
+        return 'w-10 h-10 text-[1.4rem]';
       case 2:
-        return 'w-8 h-8 text-[1rem]';
+        return 'w-8 h-8 text-[1.2rem]';
       case 3:
-        return 'w-6 h-6 text-[0.8rem]';
+        return 'w-6 h-6 text-[1rem]';
       case 4:
-        return 'w-4 h-4 text-[0.6rem]';
+        return 'w-4 h-4 text-[0.8rem]';
     }
   })();
 
