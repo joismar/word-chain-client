@@ -41,9 +41,9 @@ export function Game() {
     contentHeight + ((middleWords.length - 1) * 4),
   );
 
-  const isActive = useSchedule(gameData.started_at);
+  const isActive = useSchedule({ seconds: 5 });
   const isMobile = useIsMobile();
-  const [running, setRunning] = React.useState(true);
+  const [running, setRunning] = React.useState(false);
 
   const [ocupiedHeight, setOcupiedHeight] = React.useState(0);
   const {ref: firstWordRef, clientHeight: firstWordHeight} = useClientSize();
@@ -121,11 +121,13 @@ export function Game() {
     });
   }
 
+  const gameDuration = React.useMemo(() => gameData.config.time * 60, []);
+
   return (
     <div className={`pl-5 flex justify-end items-start flex-col h-full pt-5 ${paddingBottom}`}>
       {!isActive && !running && <Spinner />}
       <div className='w-full flex gap-5'>
-        {isActive && <Timer onlyTime duration={180} onEnd={onEndGame}/>}
+        {isActive && <Timer onlyTime duration={gameDuration} onEnd={onEndGame}/>}
         {isActive && gameData.players.length > 1 && isMyTurn() && <Timer duration={15} onEnd={onEndTurn} />}
       </div>
       <div className="border-t border-neutral-600 mb-3 w-[100%]"></div>
@@ -174,31 +176,24 @@ export function Game() {
       />
       <div className="border-t border-neutral-600 mb-3 w-[100%]"></div>
       {inputWord && isMyTurn() ? (
-        <div className="flex w-[100%] justify-between" ref={inputRef}>
-          <BorderShadow
-            size="64px"
-            direction="r"
-            className="z-[10]"
-            isVisible
-          />
           <form onSubmit={handleSubmit} className='w-full'>
-          <Input 
-            wordProps={{
-              chainConfig: { first: inputWord.first, last: inputWord.last },
-              className: "max-w-[100%] justify-end overflow-hidden"
-            }}
-            name="word" 
-            value={inputWord.word} 
-            onChange={onChange} 
-            distance={(1 + wordDistanceSum) as Distance} 
-            fixedFocus
-          />
-          <input type='submit' hidden />
+            <Input 
+              wordProps={{
+                chainConfig: { first: inputWord.first, last: inputWord.last },
+                className: "max-w-[100%] justify-end overflow-hidden"
+              }}
+              name="word" 
+              value={inputWord.word} 
+              onChange={onChange} 
+              distance={(1 + wordDistanceSum) as Distance}
+              containerRef={inputRef}
+              fixedFocus
+            />
+            <input type='submit' hidden />
           </form>
-        </div>
       ) : (
         <div className="flex justify-center items-center h-12 w-[100%] animate-blink">
-          PLAYER {playerTurn.name.toUpperCase()} TURN
+          Aguarde, é a vez de {playerTurn.name.toUpperCase()}...
         </div>
       )}
     </div>

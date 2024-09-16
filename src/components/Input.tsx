@@ -1,11 +1,13 @@
 import * as React from "react";
 import { Word, WordProps } from "./Word";
 import { Distance } from "@src/utils/types";
+import { BorderShadow } from "./BorderShadow";
 
 type InputProps = {
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     distance?: Distance;
     ref?: React.RefObject<HTMLInputElement>;
+    containerRef?: React.RefObject<HTMLDivElement>;
     fixedFocus?: boolean;
     wordProps?: Omit<WordProps, "children">;
     value: string;
@@ -17,6 +19,7 @@ export function Input({
     fixedFocus,
     wordProps,
     value,
+    containerRef,
     onChange: userOnChange,
     ...inputProps
 }: InputProps) {
@@ -55,22 +58,33 @@ export function Input({
         }
     }, [inputRef.current])
 
+    if (wordProps?.className)
+        wordProps.className = `${wordProps?.className} `
+
     return (
-        <div
-            onClick={() => handleFocus()}
-            className={`w-full h-full cursor-text overflow-hidden`}
-        >
-            <Word distance={distance} blink={focused} {...wordProps}>
-                {value}
-            </Word>
-            <input 
-                ref={inputRef} 
-                className="absolute opacity-0 pointer-events-none" 
-                aria-hidden="true" autoComplete="off" 
-                value={value}
-                onChange={onChange} 
-                {...inputProps} 
+        <div className="flex w-[100%] justify-between" ref={containerRef}>
+            <BorderShadow
+                size="64px"
+                direction="r"
+                className="z-[10]"
+                isVisible
             />
+            <div
+                onClick={() => handleFocus()}
+                className={`w-full h-full cursor-text overflow-hidden flex justify-end`}
+            >    
+                <Word distance={distance} blink={focused} {...wordProps}>
+                    {value}
+                </Word>
+                <input 
+                    ref={inputRef} 
+                    className="absolute opacity-0 pointer-events-none" 
+                    aria-hidden="true" autoComplete="off" 
+                    value={value}
+                    onChange={onChange} 
+                    {...inputProps} 
+                />
+            </div>
         </div>
     )
 }

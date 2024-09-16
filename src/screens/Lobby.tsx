@@ -1,25 +1,29 @@
 import { Action } from '@shared/enums';
 import { Avatar } from '@src/components/Avatar';
 import { Button } from '@src/components/Button';
+import { CheckBox } from '@src/components/Checkbox';
 import { Letter } from '@src/components/Letter';
+import { Modal } from '@src/components/Modal';
 import { Select } from '@src/components/Select';
 import { Spinner } from '@src/components/Spinner';
 import { Word } from '@src/components/Word';
-import { ClipboardIcon } from '@src/images/ClipboardIcon';
+import { ClipboardIcon } from '@src/icons/ClipboardIcon';
+import { CogIcon } from '@src/icons/CogIcon';
 import { useGameBlocContext } from '@src/providers/GameBlocProvider';
 import { getCSSPlayerColor } from '@src/utils/helpers';
 import React from 'react';
 
-type GameMode = 'time' | 'repetition';
+type Config = ['3' | '5', 'true' | 'false'];
 
 export function Lobby() {
   const { sendEvent, gameData, playerReady, isHost, isLoadingAction } = useGameBlocContext();
-  const [gameMode, setGameMode] = React.useState<GameMode>('time');
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [config, setConfig] = React.useState<Config>(['3', 'true']);
   
   function onStart() {
     sendEvent({
       action: Action.START,
-      data: [{'time': '0', 'repetition': '1'}[gameMode]],
+      data: config,
     });
   }
 
@@ -34,22 +38,45 @@ export function Lobby() {
     navigator.clipboard.writeText(gameData?.name);
   }
 
-  const selectOptions = [
-    {value: 'time', label: 'Tempo'},
-    {value: 'repetition', label: 'Repetição'},
-  ]
+  const isLoading = isLoadingAction(Action.START) || isLoadingAction(Action.STATUS);
 
-  function onSelectChange(value: string) {
-    setGameMode(value as GameMode);
+  const timeOptions = [{
+    value: '3',
+    label: '3 min'
+  }, {
+    value: '5',
+    label: '5 min'
+  }]
+
+  function onTimeChange(value: string) {
+    setConfig((prev) => {
+      return [value as Config[0], prev[1]]
+    })
   }
 
-  const isLoading = isLoadingAction(Action.START) || isLoadingAction(Action.STATUS);
+  function onRepeatChange(checked: boolean) {
+    setConfig((prev) => {
+      return [prev[0], checked.toString() as Config[1]]
+    })
+  }
 
   return (
     <div className="flex flex-col items-start justify-center gap-2 h-[100%] pt-5 pb-10">
       {isLoading && <Spinner />}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <div className='flex flex-col gap-2'>
+          <Select label='Tempo de jogo' options={timeOptions} onChange={onTimeChange} value={config[0]}/>
+          <CheckBox label='Perde a vez ao repetir' onChange={onRepeatChange} checked={config[1] === "true"}/>
+        </div>
+      </Modal>
       <div className="flex justify-between w-full">
-        <div className="w-40"><Select options={selectOptions} value={gameMode} onChange={onSelectChange} /></div>
+        <Button
+            distance={3}
+            className="cursor-pointer hover:bg-neutral-900"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <CogIcon className="size-4" />
+        </Button>
         <div className="flex gap-1 self-end">
           <Button distance={3} className="">
             {gameData?.name.toUpperCase()}

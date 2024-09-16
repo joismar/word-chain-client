@@ -22,6 +22,10 @@ export interface GameData {
   players: Player[];
   turn: number;
   started_at: number;
+  config: {
+    repetition: boolean;
+    time: number;
+  }
 }
 
 export interface Error {

@@ -19,9 +19,7 @@ export class GameBloc {
     this.socket.on('any', (event: any) => {
       const data = JSON.parse(event.data.toString());
       this._actionStateStream.next(data.action);
-      if (data?.error) {
-        this._errorStream.next(data);
-      } else if (data?.data?.error) {
+      if (data?.data?.error) {
         this._errorStream.next(data.data);
       }
     });
