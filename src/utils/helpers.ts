@@ -14,6 +14,8 @@ export function countOverlapStartEnd(word1: string, word2: string) {
 }
 
 export function getCSSPlayerColor(color: PlayerColor) {
+  console.log(color)
+
   return {
     [PlayerColor.RED]: 'bg-red-700',
     [PlayerColor.BLUE]: 'bg-blue-700',
@@ -22,6 +24,6 @@ export function getCSSPlayerColor(color: PlayerColor) {
     [PlayerColor.PURPLE]: 'bg-purple-700',
     [PlayerColor.ORANGE]: 'bg-orange-700',
     [PlayerColor.PINK]: 'bg-pink-700',
-    [PlayerColor.BROWN]: 'bg-brown-700',
+    [PlayerColor.BROWN]: 'bg-cyan-700',
   }[color];
 }

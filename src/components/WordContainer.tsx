@@ -7,7 +7,6 @@ import { useGameBlocContext } from '@src/providers/GameBlocProvider';
 import useIsMobile from '@src/hooks/useIsMobile';
 import { useClientSize } from '@src/hooks/useClientSize';
 import { getCSSPlayerColor } from '@src/utils/helpers';
-import { PlayerColor } from '@shared/enums';
 
 export function WordContainer({
   hasScore,
@@ -59,14 +58,14 @@ export function WordContainer({
       className={`relative ${lastMargin} flex flex-row transition-[margin] duration-[.5s] delay-[.5s] w-[100%]`}
       ref={ref}
     >
-      {hasScore && (
+      {hasScore && wordPlayer && (
         <Avatar
           distance={distance != undefined ? distance : calculatedDistance}
           points={wordPlayer?.score}
           className={`absolute ${
             isMobile ? 'left-[-1.8rem]' : 'left-[-2.4rem]'
           }`}
-          color={getCSSPlayerColor(wordPlayer?.color || PlayerColor.BLUE)}
+          color={getCSSPlayerColor(wordPlayer.color)}
         />
       )}
       <Word
