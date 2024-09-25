@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 
-type CircularTimerProps = {
+type TimerProps = {
   duration: number;
   onEnd?: () => void;
+  onlyTime?: boolean;
 };
 
-export function CircularTimer({ duration, onEnd }: CircularTimerProps) {
+export function Timer({ duration, onEnd, onlyTime }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(duration);
   const [progress, setProgress] = useState(100);
 
@@ -24,6 +25,25 @@ export function CircularTimer({ duration, onEnd }: CircularTimerProps) {
 
     return () => clearInterval(interval);
   }, [duration]);
+
+  function formatTime(time: number) {
+    const maxTime = 99 * 60 + 59; // 99 minutos e 59 segundos
+
+    time = Math.min(time, maxTime);
+
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+
+    const formattedMinutes = String(minutes).padStart(2, '0');
+    const formattedSeconds = String(seconds).padStart(2, '0');
+
+    return `${formattedMinutes}:${formattedSeconds}s`;
+  }
+
+  if (onlyTime)
+    return (
+      <div className="text-center text-amber-700 font-bold">{formatTime(timeLeft)}</div>
+    )
 
   return (
     <div className="w-full max-w-md flex gap-2 items-center justify-center">

@@ -21,6 +21,11 @@ export interface GameData {
   chain: Word[];
   players: Player[];
   turn: number;
+  started_at: number;
+  config: {
+    repetition: boolean;
+    time: number;
+  }
 }
 
 export interface Error {
@@ -29,7 +34,7 @@ export interface Error {
 }
 
 export interface EventAction {
-  action: Action | null;
+  action: Action;
   data: string[];
 }
 

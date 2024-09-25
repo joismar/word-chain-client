@@ -1,7 +1,7 @@
 import { Subject, Observable } from 'rxjs';
 import { SocketWrapper } from '../shared/SocketWrapper';
 import { EventAction, GameData, Player } from '../shared/interfaces';
-import { SocketState } from '@shared/enums';
+import { Action, SocketState } from '@shared/enums';
 
 export class GameBloc {
   private socket: SocketWrapper;
@@ -11,15 +11,16 @@ export class GameBloc {
   private _playerStream: Subject<Player> = new Subject<Player>();
   private _errorStream: Subject<Error> = new Subject<Error>();
   private _connectionStream: Subject<SocketState> = new Subject<SocketState>();
+  private _actionStateStream: Subject<Action> = new Subject<Action>();
 
   constructor(socket: SocketWrapper) {
     this._connectionStream.next(SocketState.CONNECTING);
     this.socket = socket;
     this.socket.on('any', (event: any) => {
       const data = JSON.parse(event.data.toString());
-      if (data?.error || data?.data?.error) {
-        this._errorStream.next(data);
-        return;
+      this._actionStateStream.next(data.action);
+      if (data?.data?.error) {
+        this._errorStream.next(data.data);
       }
     });
     this.socket.on('game_data', (event: any) => {
@@ -61,6 +62,10 @@ export class GameBloc {
 
   get playerStream(): Observable<Player> {
     return this._playerStream.asObservable();
+  }
+
+  get actionStateStream(): Observable<Action> {
+    return this._actionStateStream.asObservable();
   }
 
   closeConnection() {

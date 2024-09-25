@@ -8,6 +8,7 @@ import { Screens } from '@src/utils/types';
 import { Home } from './screens/Home';
 import useIsMobile from './hooks/useIsMobile';
 import { useVisualViewportH } from './hooks/useVisualViewportH';
+import { End } from './screens/End';
 
 function App() {
   const [screen, setScreen] = React.useState<Screens>('home');
@@ -19,6 +20,8 @@ function App() {
       setScreen('lobby');
     } else if (gameData.status === 1) {
       setScreen('game');
+    } else if (gameData.status === 2) {
+      setScreen('end');
     }
   }, [gameData.status]);
 
@@ -30,6 +33,8 @@ function App() {
         return <Lobby />;
       case 'game':
         return <Game />;
+      case 'end':
+        return <End />;
     }
   })();
 

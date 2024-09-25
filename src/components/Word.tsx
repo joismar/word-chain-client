@@ -48,13 +48,13 @@ export function Word({
       case 0:
         return 'gap-0';
       case 1:
-        return 'gap-2';
+        return 'gap-[.30rem]';
       case 2:
-        return 'gap-1.5';
+        return 'gap-[.25rem]';
       case 3:
-        return 'gap-1';
+        return 'gap-[.20rem]';
       case 4:
-        return 'gap-[.125rem]';
+        return 'gap-[.15rem]';
     }
   })();
 

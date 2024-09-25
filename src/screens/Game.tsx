@@ -14,11 +14,12 @@ import { useClientSize } from '@src/hooks/useClientSize';
 import { useContentHeight } from '@src/hooks/useContentHeight';
 import { Input } from '@src/components/Input';
 import { useVisualViewportH } from '@src/hooks/useVisualViewportH';
-import { CircularTimer } from '@src/components/CircularTimer';
+import { Timer } from '@src/components/Timer';
+import { useSchedule } from '@src/hooks/useSchedule';
+import { Spinner } from '@src/components/Spinner';
 
 export function Game() {
-  const { gameData, sendEvent, isMyTurn, findTurnPlayer } =
-    useGameBlocContext();
+  const { gameData, sendEvent, isMyTurn, findTurnPlayer, isHost } = useGameBlocContext();
 
   const {
     setWords,
@@ -27,10 +28,6 @@ export function Game() {
     inputWord,
     removeWord,
   } = useWordList();
-
-  React.useEffect(() => {
-    setWords([...gameData.chain, { word: '' }]);
-  }, [gameData]);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const { isTopScrolled, isBottomScrolled } = useVerticalScroll(containerRef);
@@ -44,7 +41,9 @@ export function Game() {
     contentHeight + ((middleWords.length - 1) * 4),
   );
 
+  const isActive = useSchedule({ seconds: 5 });
   const isMobile = useIsMobile();
+  const [running, setRunning] = React.useState(false);
 
   const [ocupiedHeight, setOcupiedHeight] = React.useState(0);
   const {ref: firstWordRef, clientHeight: firstWordHeight} = useClientSize();
@@ -52,15 +51,24 @@ export function Game() {
 
   React.useEffect(() => {
     const footerHeight = 24;
-    const marginsAndPaddings = isMobile ? 48 : 68;
+    const marginsAndPaddings = isMobile ? 84 : 104;
     setOcupiedHeight(firstWordHeight + inputHeight + footerHeight + marginsAndPaddings)
   }, [firstWordHeight, inputHeight])
 
-  function handleMouseEnter() {
+  function scrollToBottom() {
     if (!isOverflowingH || !containerRef.current) return;
     containerRef.current.scrollTop = containerRef.current?.clientHeight;
+  }
+
+  function handleMouseEnter() {
+    scrollToBottom();
     setIsWordListHover(true);
   }
+
+  React.useEffect(() => {
+    scrollToBottom();
+    setWords([...gameData.chain, { word: '' }]);
+  }, [gameData]);
 
   // const { emit } = useEventSystem();
 
@@ -84,7 +92,7 @@ export function Game() {
 
   const playerCount = gameData.players.length;
   const playerTurn = findTurnPlayer();
-  const wordDistanceSum = isMobile ? 1 : 0
+  const wordDistanceSum = isMobile ? 1 : 0;
   const hasScore = (i: number) => i > middleWords.length - 1 - playerCount
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -105,9 +113,23 @@ export function Game() {
     });
   }
 
+  function onEndGame() {
+    setRunning(false);
+    isHost() && sendEvent({
+      action: Action.END,
+      data: [],
+    });
+  }
+
+  const gameDuration = React.useMemo(() => gameData.config.time * 60, []);
+
   return (
     <div className={`pl-5 flex justify-end items-start flex-col h-full pt-5 ${paddingBottom}`}>
-      {gameData.players.length > 1 && isMyTurn() && <CircularTimer duration={10} onEnd={onEndTurn} />}
+      {!isActive && !running && <Spinner />}
+      <div className='w-full flex gap-5'>
+        {isActive && <Timer onlyTime duration={gameDuration} onEnd={onEndGame}/>}
+        {isActive && gameData.players.length > 1 && isMyTurn() && <Timer duration={15} onEnd={onEndTurn} />}
+      </div>
       <div className="border-t border-neutral-600 mb-3 w-[100%]"></div>
       <div ref={firstWordRef}>
       {firstWord && (
@@ -154,31 +176,24 @@ export function Game() {
       />
       <div className="border-t border-neutral-600 mb-3 w-[100%]"></div>
       {inputWord && isMyTurn() ? (
-        <div className="flex w-[100%] justify-between" ref={inputRef}>
-          <BorderShadow
-            size="64px"
-            direction="r"
-            className="z-[10]"
-            isVisible
-          />
           <form onSubmit={handleSubmit} className='w-full'>
-          <Input 
-            wordProps={{
-              chainConfig: { first: inputWord.first, last: inputWord.last },
-              className: "max-w-[100%] justify-end overflow-hidden"
-            }}
-            name="word" 
-            value={inputWord.word} 
-            onChange={onChange} 
-            distance={(1 + wordDistanceSum) as Distance} 
-            fixedFocus
-          />
-          <input type='submit' hidden />
+            <Input 
+              wordProps={{
+                chainConfig: { first: inputWord.first, last: inputWord.last },
+                className: "max-w-[100%] justify-end overflow-hidden"
+              }}
+              name="word" 
+              value={inputWord.word} 
+              onChange={onChange} 
+              distance={(1 + wordDistanceSum) as Distance}
+              containerRef={inputRef}
+              fixedFocus
+            />
+            <input type='submit' hidden />
           </form>
-        </div>
       ) : (
         <div className="flex justify-center items-center h-12 w-[100%] animate-blink">
-          PLAYER {playerTurn.name.toUpperCase()} TURN
+          Aguarde, é a vez de {playerTurn.name.toUpperCase()}...
         </div>
       )}
     </div>

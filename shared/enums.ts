@@ -15,6 +15,7 @@ export enum Action {
   WORD = 'word',
   JOIN = 'join',
   PASS = 'pass',
+  END = 'end',
 }
 
 export enum SocketState {
