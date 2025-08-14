@@ -13,7 +13,7 @@ import { Distance } from '@src/utils/types';
 import { useClientSize } from '@src/hooks/useClientSize';
 import { useContentHeight } from '@src/hooks/useContentHeight';
 import { Input } from '@src/components/Input';
-import { useVisualViewportH } from '@src/hooks/useVisualViewportH';
+import { useVisualViewport } from '@src/hooks/useVisualViewport';
 import { Timer } from '@src/components/Timer';
 import { useSchedule } from '@src/hooks/useSchedule';
 import { Spinner } from '@src/components/Spinner';
@@ -102,7 +102,7 @@ export function Game() {
     formData.delete('word')
   }
 
-  const visualViewportH = useVisualViewportH();
+  const {height: visualViewportH} = useVisualViewport();
   const wordListMaxHeight = visualViewportH - ocupiedHeight;
   const paddingBottom = isMobile ? 'pb-0' : 'pb-5'
 

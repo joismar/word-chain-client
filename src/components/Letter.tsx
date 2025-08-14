@@ -18,7 +18,6 @@ HTMLDivElement
 export function Letter({
   children,
   distance,
-  chained,
   transparent,
   className,
   getLetterSize,
