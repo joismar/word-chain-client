@@ -126,11 +126,11 @@ Regra: **nenhum número mágico de animação fora de `tokens.ts`**.
 ## 4. Fases do front
 
 ### F0 — Preparação
-- [ ] Commitar/arquivar o WIP da `new-grid-layout`; criar branch `refactor/engine`
-- [ ] Instalar skills (seção 6) e criar `CLAUDE.md` do projeto
-- [ ] Atualizar deps: React 19, Vite (atual), Tailwind 4, TypeScript (atual); remover `@react-spring/web` e `rxjs` ao final
-- [ ] Adicionar Vitest + Playwright; configurar `VITE_WS_URL` via env
-- [ ] Remover código morto (lista no diagnóstico)
+- [x] Commitar/arquivar o WIP da `new-grid-layout`; criar branch `refactor/engine`
+- [x] Instalar skills (seção 6) e criar `CLAUDE.md` do projeto
+- [x] Atualizar deps: React 19, Vite (atual), Tailwind 4, TypeScript (atual); remover `@react-spring/web` e `rxjs` ao final (pendente: saem quando F1/F4 substituírem o código que os usa)
+- [x] Adicionar Vitest + Playwright; configurar `VITE_WS_URL` via env
+- [x] Remover código morto (lista no diagnóstico)
 
 ### F1 — Protocolo e estado
 - [ ] `protocol/schema.ts` com zod, alinhado ao protocolo v2 do backend (B2)
