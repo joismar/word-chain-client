@@ -2,9 +2,11 @@ import * as React from "react";
 import { Letter, WordProps } from "./GridLayout";
 import { useWordAnimations } from "@src/hooks/useWordAnimations";
 import { animated } from "@react-spring/web";
+import { sanitizeInput } from "@src/utils/helpers";
 
 type CustomInputProps = {
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     refElement?: HTMLInputElement;
     fixedFocus?: boolean;
     maxSize?: number;
@@ -16,43 +18,50 @@ export function CustomInput({
     fixedFocus,
     value,
     onChange: userOnChange,
+    onKeyDown,
     itemGap,
     itemSize,
     index,
     maxSize = 8,
     ...wordProps
 }: CustomInputProps) {
+    const sanitizedValue = sanitizeInput(value || "");
+
     const {
       word: input,
       hiddenProps: inputHiddenProps,
     } = useWordAnimations({ children: Array.from({ length: maxSize }, () => " ").join(""), itemGap, itemSize, index, ...wordProps });
 
     const inputRef = React.useRef<HTMLInputElement>(refElement || null);
-    const [focused, setFocused] = React.useState<number | false>(false);
+    const [isFocused, setIsFocused] = React.useState(false);
 
     React.useEffect(() => {
-      if (!fixedFocus) return; 
-      handleFocus();
+      if (fixedFocus) {
+        handleFocus();
+      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fixedFocus, focused])
+    }, [fixedFocus]);
 
     function handleFocus() {
-      setFocused(0)
+      setIsFocused(true);
       inputRef.current?.focus();
     }
 
     function onFocus() {
-      setFocused(0)
+      setIsFocused(true);
     }
 
     function onUnfocus() {
-      if (fixedFocus) handleFocus()
-      else setFocused(false)
+      if (fixedFocus) {
+        handleFocus();
+      } else {
+        setIsFocused(false);
+      }
     }
 
     function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-      e.target.value = e.target.value.toLowerCase();
-      setFocused(e.target.value.length);
+      const sanitized = sanitizeInput(e.target.value);
+      e.target.value = sanitized;
       userOnChange?.(e);
     }
 
@@ -67,6 +76,8 @@ export function CustomInput({
         }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [inputRef.current])
+
+    const activeIndex = isFocused && sanitizedValue.length < maxSize ? sanitizedValue.length : -1;
 
     const wordStyle = (hover: boolean) => ({
         gap: `${itemGap}rem`,
@@ -96,7 +107,7 @@ export function CustomInput({
                   ...inputHiddenProps[i],
                 }}
               >
-                <Letter variant="input" blink={focused === i}>{char}</Letter>
+                <Letter variant="input" blink={activeIndex === i}>{char}</Letter>
               </animated.div>
             ))}
           </div>
@@ -105,7 +116,7 @@ export function CustomInput({
             style={wordStyle(!!wordProps.hover)} 
             onClick={wordProps.onClick}
           >
-            {Array.from(value).map((char, i) => (
+            {Array.from(sanitizedValue).map((char, i) => (
               <div 
                 key={i}
                 style={{
@@ -122,8 +133,10 @@ export function CustomInput({
           className="absolute opacity-0 pointer-events-none w-full" 
           aria-hidden="true" 
           autoComplete="off" 
-          value={value}
-          onChange={onChange} 
+          value={sanitizedValue}
+          maxLength={maxSize}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
         />
     </>
     )

@@ -4,7 +4,11 @@ import { animated, useSpring } from "@react-spring/web";
 import { useWordAnimations } from "@src/hooks/useWordAnimations";
 import { CustomInput } from "./CustomInput";
 
+export { sanitizeInput } from "@src/utils/helpers";
+
 export type GridItemKey = `${number},${number}`;
+
+export type GridColor = "stone" | "amber" | "emerald" | "sky" | "purple" | "rose";
 
 export type GridItem = {
   value: string;
@@ -15,7 +19,12 @@ export type GridItem = {
   onFinishAnimation?: () => void;
   variant?: "default" | "input";
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  color?: "stone" | "amber" | "emerald" | "sky" | "purple" | "rose";
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  color?: GridColor;
+  letterColors?: GridColor[];
+  maxSize?: number;
+  fixedFocus?: boolean;
+  animate?: boolean;
 }
 
 export type GridItems = {[key: GridItemKey]: GridItem}
@@ -33,16 +42,11 @@ export function GridLayout({ gridItems }: GridLayoutProps) {
   const roundedGridCols = Math.round((width / 16) / (itemSize + itemGap));
   const gridCols = roundedGridCols % 2 === 0 ? roundedGridCols + 1 : roundedGridCols;
 
-  // function check(input: [number, number], grid: [number, number]) {
-  //   if (input[0] == grid[0] && input[1] == grid[1]) return true;
-  //   return false;
-  // }
-
-  const gridData = Array.from({ length: gridRows }, (_, row) =>
+  const gridData = Array.from({ length: gridRows }, () =>
     Array.from({ length: gridCols }, () => ({
       value: '',
     }))
-  )
+  );
 
   return (
     <div className="w-full h-full overflow-hidden">
@@ -56,7 +60,19 @@ export function GridLayout({ gridItems }: GridLayoutProps) {
             if (gridItems && `${rowIndex},${colIndex}` in gridItems) {
               const { value, ...cell } = gridItems[`${rowIndex},${colIndex}`];
               if (cell.variant === "input")
-                return <CustomInput {...cell} itemGap={itemGap} itemSize={itemSize} index={`${rowIndex},${colIndex}`} value={value} onChange={cell.onChange} />
+                return (
+                  <CustomInput
+                    {...cell}
+                    itemGap={itemGap}
+                    itemSize={itemSize}
+                    index={`${rowIndex},${colIndex}`}
+                    value={value}
+                    onChange={cell.onChange}
+                    onKeyDown={cell.onKeyDown}
+                    maxSize={cell.maxSize}
+                    fixedFocus={cell.fixedFocus}
+                  />
+                );
               return <Word {...cell} itemGap={itemGap} itemSize={itemSize} index={`${rowIndex},${colIndex}`}>{value}</Word>
             }
             return item.value
@@ -115,7 +131,7 @@ function Word({ children, itemGap, itemSize, index, variant = "default", ...cell
             setHoverIndex(i)}
           }
         >
-          <Letter variant={variant} color={cell.color}>{char}</Letter>
+          <Letter variant={variant} color={cell.letterColors?.[i] || cell.color}>{char}</Letter>
         </animated.div>
       ))}
     </div>

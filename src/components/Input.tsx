@@ -2,6 +2,7 @@ import * as React from "react";
 import { Word, WordProps } from "./Word";
 import { Distance } from "@src/utils/types";
 import { BorderShadow } from "./BorderShadow";
+import { sanitizeInput } from "@src/utils/helpers";
 
 type InputProps = {
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -44,7 +45,7 @@ export function Input({
     }
 
     function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-        e.target.value = e.target.value.toLowerCase();
+        e.target.value = sanitizeInput(e.target.value);
         userOnChange?.(e);
     }
 

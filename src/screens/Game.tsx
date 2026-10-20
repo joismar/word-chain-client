@@ -115,10 +115,12 @@ export function Game() {
 
   function onEndGame() {
     setRunning(false);
-    isHost() && sendEvent({
-      action: Action.END,
-      data: [],
-    });
+    if (isHost()) {
+      sendEvent({
+        action: Action.END,
+        data: [],
+      });
+    }
   }
 
   const gameDuration = React.useMemo(() => gameData.config.time * 60, []);

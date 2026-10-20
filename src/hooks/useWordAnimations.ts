@@ -8,6 +8,8 @@ export function useWordAnimations({ children, itemGap, itemSize, index, ...cell 
   const [hoverIndex, setHoverIndex] = React.useState<number | null>(null);
   const [word, setWord] = React.useState<string>(children);
 
+  const isAnimated = cell.animate !== false;
+
   const propagateProps = (i: number) => {
     if (hoverIndex === null || !cell.hover) return;
     return { y: - 6 + (Math.abs(i - hoverIndex) * 1.2) }
@@ -31,26 +33,33 @@ export function useWordAnimations({ children, itemGap, itemSize, index, ...cell 
       pause: !cell.newIndex,
       onRest: cell.onFinishAnimation,
     }),
-    [cell.newIndex]
+    [cell.newIndex, children.length]
   )
 
   const hiddenTo = (i: number) => ({
     to: { scale: 1 },
-    delay: 50 * i
+    delay: isAnimated ? 50 * i : 0,
+    immediate: !isAnimated,
   })
 
   const [hiddenProps, set] = useSprings(
     word.length,
     (i) => ({
-      from: { scale: 0 },
+      from: { scale: isAnimated ? 0 : 1 },
       ...hiddenTo(i),
       reverse: cell.hidden,
+      immediate: !isAnimated,
     }),
-    [cell.hidden]
+    [cell.hidden, isAnimated, word.length]
   )
 
   React.useEffect(() => {
     if (cell.hidden) return;
+    if (!isAnimated) {
+      setWord(children);
+      set({ scale: 1, immediate: true });
+      return;
+    }
     if (word != children) {
       const res = set((i) => ({ scale: 0, delay: 50 * i }));
       Promise.all(res).then(() => setWord(children));
@@ -58,7 +67,7 @@ export function useWordAnimations({ children, itemGap, itemSize, index, ...cell 
       set({ scale: 1 })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children])
+  }, [children, isAnimated])
 
   return {
     word,

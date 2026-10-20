@@ -5,6 +5,8 @@ import { EventAction, GameData, Player } from '@shared/interfaces';
 import { Action, PlayerStatus, SocketState } from '@shared/enums';
 import { useEventSystem } from './useEventSystem';
 
+const SESSION_PLAYER_ID_KEY = 'word_chain_player_id';
+
 const socket = new SocketWrapper();
 const gameBloc = new GameBloc(socket);
 
@@ -30,15 +32,35 @@ export function useGameBloc() {
 
     const player = gameBloc.playerStream.subscribe((data) => {
       setPlayerData(data);
+      if (data?.id) {
+        localStorage.setItem(SESSION_PLAYER_ID_KEY, data.id);
+      }
     });
 
     const error = gameBloc.errorStream.subscribe((data) => {
       emit('infoToast', data.message);
       setErrorData(data);
+      if (
+        data?.message?.toLowerCase().includes('não existe') ||
+        data?.error?.toLowerCase().includes('inexistent')
+      ) {
+        localStorage.removeItem(SESSION_PLAYER_ID_KEY);
+      }
     });
 
     const connection = gameBloc.connectionStream.subscribe((data) => {
-      setConnected(data === SocketState.CONNECTED);
+      const isConnected = data === SocketState.CONNECTED;
+      setConnected(isConnected);
+
+      if (isConnected) {
+        const savedPlayerId = localStorage.getItem(SESSION_PLAYER_ID_KEY);
+        if (savedPlayerId) {
+          sendEvent({
+            action: Action.RECONNECT,
+            data: [savedPlayerId],
+          });
+        }
+      }
     });
 
     const actionState = gameBloc.actionStateStream.subscribe((data) => {
@@ -51,37 +73,54 @@ export function useGameBloc() {
       connection.unsubscribe();
       error.unsubscribe();
       actionState.unsubscribe();
-      socket.socket.readyState === 1 && gameBloc.closeConnection();
+      if (socket.socket.readyState === 1) {
+        gameBloc.closeConnection();
+      }
     };
   }, []);
 
   function findPlayerById(id: string) {
-    return gameData.players.find((player) => player.id === id);
-  };
+    return gameData.players?.find((player) => player.id === id);
+  }
 
   function isMyTurn() {
+    if (!gameData.players || !playerData.id) return false;
     const playerIndex = gameData.players.findIndex(
       (player) => player.id === playerData.id
     );
     return playerIndex === gameData.turn;
-  };
+  }
 
   function findTurnPlayer() {
-    return gameData.players[gameData.turn];
-  };
+    return gameData.players?.[gameData.turn];
+  }
 
   async function sendEvent(event: EventAction) {
     updateLoadingState(event.action, true);
-    event.data = event.data.map(value => value.toLowerCase());
+    if (event.action === Action.WORD) {
+      event.data = event.data.map((value) => value.toLowerCase());
+    } else if (event.action === Action.JOIN && event.data.length > 0) {
+      event.data[0] = event.data[0].toLowerCase();
+    }
     gameBloc.sendEvent(event);
-  };
+  }
 
   function playerReady(status: PlayerStatus) {
     return status === PlayerStatus.READY;
   } 
 
   function isHost() {
-    return playerData.id === playerData.session_id;
+    if (!playerData?.id) return false;
+    return (
+      playerData.id === playerData.session_id ||
+      (gameData.players && gameData.players.length > 0 && gameData.players[0].id === playerData.id)
+    );
+  }
+
+  function leaveGame() {
+    localStorage.removeItem(SESSION_PLAYER_ID_KEY);
+    setGameData({} as GameData);
+    setPlayerData({} as Player);
   }
 
   function isLoadingAction(action: Action) {
@@ -101,5 +140,6 @@ export function useGameBloc() {
     playerReady,
     isHost,
     isLoadingAction,
+    leaveGame,
   };
 }

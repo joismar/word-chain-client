@@ -40,6 +40,17 @@ export class GameBloc {
       this.playerData = data.data as Player;
       this._playerStream.next(this.playerData);
     });
+    this.socket.on('reconnect', (event: any) => {
+      const data = JSON.parse(event.data.toString());
+      if (data.data?.player) {
+        this.playerData = data.data.player as Player;
+        this._playerStream.next(this.playerData);
+      }
+      if (data.data?.game) {
+        this.gameData = data.data.game as GameData;
+        this._gameStream.next(this.gameData);
+      }
+    });
     this.socket.on('open', () => {
       this._connectionStream.next(SocketState.CONNECTED);
     });

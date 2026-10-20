@@ -27,3 +27,31 @@ export function getCSSPlayerColor(color: PlayerColor) {
     [PlayerColor.BROWN]: 'bg-cyan-700',
   }[color];
 }
+
+export function getGridPlayerColor(color?: PlayerColor): "stone" | "amber" | "emerald" | "sky" | "purple" | "rose" {
+  switch (color) {
+    case PlayerColor.RED:
+      return "rose";
+    case PlayerColor.BLUE:
+      return "sky";
+    case PlayerColor.GREEN:
+      return "emerald";
+    case PlayerColor.YELLOW:
+    case PlayerColor.ORANGE:
+      return "amber";
+    case PlayerColor.PURPLE:
+    case PlayerColor.PINK:
+      return "purple";
+    default:
+      return "stone";
+  }
+}
+
+export function sanitizeInput(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+}
+
