@@ -8,9 +8,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@shared': resolve(__dirname, 'shared'),
-      '@bloc': resolve(__dirname, 'bloc'),
-      '@src': resolve(__dirname, 'src'),
+      '@shared': resolve(import.meta.dirname, 'shared'),
+      '@bloc': resolve(import.meta.dirname, 'bloc'),
+      '@src': resolve(import.meta.dirname, 'src'),
     },
   },
 });

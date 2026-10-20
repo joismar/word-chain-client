@@ -1,5 +1,7 @@
+import { resolveWsUrl } from '@src/lib/env';
+
 export class SocketWrapper {
-  private SOCKET_URL = 'wss://h9qktxoj4a.execute-api.sa-east-1.amazonaws.com/dev';
+  private SOCKET_URL = resolveWsUrl(import.meta.env);
   public socket: WebSocket;
 
   constructor() {
