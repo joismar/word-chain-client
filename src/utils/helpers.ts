@@ -13,21 +13,6 @@ export function countOverlapStartEnd(word1: string, word2: string) {
   return maxOverlap;
 }
 
-export function getCSSPlayerColor(color: PlayerColor) {
-  console.log(color)
-
-  return {
-    [PlayerColor.RED]: 'bg-red-700',
-    [PlayerColor.BLUE]: 'bg-blue-700',
-    [PlayerColor.GREEN]: 'bg-green-700',
-    [PlayerColor.YELLOW]: 'bg-yellow-700',
-    [PlayerColor.PURPLE]: 'bg-purple-700',
-    [PlayerColor.ORANGE]: 'bg-orange-700',
-    [PlayerColor.PINK]: 'bg-pink-700',
-    [PlayerColor.BROWN]: 'bg-cyan-700',
-  }[color];
-}
-
 export function getGridPlayerColor(color?: PlayerColor): "stone" | "amber" | "emerald" | "sky" | "purple" | "rose" {
   switch (color) {
     case PlayerColor.RED:
@@ -54,4 +39,4 @@ export function sanitizeInput(value: string): string {
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '');
 }
-
+

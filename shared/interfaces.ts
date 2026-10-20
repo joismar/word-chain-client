@@ -28,7 +28,7 @@ export interface GameData {
   }
 }
 
-export interface Error {
+export interface ServerError {
   message: string;
   error: string;
 }

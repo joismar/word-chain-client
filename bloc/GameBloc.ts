@@ -1,6 +1,6 @@
 import { Subject, Observable } from 'rxjs';
 import { SocketWrapper } from '../shared/SocketWrapper';
-import { EventAction, GameData, Player } from '../shared/interfaces';
+import { EventAction, GameData, Player, ServerError } from '../shared/interfaces';
 import { Action, SocketState } from '@shared/enums';
 
 export class GameBloc {
@@ -9,7 +9,7 @@ export class GameBloc {
   private playerData: Player = {} as Player;
   private _gameStream: Subject<GameData | any> = new Subject<GameData | any>();
   private _playerStream: Subject<Player> = new Subject<Player>();
-  private _errorStream: Subject<Error> = new Subject<Error>();
+  private _errorStream: Subject<ServerError> = new Subject<ServerError>();
   private _connectionStream: Subject<SocketState> = new Subject<SocketState>();
   private _actionStateStream: Subject<Action> = new Subject<Action>();
 
@@ -67,7 +67,7 @@ export class GameBloc {
     return this._connectionStream.asObservable();
   }
 
-  get errorStream(): Observable<Error> {
+  get errorStream(): Observable<ServerError> {
     return this._errorStream.asObservable();
   }
 
