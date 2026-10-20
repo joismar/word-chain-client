@@ -195,13 +195,13 @@ export function Letter({ children: char, variant, blink, animate, color = "stone
   
   return (
     <animated.div
-      className={`${colorStyle[variant].shadow} w-full h-full rounded-sm` }
+      className={`${colorStyle[variant].shadow} w-full h-full rounded-xs` }
       style={animate ? hiddenProps : {}}
     >
-      <div className={`${colorStyle[variant].bg} flex justify-center items-center rounded-sm h-[90%] font-semibold`}>
+      <div className={`${colorStyle[variant].bg} flex justify-center items-center rounded-xs h-[90%] font-semibold`}>
         {char}
       </div>
-      {blink && <div className="p-1 -mt-2"><div className="w-full h-1 bg-stone-400 animate-blink rounded-sm"></div></div>}
+      {blink && <div className="p-1 -mt-2"><div className="w-full h-1 bg-stone-400 animate-blink rounded-xs"></div></div>}
     </animated.div>
   )
 }

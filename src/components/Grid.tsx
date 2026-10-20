@@ -30,7 +30,7 @@ export function Grid({ gridData, itemWidth, itemHeight, renderItem, gap = 0.1 }:
         row.map((item: GridItem, colIndex: number) => (
           <div
             key={`${rowIndex}-${colIndex}`}
-            className="bg-stone-900 rounded-sm relative"
+            className="bg-stone-900 rounded-xs relative"
             style={{ width: `${itemWidth}rem`, height: `${itemHeight}rem` }}
           >
             {renderItem(item, rowIndex - centerCell[0], colIndex - centerCell[1])}
