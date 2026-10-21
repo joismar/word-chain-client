@@ -139,11 +139,13 @@ Regra: **nenhum número mágico de animação fora de `tokens.ts`**.
 - [x] Testes da máquina (transições, reconexão, erros por código e não por texto)
 
 ### F2 — Engine core
-- [ ] `Stage` montado por `<GameCanvas/>` (mount/unmount limpos, compatível com StrictMode)
-- [ ] `Board`: coordenadas centradas, resize via `visualViewport`, DPR, cálculo de célula adaptativo
-- [ ] `Tile` + pool; `TileLayer` com join enter/update/exit por `key`
-- [ ] Hit-testing (hover/click/tap) no Pixi, emitindo eventos para a máquina
-- [ ] `HiddenInput` DOM sincronizado com o slot de input no canvas (teclado mobile, IME, colar)
+- [x] `Stage` montado por `<GameCanvas/>` (mount/unmount limpos, compatível com StrictMode)
+- [x] `Board`: coordenadas centradas, resize via `visualViewport`, DPR, cálculo de célula adaptativo
+- [x] `Tile` + pool; `TileLayer` com join enter/update/exit por `key`
+- [x] Hit-testing (hover/click/tap) no Pixi, emitindo eventos para a máquina
+- [x] `HiddenInput` DOM sincronizado com o slot de input no canvas (teclado mobile, IME, colar)
+
+A engine roda isolada em `/dev/engine` (só em dev). O app continua no `GridLayout` até a F4 portar as cenas; os eventos `tap`/`hover` chegam à máquina quando as cenas existirem.
 
 ### F3 — Motion
 - [ ] `ticker-bridge` (anime ↔ Pixi), `tokens.ts`, `choreography.ts`

@@ -156,6 +156,10 @@ word-chain-client/
 │   │   └── useGame.ts           # Hook usado pelas telas
 │   ├── components/              # GridLayout, CustomInput, Toast...
 │   ├── hooks/                   # useWordAnimations, useVisualViewport...
+│   ├── engine/                  # Engine Pixi: Stage, layout, TileLayer, Tile, pool (F2)
+│   ├── app/                     # GameCanvas e HiddenInput (ponte React ↔ engine)
+│   ├── theme/palette.ts         # Cores dos tiles
+│   ├── dev/EngineDemo.tsx       # Playground da engine em /dev/engine (só em dev)
 │   ├── screens/grid/            # HomeGrid, LobbyGrid, SettingsGrid, GameGrid, EndGrid
 │   ├── lib/env.ts               # Leitura de VITE_WS_URL
 │   ├── App.tsx
