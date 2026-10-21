@@ -1,69 +1,24 @@
 import React from 'react';
-import { Action } from '@shared/enums';
 import { GridColor, GridItems, GridLayout } from '@src/components/GridLayout';
-import { useGameBlocContext } from '@src/providers/GameBlocProvider';
+import { useGame, useNow } from '@src/state/useGame';
 import { countOverlapStartEnd } from '@src/utils/helpers';
 
+const seconds = (ms: number) => Math.ceil(ms / 1000);
+
 export function GameGrid() {
-  const {
-    gameData,
-    sendEvent,
-    isMyTurn,
-    findTurnPlayer,
-    isHost,
-  } = useGameBlocContext();
+  const { game, isMyTurn, turnPlayer, isPending, clock, playWord, pass } = useGame();
 
   const [inputWord, setInputWord] = React.useState('');
-  const [turnSeconds, setTurnSeconds] = React.useState(15);
-  const [matchSeconds, setMatchSeconds] = React.useState(
-    (gameData.config?.time || 3) * 6000
-  );
+  // Timers are read from the server's deadlines on every tick, never counted down.
+  const { startsInMs, matchMs, turnMs } = clock(useNow());
 
-  const chain = gameData.chain || [];
-
-  // Match countdown timer
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setMatchSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          if (isHost()) {
-            sendEvent({ action: Action.END, data: [] });
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isHost, sendEvent]);
-
-  // Turn timer (15 seconds)
-  React.useEffect(() => {
-    setTurnSeconds(15);
-    if (!isMyTurn() || (gameData.players?.length || 0) <= 1) return;
-
-    const interval = setInterval(() => {
-      setTurnSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          sendEvent({ action: Action.PASS, data: [] });
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [gameData.turn, chain.length, isMyTurn, gameData.players?.length, sendEvent]);
+  const chain = game?.chain ?? [];
+  const started = startsInMs === 0;
+  const canPlay = isMyTurn && started && !isPending('word', 'pass');
 
   function handleWordSubmit() {
-    if (!inputWord.trim() || !isMyTurn()) return;
-    sendEvent({
-      action: Action.WORD,
-      data: [inputWord.trim().toLowerCase()],
-    });
+    if (!inputWord.trim() || !canPlay) return;
+    playWord(inputWord);
     setInputWord('');
   }
 
@@ -74,11 +29,8 @@ export function GameGrid() {
   }
 
   function handlePass() {
-    if (!isMyTurn()) return;
-    sendEvent({
-      action: Action.PASS,
-      data: [],
-    });
+    if (!canPlay) return;
+    pass();
   }
 
   // Format timer MM:SS
@@ -88,24 +40,25 @@ export function GameGrid() {
     return `${mins}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const activeTurnPlayer = findTurnPlayer();
-  const myTurn = isMyTurn();
-
   const gridItems: GridItems = {};
 
   // 1. Top Bar: Timers
   // Match timer at top right
-  gridItems['-5,3'] = {
-    value: formatTime(matchSeconds),
-    color: matchSeconds <= 30 ? 'rose' : 'stone',
-    animate: false,
-  };
+  if (matchMs !== null) {
+    const matchSeconds = seconds(matchMs);
+    gridItems['-5,3'] = {
+      value: formatTime(matchSeconds),
+      color: matchSeconds <= 30 ? 'rose' : 'stone',
+      animate: false,
+    };
+  }
 
-  // Turn timer at top left when active
-  if (myTurn && (gameData.players?.length || 0) > 1) {
+  // Turn timer at top left while the turn clock runs
+  if (started && turnMs !== null) {
+    const turnSeconds = seconds(turnMs);
     gridItems['-4,-5'] = {
       value: `TURNO:${turnSeconds}S`,
-      color: turnSeconds <= 5 ? 'rose' : 'amber',
+      color: turnSeconds <= 5 ? 'rose' : isMyTurn ? 'amber' : 'stone',
       animate: false,
     };
   }
@@ -149,8 +102,15 @@ export function GameGrid() {
     });
   }
 
-  // 4. Input or Turn Notification (Row +2)
-  if (myTurn) {
+  // 3. Start countdown, input or turn notification
+  if (!started) {
+    const message = `COMECA EM ${seconds(startsInMs)}`;
+    gridItems[`2,${-Math.floor(message.length / 2)}`] = {
+      value: message,
+      color: 'amber',
+      animate: false,
+    };
+  } else if (isMyTurn) {
     gridItems['6,-5'] = {
       value: inputWord,
       variant: 'input',
@@ -166,7 +126,7 @@ export function GameGrid() {
     gridItems['7,3'] = {
       value: '↵',
       onClick: handleWordSubmit,
-      hover: !!inputWord.trim(),
+      hover: !!inputWord.trim() && canPlay,
       color: 'emerald',
     };
 
@@ -174,12 +134,12 @@ export function GameGrid() {
     gridItems['7,-5'] = {
       value: 'PASSAR',
       onClick: handlePass,
-      hover: true,
+      hover: canPlay,
       color: 'rose',
     };
   } else {
     // Other player's turn message
-    const turnMessage = `VEZ DE ${activeTurnPlayer?.name?.toUpperCase() || 'OUTRO'}`;
+    const turnMessage = `VEZ DE ${turnPlayer?.name?.toUpperCase() || 'OUTRO'}`;
     const startCol = -Math.floor(turnMessage.length / 2);
     gridItems[`2,${startCol}`] = {
       value: turnMessage,

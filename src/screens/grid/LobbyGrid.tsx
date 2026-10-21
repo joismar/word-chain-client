@@ -1,60 +1,39 @@
 import React from 'react';
-import { Action } from '@shared/enums';
 import { GridItems, GridLayout } from '@src/components/GridLayout';
-import { useGameBlocContext } from '@src/providers/GameBlocProvider';
+import type { GameConfig } from '@src/protocol/schema';
+import { useGame } from '@src/state/useGame';
 import { getGridPlayerColor } from '@src/utils/helpers';
 import { useEventSystem } from '@src/hooks/useEventSystem';
-import { Config, SettingsGrid } from './SettingsGrid';
+import { SettingsGrid } from './SettingsGrid';
 
-type LobbyGridProps = {
-  onBack: () => void;
-}
-
-export function LobbyGrid({ onBack }: LobbyGridProps) {
-  const {
-    gameData,
-    sendEvent,
-    playerReady,
-    isHost,
-    isLoadingAction,
-    leaveGame,
-  } = useGameBlocContext();
+export function LobbyGrid() {
+  const { game, player, isHost, isPending, setReady, start, leave } = useGame();
 
   const { emit } = useEventSystem();
-  const [config, setConfig] = React.useState<Config>(['3', 'true']);
+  const [config, setConfig] = React.useState<GameConfig>({ time: 3, repetition: true });
   const [copied, setCopied] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
 
-  function handleBack() {
-    leaveGame();
-    onBack();
-  }
-
-  const isStarting = isLoadingAction(Action.START);
-  const isStatusLoading = isLoadingAction(Action.STATUS);
+  const isStarting = isPending('start');
+  const isStatusLoading = isPending('ready');
   const isLoading = isStarting || isStatusLoading;
+  const amReady = game?.players.find((p) => p.id === player?.id)?.status === 'ready';
 
   function onStart() {
     if (isLoading) return;
-    sendEvent({
-      action: Action.START,
-      data: config,
-    });
+    start(config);
   }
 
   function onReady() {
     if (isLoading) return;
-    sendEvent({
-      action: Action.STATUS,
-      data: ['1'],
-    });
+    setReady(!amReady);
   }
 
   function onCopyClick() {
-    if (gameData?.name) {
-      navigator.clipboard.writeText(gameData.name);
+    if (game?.name) {
+      navigator.clipboard.writeText(game.name);
       setCopied(true);
-      emit('infoToast', `Código da sala copiado: ${gameData.name.toUpperCase()}`);
+      emit('infoToast', `Código da sala copiado: ${game.name.toUpperCase()}`);
       setTimeout(() => setCopied(false), 2000);
     }
   }
@@ -65,19 +44,19 @@ export function LobbyGrid({ onBack }: LobbyGridProps) {
         config={config}
         onChangeConfig={setConfig}
         onBack={() => setShowSettings(false)}
-        isHost={isHost()}
+        isHost={isHost}
       />
     );
   }
 
-  const roomName = (gameData?.name || 'SALA').toUpperCase();
+  const roomName = (game?.name || 'SALA').toUpperCase();
 
   const gridItems: GridItems = {
     '-7,-5': {
       value: '<',
       color: 'emerald',
       hover: true,
-      onClick: handleBack,
+      onClick: leave,
     },
     '-7,5': {
       value: '⚙',
@@ -98,17 +77,17 @@ export function LobbyGrid({ onBack }: LobbyGridProps) {
   };
 
   // Render players on the grid
-  (gameData.players || []).forEach((player, index) => {
+  (game?.players ?? []).forEach((member, index) => {
     const row = -2 + index;
-    const isReady = playerReady(player.status);
-    const playerColor = getGridPlayerColor(player.color);
+    const isReady = member.status === 'ready';
+    const playerColor = getGridPlayerColor(member.color);
 
     gridItems[`${row},-5`] = {
-      value: player.name.toUpperCase(),
+      value: member.name.toUpperCase(),
       color: playerColor,
     };
 
-    gridItems[`${row},${player.name.length - 4}`] = {
+    gridItems[`${row},${member.name.length - 4}`] = {
       value: isReady ? '✓' : '✕',
       color: isReady ? 'emerald' : 'rose',
     };
@@ -116,13 +95,13 @@ export function LobbyGrid({ onBack }: LobbyGridProps) {
 
   // Action buttons
   gridItems['4,-5'] = {
-    value: isStatusLoading ? '...' : 'PRONTO',
+    value: isStatusLoading ? '...' : amReady ? 'ESPERAR' : 'PRONTO',
     onClick: onReady,
     hover: !isLoading,
     color: 'emerald',
   };
 
-  if (isHost()) {
+  if (isHost) {
     gridItems['5,-5'] = {
       value: isStarting ? '...' : 'INICIAR',
       onClick: onStart,
@@ -133,4 +112,3 @@ export function LobbyGrid({ onBack }: LobbyGridProps) {
 
   return <GridLayout gridItems={gridItems} />;
 }
-

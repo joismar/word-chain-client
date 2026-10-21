@@ -8,8 +8,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@shared': resolve(import.meta.dirname, 'shared'),
-      '@bloc': resolve(import.meta.dirname, 'bloc'),
       '@src': resolve(import.meta.dirname, 'src'),
     },
   },

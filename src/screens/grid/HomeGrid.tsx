@@ -1,18 +1,15 @@
 import React from 'react';
-import { Action } from '@shared/enums';
 import { GridItems, GridLayout } from '@src/components/GridLayout';
-import { useGameBlocContext } from '@src/providers/GameBlocProvider';
+import { useGame } from '@src/state/useGame';
 
 export function HomeGrid() {
-  const { sendEvent, isLoadingAction } = useGameBlocContext();
+  const game = useGame();
 
   const [mode, setMode] = React.useState<'menu' | 'host' | 'join'>('menu');
   const [player, setPlayer] = React.useState('');
   const [room, setRoom] = React.useState('');
 
-  const isHosting = isLoadingAction(Action.HOST);
-  const isJoining = isLoadingAction(Action.JOIN);
-  const isLoading = isHosting || isJoining;
+  const isLoading = game.isPending('host', 'join');
 
   function handleHostClick() {
     if (mode === 'menu') {
@@ -36,15 +33,9 @@ export function HomeGrid() {
     if (isLoading) return;
 
     if (mode === 'host' && player.trim()) {
-      sendEvent({
-        action: Action.HOST,
-        data: [player.trim()],
-      });
+      game.host(player);
     } else if (mode === 'join' && room.trim() && player.trim()) {
-      sendEvent({
-        action: Action.JOIN,
-        data: [room.trim(), player.trim()],
-      });
+      game.join(room, player);
     }
   }
 

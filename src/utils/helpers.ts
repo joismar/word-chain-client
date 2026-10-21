@@ -1,4 +1,4 @@
-import { PlayerColor } from '@shared/enums';
+import type { PlayerColor } from '@src/protocol/schema';
 
 export function countOverlapStartEnd(word1: string, word2: string) {
   let maxOverlap = 0;
@@ -13,19 +13,19 @@ export function countOverlapStartEnd(word1: string, word2: string) {
   return maxOverlap;
 }
 
-export function getGridPlayerColor(color?: PlayerColor): "stone" | "amber" | "emerald" | "sky" | "purple" | "rose" {
+export function getGridPlayerColor(color?: PlayerColor | null): "stone" | "amber" | "emerald" | "sky" | "purple" | "rose" {
   switch (color) {
-    case PlayerColor.RED:
+    case 'red':
       return "rose";
-    case PlayerColor.BLUE:
+    case 'blue':
       return "sky";
-    case PlayerColor.GREEN:
+    case 'green':
       return "emerald";
-    case PlayerColor.YELLOW:
-    case PlayerColor.ORANGE:
+    case 'yellow':
+    case 'orange':
       return "amber";
-    case PlayerColor.PURPLE:
-    case PlayerColor.PINK:
+    case 'purple':
+    case 'pink':
       return "purple";
     default:
       return "stone";

@@ -1,18 +1,11 @@
 import { GridItems, GridLayout } from '@src/components/GridLayout';
-import { useGameBlocContext } from '@src/providers/GameBlocProvider';
+import { useGame } from '@src/state/useGame';
 import { getGridPlayerColor } from '@src/utils/helpers';
 
 export function EndGrid() {
-  const { gameData, leaveGame } = useGameBlocContext();
+  const { game, leave } = useGame();
 
-  const sortedPlayers = [...(gameData.players || [])].sort(
-    (a, b) => (b.score || 0) - (a.score || 0)
-  );
-
-  function handleRestart() {
-    leaveGame();
-    window.location.reload();
-  }
+  const sortedPlayers = [...(game?.players ?? [])].sort((a, b) => b.score - a.score);
 
   const gridItems: GridItems = {
     '-6,-1': {
@@ -37,7 +30,7 @@ export function EndGrid() {
 
     // Player Score
     gridItems[`${row},5`] = {
-      value: `${player.score || 0}`,
+      value: `${player.score}`,
       color: index === 0 ? 'amber' : 'stone',
     };
   });
@@ -45,13 +38,13 @@ export function EndGrid() {
   // Restart Button
   gridItems['6,-2'] = {
     value: 'NOVO',
-    onClick: handleRestart,
+    onClick: leave,
     hover: true,
     color: 'stone',
   };
   gridItems['7,-1'] = {
     value: 'JOGO',
-    onClick: handleRestart,
+    onClick: leave,
     hover: true,
     color: 'stone',
   };

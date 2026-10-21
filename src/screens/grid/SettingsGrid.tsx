@@ -1,11 +1,10 @@
 import React from 'react';
 import { GridItems, GridLayout } from '@src/components/GridLayout';
-
-export type Config = ['3' | '5', 'true' | 'false'];
+import type { GameConfig } from '@src/protocol/schema';
 
 type SettingsGridProps = {
-  config: Config;
-  onChangeConfig: React.Dispatch<React.SetStateAction<Config>>;
+  config: GameConfig;
+  onChangeConfig: React.Dispatch<React.SetStateAction<GameConfig>>;
   onBack: () => void;
   isHost: boolean;
 };
@@ -18,16 +17,16 @@ export function SettingsGrid({
 }: SettingsGridProps) {
   function toggleTime() {
     if (!isHost) return;
-    onChangeConfig((prev) => [prev[0] === '3' ? '5' : '3', prev[1]]);
+    onChangeConfig((prev) => ({ ...prev, time: prev.time === 3 ? 5 : 3 }));
   }
 
   function toggleRepetition() {
     if (!isHost) return;
-    onChangeConfig((prev) => [prev[0], prev[1] === 'true' ? 'false' : 'true']);
+    onChangeConfig((prev) => ({ ...prev, repetition: !prev.repetition }));
   }
 
-  const timeLabel = config[0] === '3' ? '3MIN' : '5MIN';
-  const repLabel = config[1] === 'true' ? 'SIM' : 'NAO';
+  const timeLabel = `${config.time}MIN`;
+  const repLabel = config.repetition ? 'SIM' : 'NAO';
 
   const gridItems: GridItems = {
     '-7,-5': {
