@@ -133,10 +133,10 @@ Regra: **nenhum número mágico de animação fora de `tokens.ts`**.
 - [x] Remover código morto (lista no diagnóstico)
 
 ### F1 — Protocolo e estado
-- [ ] `protocol/schema.ts` com zod, alinhado ao protocolo v2 do backend (B2)
-- [ ] `socketActor`: reconexão com backoff exponencial + jitter, fila de envio offline, reidratação via `reconnect`
-- [ ] `gameMachine` (XState v5) substituindo `GameBloc` + `useGameBloc`
-- [ ] Testes da máquina (transições, reconexão, erros por código e não por texto)
+- [x] `protocol/schema.ts` com zod, alinhado ao protocolo v2 do backend (B2)
+- [x] `socketActor`: reconexão com backoff exponencial + jitter, fila de envio offline, reidratação via `reconnect`
+- [x] `gameMachine` (XState v5) substituindo `GameBloc` + `useGameBloc`
+- [x] Testes da máquina (transições, reconexão, erros por código e não por texto)
 
 ### F2 — Engine core
 - [ ] `Stage` montado por `<GameCanvas/>` (mount/unmount limpos, compatível com StrictMode)
@@ -172,18 +172,18 @@ Regra: **nenhum número mágico de animação fora de `tokens.ts`**.
 ## 5. Backend (redesenho em paralelo)
 
 ### B1 — Hotfix (antes de F1, destrava os testes ponta a ponta)
-- [ ] `start(time, repetition)` aceitando a config real; persistir `config` na sessão e enviá-la no `GameData`
-- [ ] Wordlist carregada **uma vez por container** (escopo de módulo) num `set`/`frozenset`
-- [ ] Python 3.13 no CI e no runtime da Lambda
+- [x] `start(time, repetition)` aceitando a config real; persistir `config` na sessão e enviá-la no `GameData`
+- [x] Wordlist carregada **uma vez por container** (escopo de módulo) num `set`/`frozenset`
+- [x] Python 3.13 no CI e no runtime da Lambda
 
 ### B2 — Protocolo v2 e servidor autoritativo
-- [ ] Envelope versionado: `{ v: 2, type, payload, requestId }`; erros com `code` estável (`INEXISTENT_SESSION`, `INVALID_TURN`…) além da mensagem pt-BR
-- [ ] Schema único do protocolo (JSON Schema) → pydantic v2 no back, zod no front
-- [ ] **Prazos no servidor:** a sessão guarda `turn_deadline` e `ends_at`. Toda mensagem recebida valida os prazos primeiro (troca o turno ou encerra a partida se venceram). O cliente pode mandar `timeout` quando o prazo vence localmente, e o servidor só aceita se o prazo dele também já passou. Isso resolve os travamentos sem precisar de infraestrutura nova
+- [x] Envelope versionado: `{ v: 2, type, payload, requestId }`; erros com `code` estável (`INEXISTENT_SESSION`, `INVALID_TURN`…) além da mensagem pt-BR
+- [x] Schema único do protocolo (JSON Schema) → pydantic v2 no back, zod no front
+- [x] **Prazos no servidor:** a sessão guarda `turn_deadline` e `ends_at`. Toda mensagem recebida valida os prazos primeiro (troca o turno ou encerra a partida se venceram). O cliente pode mandar `timeout` quando o prazo vence localmente, e o servidor só aceita se o prazo dele também já passou. Isso resolve os travamentos sem precisar de infraestrutura nova
   - Opcional, numa fase futura: Step Functions (Wait state) para encerrar partidas mesmo sem nenhum cliente conectado
-- [ ] Escritas condicionais no DynamoDB (`version` + `ConditionExpression`) contra jogadas simultâneas
-- [ ] Broadcast em paralelo e limpeza de conexões `GoneException`
-- [ ] AWS Lambda Powertools (logs estruturados, tracing) no lugar de `print(json.dumps(event))`
+- [x] Escritas condicionais no DynamoDB (`version` + `ConditionExpression`) contra jogadas simultâneas
+- [x] Broadcast em paralelo e limpeza de conexões `GoneException`
+- [x] AWS Lambda Powertools (logs estruturados, tracing) no lugar de `print(json.dumps(event))`
 
 ### B3 — Infraestrutura como código
 - [ ] Versionar API Gateway WebSocket, Lambda, tabelas `sessions`/`players` + GSI `name-index` e TTL (SAM ou CDK, **decisão pendente**)

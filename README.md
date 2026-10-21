@@ -38,114 +38,69 @@ O **Word Chain** é um jogo de vocabulário e agilidade mental onde:
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Framework**: [React 18](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
 - **Bundler & Dev Server**: [Vite](https://vitejs.dev/)
-- **Estilização**: [Tailwind CSS](https://tailwindcss.com/) + PostCSS
-- **Reatividade & Fluxo**: [RxJS 7](https://rxjs.dev/) (Subjects, Observables)
-- **Animações de UI**: [@react-spring/web](https://www.react-spring.dev/)
+- **Estilização**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **Estado**: [XState v5](https://stately.ai/docs) (`gameMachine` + `socketActor`)
+- **Protocolo**: [zod](https://zod.dev/) espelhando o JSON Schema do backend (protocolo v2)
+- **Animações de UI**: [@react-spring/web](https://www.react-spring.dev/) (até a engine Pixi da refatoração)
 - **Comunicação em Tempo Real**: WebSocket nativo integrado a AWS API Gateway WebSocket
+- **Testes**: Vitest (unitários) e Playwright (e2e)
 
 ---
 
 ## 🏛️ Arquitetura do Projeto
 
-### Padrão BLoC (Business Logic Component)
+A arquitetura alvo e as fases da refatoração estão em [docs/refactor-plan.md](./docs/refactor-plan.md).
 
-A lógica de conexão e estado do jogo é desacoplada da camada visual através da classe `GameBloc` (`bloc/GameBloc.ts`) e consumida via React Context (`src/providers/GameBlocProvider.tsx`):
+### Estado (`src/state/`)
 
 ```
 ┌─────────────────────────────────┐
 │     AWS API Gateway WebSocket   │
 └───────────────▲─────────────────┘
-                │ Raw JSON
+                │ JSON (protocolo v2, validado com zod)
 ┌───────────────▼─────────────────┐
-│         SocketWrapper           │
-└───────────────▲─────────────────┘
-                │ Event Listeners
+│          socketActor            │  ◄── reconexão com backoff + jitter,
+└───────────────▲─────────────────┘      fila de envio offline
+                │ socket.open / socket.message / socket.closed
 ┌───────────────▼─────────────────┐
-│            GameBloc             │  ◄── Streams RxJS (gameStream, playerStream,
-└───────────────▲─────────────────┘      errorStream, connectionStream, actionStateStream)
-                │ useGameBloc Hook
-┌───────────────▼─────────────────┐
-│       GameBlocProvider          │  ◄── React Context
-└───────────────▲─────────────────┘
-                │
+│          gameMachine            │  ◄── boot → restoring → home → lobby
+└───────────────▲─────────────────┘      → playing → ended
+                │ useGame()
 ┌───────────────▼─────────────────┐
 │        React UI Screens         │  (Home, Lobby, Game, End / GridLayout)
 └─────────────────────────────────┘
 ```
 
-### Fluxo de Estado e Telas
+- **Reidratação:** o id do jogador fica no `localStorage`. A cada conexão nova, a máquina manda `reconnect` antes de liberar a fila, porque o servidor só reconhece a conexão depois disso.
+- **Erros por código:** a máquina decide pelo `code` (`INEXISTENT_PLAYER`, `DEADLINE_NOT_REACHED`...), nunca pelo texto. O texto pt-BR vai para o toast.
+- **Prazos do servidor:** os timers da tela são derivados de `startedAt`, `endsAt` e `turnDeadline` com o offset de `serverTime`. Quando um prazo vence, o cliente manda `timeout`: primeiro o jogador da vez (ou o host, no fim da partida), e os outros um pouco depois, caso ele esteja offline.
 
-O estado da partida determina a transição automática entre as telas:
-- `GameStatus.CREATED` (0) → Tela de **Lobby**
-- `GameStatus.STARTED` (1) → Tela de **Game**
-- `GameStatus.ENDED` (2) → Tela de **End**
+### Fluxo de Telas
+
+A tela é derivada do estado da máquina (`screenOf`): `lobby` → **Lobby**, `playing` → **Game**, `ended` → **End**, `home` → **Home**, e `boot`/`restoring` → "CONECTANDO".
 
 ---
 
-## 📡 Protocolo WebSocket
+## 📡 Protocolo WebSocket (v2)
 
-**Endpoint padrão**: `wss://h9qktxoj4a.execute-api.sa-east-1.amazonaws.com/dev`
+A fonte da verdade são os modelos pydantic do backend (`word-chain-backend/lambda/protocol/models.py`). O JSON Schema exportado por ele fica copiado em `src/protocol/v2.schema.json`, e `src/protocol/schema.ts` (zod) tem um teste que falha se divergir. Para atualizar a cópia: `npm run protocol:sync`.
 
-### Ações Enviadas pelo Cliente
+Todo envelope tem a forma `{ v: 2, type, payload, requestId }`, com campos em camelCase.
 
-Todos os envios utilizam a interface `EventAction`:
-```typescript
-{
-  action: Action; // 'host' | 'join' | 'status' | 'start' | 'word' | 'pass' | 'end'
-  data: string[];
-}
-```
-
-| Ação (`Action`) | Descrição | Formato do `data` |
+| Cliente → servidor | `payload` | Resposta |
 | :--- | :--- | :--- |
-| `host` | Cria uma nova sala | `[playerName]` |
-| `join` | Entra em uma sala existente | `[gameName, playerName]` |
-| `status` | Altera status do jogador (Pronto) | `['1']` (Ready) ou `['0']` (Waiting) |
-| `start` | Inicia a partida (Host apenas) | `[durationMinutes, allowRepetition]` (ex: `['3', 'true']`) |
-| `word` | Envia uma nova palavra na sua vez | `[word]` (convertido para minúsculas) |
-| `pass` | Passa o turno | `[]` |
-| `end` | Encerra a partida | `[]` |
+| `host` | `{ playerName }` | `session` |
+| `join` | `{ roomName, playerName }` | `session` |
+| `reconnect` | `{ playerId }` | `session` |
+| `ready` | `{ ready }` | `ack` |
+| `start` | `{ config: { time, repetition } }` (só o host) | `ack` |
+| `word` | `{ word }` | `ack` com `points` e `chainPoints` |
+| `pass` | `{}` | `ack` |
+| `timeout` | `{}` (aceito só se o prazo já venceu no servidor) | `ack` |
 
-### Eventos Recebidos do Servidor
-
-| Evento | Payload (`event.data`) | Ação no BLoC |
-| :--- | :--- | :--- |
-| `open` | Evento de conexão aberta | Atualiza `connectionStream` para `CONNECTED` |
-| `close` | Evento de desconexão | Atualiza `connectionStream` para `DISCONNECTED` |
-| `game_data` | `{ data: GameData }` | Atualiza `gameStream` |
-| `host` | `{ data: { player: Player, game: GameData } }` | Salva o jogador e o jogo no estado |
-| `join` | `{ data: Player }` | Salva os dados do jogador atual |
-| `any` | `{ action: Action, data?: { error?: string, message?: string } }` | Atualiza `actionStateStream` e emite erro para `errorStream` |
-
-### Modelos de Dados
-
-```typescript
-// shared/interfaces.ts
-export interface Player {
-  id: string;
-  session_id: string | null;
-  name: string;
-  score: number;
-  color: PlayerColor;
-  status: PlayerStatus; // WAITING = 0, READY = 1
-  last_word_time: number;
-}
-
-export interface GameData {
-  name: string;
-  status: GameStatus; // CREATED = 0, STARTED = 1
-  chain: Word[];
-  players: Player[];
-  turn: number;
-  started_at: number;
-  config: {
-    repetition: boolean;
-    time: number;
-  };
-}
-```
+O servidor também manda `error` (`{ code, message }`, com `requestId` nulo quando não deu para ler o pedido) e `game_state`, transmitido a todos da sala a cada mudança.
 
 ---
 
@@ -188,36 +143,23 @@ Combina um `<input>` nativo transparente (que captura teclado físico e virtual 
 
 ```
 word-chain-client/
-├── bloc/
-│   └── GameBloc.ts              # Camada de lógica de negócio e streams RxJS
-├── shared/
-│   ├── enums.ts                 # Enums: Action, PlayerStatus, PlayerColor, etc.
-│   ├── interfaces.ts            # Interfaces de dados do jogo e mensagens
-│   └── SocketWrapper.ts         # Wrapper sobre WebSocket nativo
+├── e2e/                         # Playwright: smoke e partida completa (match.spec.ts)
 ├── src/
-│   ├── components/
-│   │   ├── CustomInput.tsx      # Input integrado ao sistema de grade
-│   │   ├── Grid.tsx             # Componente base de renderização da matriz CSS Grid
-│   │   ├── GridLayout.tsx       # Layout orquestrador da grade responsiva e letras
-│   │   ├── Letter.tsx           # Bloco visual unitário de letra com sombras e cores
-│   │   ├── Word.tsx             # Palavra encadeada na UI clássica
-│   │   ├── Timer.tsx            # Componente de contagem regressiva
-│   │   ├── Toast.tsx            # Gerenciador global de notificações toast
-│   │   └── Modal.tsx, Avatar... # Componentes visuais auxiliares
-│   ├── hooks/
-│   │   ├── useGameBloc.ts       # Hook de integração React <-> GameBloc
-│   │   ├── useWordAnimations.ts # Hook de animações via @react-spring/web
-│   │   ├── useVisualViewport.ts # Detecção e monitoramento de viewport responsivo
-│   │   └── useSchedule.ts...    # Hooks auxiliares
-│   ├── providers/
-│   │   └── GameBlocProvider.tsx # Context Provider do GameBloc
-│   ├── screens/
-│   │   ├── Home.tsx             # Tela inicial (versão clássica)
-│   │   ├── Lobby.tsx            # Sala de espera e configurações (versão clássica)
-│   │   ├── Game.tsx             # Partida em andamento (versão clássica)
-│   │   └── End.tsx              # Tela de pontuação e ranking (versão clássica)
-│   ├── App.tsx                  # Componente raiz / protótipo do Grid Layout
-│   └── main.tsx                 # Entrypoint da aplicação React
+│   ├── protocol/
+│   │   ├── schema.ts            # Protocolo v2 em zod
+│   │   └── v2.schema.json       # Cópia do JSON Schema do backend
+│   ├── state/
+│   │   ├── gameMachine.ts       # Máquina do jogo (XState v5)
+│   │   ├── socketActor.ts       # WebSocket: reconexão, fila offline
+│   │   ├── selectors.ts         # Derivações puras (host, turno, timers)
+│   │   ├── GameProvider.tsx     # Monta a máquina com o socket real
+│   │   └── useGame.ts           # Hook usado pelas telas
+│   ├── components/              # GridLayout, CustomInput, Toast...
+│   ├── hooks/                   # useWordAnimations, useVisualViewport...
+│   ├── screens/grid/            # HomeGrid, LobbyGrid, SettingsGrid, GameGrid, EndGrid
+│   ├── lib/env.ts               # Leitura de VITE_WS_URL
+│   ├── App.tsx
+│   └── main.tsx
 ├── package.json
 └── vite.config.ts
 ```
@@ -251,6 +193,21 @@ word-chain-client/
    ```bash
    npm run lint
    ```
+
+### Testar de ponta a ponta sem deploy
+
+O backend tem um servidor local que roda o jogo de verdade com estado em memória:
+
+```bash
+# em word-chain-backend/lambda, com o venv ativo
+python -m local.server --port 3001
+```
+
+Aponte o cliente para ele com `VITE_WS_URL=ws://localhost:3001` no `.env.local` e rode `npm run dev`, ou rode a partida automatizada:
+
+```bash
+E2E_WS_URL=ws://localhost:3001 npm run e2e
+```
 
 ---
 

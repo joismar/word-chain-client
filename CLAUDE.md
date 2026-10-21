@@ -17,15 +17,17 @@ npm run e2e        # Playwright (desktop + mobile), sobe o Vite na porta 5174
 ## Ambiente
 
 - `VITE_WS_URL` (obrigatória, `ws://` ou `wss://`). `.env` traz o default de dev; sobrescreva em `.env.local`.
-- O e2e aponta para um socket inalcançável (`ws://127.0.0.1:9`) para nunca tocar o backend real. Use `E2E_WS_URL` para apontar para um backend de teste.
+- O e2e aponta para um socket inalcançável (`ws://127.0.0.1:9`) para nunca tocar o backend real. Use `E2E_WS_URL` para apontar para um backend de teste; sem ele, `e2e/match.spec.ts` é pulado.
+- Backend local para testar ponta a ponta sem deploy: em `../word-chain-backend/lambda`, `.venv/Scripts/python -m local.server --port 3001`, depois `E2E_WS_URL=ws://localhost:3001 npm run e2e` (ou `VITE_WS_URL` no `.env.local` para jogar no navegador).
 
-## Estado atual do código (pré-F1)
+## Estado atual do código (pós-F1)
 
-- `src/screens/grid/*` montam a tela como dicionários `"row,col"` renderizados por `GridLayout` (um `div` por célula, animações com react-spring).
-- Estado: `bloc/GameBloc.ts` (RxJS) + `src/hooks/useGameBloc.ts`, expostos por `GameBlocProvider`. Serão substituídos pela `gameMachine` (XState v5) na F1.
-- `shared/` tem o protocolo atual (`enums.ts`, `interfaces.ts`) e o `SocketWrapper`.
-- Aliases: `@src/*`, `@shared/*`, `@bloc/*`.
-- Os erros de lint restantes (`no-explicit-any`, `set-state-in-effect`) estão no código que a F1/F4 substitui; não vale corrigir antes.
+- Protocolo v2: `src/protocol/schema.ts` (zod) espelha `src/protocol/v2.schema.json`, cópia do schema exportado pelo backend. `schema.test.ts` falha se divergirem; atualize com `npm run protocol:sync` depois de mudar o protocolo no backend.
+- Estado: `src/state/gameMachine.ts` (XState v5) com o `socketActor` invocado. As telas usam `useGame()` (`src/state/useGame.ts`); seletores puros em `selectors.ts`. Decisões por `code` de erro, nunca pelo texto.
+- Timers vêm dos prazos do servidor (`startedAt`/`endsAt`/`turnDeadline` + offset de `serverTime`); o cliente só manda `timeout` quando o prazo vence, nunca `pass` automático.
+- `src/screens/grid/*` montam a tela como dicionários `"row,col"` renderizados por `GridLayout` (um `div` por célula, animações com react-spring), até a F4.
+- Alias: `@src/*`.
+- Os erros de lint restantes (`only-export-components` no `GridLayout`, `set-state-in-effect` no `useWordAnimations`) estão no código que a F2/F4 substitui; não vale corrigir antes.
 
 ## Convenções
 
