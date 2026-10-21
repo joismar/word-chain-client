@@ -61,8 +61,16 @@ export function useWordAnimations({ children, itemGap, itemSize, index, ...cell 
       return;
     }
     if (word != children) {
+      // A newer value may arrive before this exit animation ends; only the
+      // latest one may land.
+      let stale = false;
       const res = set((i) => ({ scale: 0, delay: 50 * i }));
-      Promise.all(res).then(() => setWord(children));
+      Promise.all(res).then(() => {
+        if (!stale) setWord(children);
+      });
+      return () => {
+        stale = true;
+      };
     } else {
       set({ scale: 1 })
     }
