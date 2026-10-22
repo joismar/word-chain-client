@@ -13,6 +13,8 @@ type GameCanvasProps = {
   onStage?: (stage: Stage | null) => void;
 };
 
+type DevWindow = Window & { __boardTiles?: readonly TileSpec[] };
+
 /** Mounts the Pixi stage over the visible viewport and feeds it tiles. */
 export function GameCanvas({ tiles, onEvent, overlay, onStage }: GameCanvasProps) {
   const hostRef = React.useRef<HTMLDivElement>(null);
@@ -59,6 +61,8 @@ export function GameCanvas({ tiles, onEvent, overlay, onStage }: GameCanvasProps
 
   React.useEffect(() => {
     stage?.setTiles(tiles);
+    // The e2e suite finds words on the board through this (dev server only).
+    if (import.meta.env.DEV) (window as DevWindow).__boardTiles = tiles;
   }, [stage, tiles]);
 
   return (

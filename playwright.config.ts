@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 5174;
+// E2E_PORT avoids a dev server already sitting on 5174 being reused with the wrong socket.
+const PORT = Number(process.env.E2E_PORT ?? 5174);
 
 export default defineConfig({
   testDir: './e2e',

@@ -1,4 +1,4 @@
-import { sanitizeInput } from '@src/utils/helpers';
+import { sanitizeInput } from '@src/lib/sanitize';
 
 /** What a board text field keeps from raw typing, IME output or a paste. */
 export function acceptInput(raw: string, maxLength: number): string {

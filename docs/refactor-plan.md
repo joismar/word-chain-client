@@ -128,7 +128,7 @@ Regra: **nenhum número mágico de animação fora de `tokens.ts`**.
 ### F0 — Preparação
 - [x] Commitar/arquivar o WIP da `new-grid-layout`; criar branch `refactor/engine`
 - [x] Instalar skills (seção 6) e criar `CLAUDE.md` do projeto
-- [x] Atualizar deps: React 19, Vite (atual), Tailwind 4, TypeScript (atual); remover `@react-spring/web` e `rxjs` ao final (pendente: saem quando F1/F4 substituírem o código que os usa)
+- [x] Atualizar deps: React 19, Vite (atual), Tailwind 4, TypeScript (atual); remover `@react-spring/web` e `rxjs` ao final (o `rxjs` saiu na F1, o `@react-spring/web` na F4)
 - [x] Adicionar Vitest + Playwright; configurar `VITE_WS_URL` via env
 - [x] Remover código morto (lista no diagnóstico)
 
@@ -154,9 +154,11 @@ A engine roda isolada em `/dev/engine` (só em dev). O app continua no `GridLayo
 As coreografias são planos puros (`choreography.ts`) executados por um `Director` com anime.js; o ticker do Pixi só roda enquanto há animação (render sob demanda). Ficam para depois: as letras sobrepostas se fundindo com brilho e partículas (F5, `FxLayer`) e o pulso de turno percorrendo as células vazias do fundo (hoje percorre os tiles; F5). O alinhamento por sobreposição na corrente é da F4.
 
 ### F4 — Cenas
-- [ ] `home` → `lobby` → `settings` → `game` → `end` como funções puras + testes de snapshot de `TileSpec[]`
-- [ ] Corrente com alinhamento por sobreposição (lógica atual de `countOverlapStartEnd`) e rolagem quando passa da tela
-- [ ] Timers derivados de `turn_deadline`/`ends_at` do servidor (B2), sem `setInterval` decrementando estado
+- [x] `home` → `lobby` → `settings` → `game` → `end` como funções puras + testes de snapshot de `TileSpec[]`
+- [x] Corrente com alinhamento por sobreposição (lógica atual de `countOverlapStartEnd`) e rolagem quando passa da tela
+- [x] Timers derivados de `turn_deadline`/`ends_at` do servidor (B2), sem `setInterval` decrementando estado
+
+O app passou a ser um único canvas Pixi; o grid DOM, o react-spring e os hooks antigos saíram. A palavra digitada usa a key da próxima palavra da corrente, então a palavra aceita voa até a escada. Shake, pulso de turno e tick dos relógios vêm do estado (`useBoardEffects`). O Pixi agora entra no bundle de produção (cerca de 715 kB, 220 kB gzip); o orçamento é da F7. As telas usam coordenadas fixas pensadas para 15 colunas: o ajuste fino para telas baixas (paisagem com teclado aberto) é da F6.
 
 ### F5 — Visual e FX
 - [ ] Paleta OKLCH, fonte MSDF, shader de relevo, `FxLayer` (partículas de corrente, flashes)

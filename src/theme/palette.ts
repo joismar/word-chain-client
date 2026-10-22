@@ -1,4 +1,5 @@
 import type { TileTone } from '@src/engine/types';
+import type { PlayerColor } from '@src/protocol/schema';
 
 // Tailwind 600/700/200 values, matching the DOM grid until the OKLCH pass (F5).
 export const TONES: Record<TileTone, { face: number; shadow: number; text: number }> = {
@@ -15,3 +16,19 @@ export const BOARD = {
   emptyCell: 0x1c1917,
   cursor: 0xa8a29e,
 };
+
+const PLAYER_TONES: Record<PlayerColor, TileTone> = {
+  red: 'rose',
+  blue: 'sky',
+  green: 'emerald',
+  yellow: 'amber',
+  orange: 'amber',
+  purple: 'purple',
+  pink: 'purple',
+  brown: 'stone',
+};
+
+/** Tile tone for a player's colour (six tones for eight colours until F5). */
+export function playerTone(color: PlayerColor | null | undefined): TileTone {
+  return color ? PLAYER_TONES[color] : 'stone';
+}

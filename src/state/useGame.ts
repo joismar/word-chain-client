@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ClientMessageType, GameConfig } from '@src/protocol/schema';
 import { GameActor } from './context';
 import { clock, isHost, isMyTurn, isPending, screenOf, turnPlayer } from './selectors';
@@ -8,6 +8,7 @@ export function useGame() {
   const actor = GameActor.useActorRef();
   const context = GameActor.useSelector((snapshot) => snapshot.context);
   const screen = GameActor.useSelector(screenOf);
+  const pending = useMemo(() => new Set(Object.values(context.pending)), [context.pending]);
 
   return {
     screen,
@@ -18,6 +19,8 @@ export function useGame() {
     isHost: isHost(context),
     isMyTurn: isMyTurn(context),
     turnPlayer: turnPlayer(context),
+    /** Request types waiting for a reply. */
+    pending: pending as ReadonlySet<ClientMessageType>,
     isPending: (...types: ClientMessageType[]) => isPending(context, ...types),
     clock: (localNow: number) => clock(context, localNow),
     host: (playerName: string) => actor.send({ type: 'HOST', playerName }),

@@ -46,9 +46,11 @@ export class TileLayer<V extends TileView> {
     return this.live.values();
   }
 
-  sync(specs: readonly TileSpec[], board: Board) {
-    if (this.destroyed) return;
-    if (board !== this.board) this.relayout(board);
+  /** Returns whether anything on the board changed. */
+  sync(specs: readonly TileSpec[], board: Board): boolean {
+    if (this.destroyed) return false;
+    const resized = board !== this.board;
+    if (resized) this.relayout(board);
     const specsByKey = new Map([...this.live].map(([key, entry]) => [key, entry.spec]));
     const join = joinTiles(specsByKey, specs);
     const { pool, mount, choreography } = this.options;
@@ -80,6 +82,7 @@ export class TileLayer<V extends TileView> {
       this.live.set(spec.key, { view, spec });
       choreography?.enter?.(view, spec, batch);
     }
+    return resized || join.enter.length + join.update.length + join.exit.length > 0;
   }
 
   /** Re-applies every live tile to a new board (resize, DPR change). */

@@ -137,11 +137,11 @@ export class Stage {
   setTiles(specs: readonly TileSpec[]) {
     if (this.destroyed) return;
     this.specs = specs;
-    this.layer.sync(specs, this.current);
+    const changed = this.layer.sync(specs, this.current);
     this.hover.prune(specs);
     // Hit-testing reads world transforms, which only refresh on render; draw
     // now so a click right after a change lands on the new layout.
-    this.app.render();
+    if (changed) this.app.render();
   }
 
   /** One-off feedback on top of the tile join (shake, flash, turn pulse, timer). */

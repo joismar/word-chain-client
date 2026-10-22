@@ -49,6 +49,15 @@ describe('TileLayer', () => {
     expect(layer.get('b')?.spec).toEqual(tile('b', 'B', 1));
   });
 
+  it('reports whether a sync changed anything', () => {
+    const { layer } = setup();
+    expect(layer.sync([tile('a')], board)).toBe(true);
+    expect(layer.sync([tile('a')], board)).toBe(false);
+    expect(layer.sync([tile('a', 'B')], board)).toBe(true);
+    expect(layer.sync([tile('a', 'B')], computeBoard({ width: 400, height: 600 }))).toBe(true);
+    expect(layer.sync([], board)).toBe(true);
+  });
+
   it('updates a tile in place when its key survives', () => {
     const { layer } = setup();
     layer.sync([tile('a')], board);

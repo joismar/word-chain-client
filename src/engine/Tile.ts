@@ -1,4 +1,5 @@
 import { BitmapFont, BitmapFontManager, BitmapText, Container, Graphics, Rectangle } from 'pixi.js';
+import { BOARD_SYMBOLS } from '@src/lib/sanitize';
 import { restMotion, type TileMotion } from '@src/motion/choreography';
 import { BOARD, TONES } from '@src/theme/palette';
 import { cellToPoint, type Board } from './layout';
@@ -12,7 +13,7 @@ const FONT_SIZE = 48;
 export function installTileFont(resolution: number) {
   BitmapFont.install({
     name: TILE_FONT,
-    chars: [...BitmapFontManager.ALPHANUMERIC, ' <>?!.,:;-_/+=*#↵←→'],
+    chars: [...BitmapFontManager.ALPHANUMERIC, BOARD_SYMBOLS],
     resolution,
     padding: 6,
     dynamicFill: true,

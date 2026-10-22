@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { boardReady, clickWord, findWord } from './board';
 
 /**
  * A full match between two players against a real backend. Needs E2E_WS_URL,
@@ -33,14 +34,9 @@ async function open(browser: Browser): Promise<Player> {
     ws.on('framesent', (frame) => player.sent.push(parse(frame.payload)));
   });
   await page.goto('/');
+  await boardReady(page);
   return player;
 }
-
-/** A word on the grid: one absolutely positioned row of letter cells. */
-const cell = (page: Page, text: string) =>
-  page.locator('div.absolute.flex').filter({ hasText: new RegExp(`^${text}$`) });
-
-const inputs = (page: Page) => page.locator('input[aria-hidden="true"]');
 
 function latestGame(player: Player): Game {
   const games = player.received.flatMap((m) => {
@@ -72,60 +68,67 @@ test('two players play a match end to end', async ({ browser }) => {
   const bia = await open(browser);
 
   // Ana hosts.
-  await cell(ana.page, 'CRIAR').click();
-  await inputs(ana.page).first().fill('Ana', { force: true });
+  await clickWord(ana.page, 'CRIAR');
+  await ana.page.getByLabel('Apelido').fill('Ana');
   await ana.page.keyboard.press('Enter');
-  await expect(cell(ana.page, 'PRONTO')).toBeVisible();
+  await findWord(ana.page, 'PRONTO');
   const room = latestGame(ana).name;
 
   // Bia joins with the room code in upper case.
-  await cell(bia.page, 'ENTRAR').click();
-  await inputs(bia.page).nth(0).fill('Bia', { force: true });
-  await inputs(bia.page).nth(1).fill(room.toUpperCase(), { force: true });
+  await clickWord(bia.page, 'ENTRAR');
+  await bia.page.getByLabel('Apelido').fill('Bia');
+  await bia.page.getByLabel('Sala').fill(room.toUpperCase());
   await bia.page.keyboard.press('Enter');
-  await expect(cell(bia.page, 'PRONTO')).toBeVisible();
-  await expect(cell(ana.page, 'BIA')).toBeVisible();
+  await findWord(bia.page, 'PRONTO');
+  await findWord(ana.page, 'BIA');
 
   // Both ready, Ana starts; the start countdown shows before play.
-  await cell(ana.page, 'PRONTO').click();
-  await cell(bia.page, 'PRONTO').click();
-  await expect(cell(ana.page, 'ESPERAR')).toBeVisible();
-  await expect(cell(bia.page, 'ESPERAR')).toBeVisible();
-  await cell(ana.page, 'INICIAR').click();
-  await expect(cell(bia.page, 'COMECA EM \\d')).toBeVisible();
+  await clickWord(ana.page, 'PRONTO');
+  await clickWord(bia.page, 'PRONTO');
+  await findWord(ana.page, 'ESPERAR');
+  await findWord(bia.page, 'ESPERAR');
+  await clickWord(ana.page, 'INICIAR');
+  await findWord(bia.page, 'COMECA EM \\d');
 
   // Ana (host, first in turn order) plays a valid word.
-  await expect(cell(ana.page, 'PASSAR')).toBeVisible({ timeout: 10_000 });
-  await expect(cell(bia.page, 'VEZ DE ANA')).toBeVisible();
+  await findWord(ana.page, 'PASSAR');
+  await findWord(bia.page, 'VEZ DE ANA');
   const first = latestGame(ana).chain.at(-1)!.word;
   const word = nextWord(first, [first]);
-  await inputs(ana.page).first().fill(word.toUpperCase(), { force: true });
+  await ana.page.getByLabel('Palavra').fill(word.toUpperCase());
   await ana.page.keyboard.press('Enter');
-  await expect(cell(bia.page, word.toUpperCase())).toBeVisible();
-  await expect(cell(ana.page, 'VEZ DE BIA')).toBeVisible();
+  await findWord(bia.page, word.toUpperCase());
+  await findWord(ana.page, 'VEZ DE BIA');
   // The reply follows the broadcast, so it may land after the screen updates.
   await expect.poll(() => ana.received.find((m) => m.type === 'ack' && m.payload.points !== null)
     ?.payload.points).toBeGreaterThan(0);
 
-  // Bia tries a word that does not exist: an error by code, turn unchanged.
-  await inputs(bia.page).first().fill('XYZWQ', { force: true });
+  // Bia tries a word that does not exist: an error by code, turn unchanged,
+  // and the word stays in the field to be fixed.
+  await bia.page.getByLabel('Palavra').fill('XYZWQ');
   await bia.page.keyboard.press('Enter');
   await expect.poll(() => bia.received.some((m) => m.type === 'error'
     && (m.payload as { code: string }).code === 'INEXISTENT_WORD')).toBe(true);
   await expect(bia.page.getByText('Palavra não existe.')).toBeVisible();
+  await expect(bia.page.getByLabel('Palavra')).toHaveValue('XYZWQ');
   expect(latestGame(bia).turnPlayerId).toBe(myId(bia));
 
   // Bia reloads mid-turn: the saved session comes back on a new connection.
   await bia.page.reload();
-  await expect(cell(bia.page, 'PASSAR')).toBeVisible();
+  await boardReady(bia.page);
+  await findWord(bia.page, 'PASSAR');
   expect(bia.sent.some((m) => m.type === 'reconnect')).toBe(true);
 
   // Bia lets her turn run out: the server deadline passes it back to Ana,
   // claimed by a client `timeout` (no client-side PASS).
-  await expect(cell(ana.page, 'PASSAR')).toBeVisible({ timeout: 25_000 });
+  await findWord(ana.page, 'PASSAR', 25_000);
   const timeouts = [...ana.sent, ...bia.sent].filter((m) => m.type === 'timeout');
   expect(timeouts.length).toBeGreaterThan(0);
   expect(bia.sent.filter((m) => m.type === 'pass')).toEqual([]);
+
+  // Ana passes by tapping the button; the turn goes to Bia.
+  await clickWord(ana.page, 'PASSAR');
+  await findWord(ana.page, 'VEZ DE BIA');
 
   // Ana leaves; Bia sees her go offline and keeps the turn.
   await ana.page.close();
@@ -133,5 +136,5 @@ test('two players play a match end to end', async ({ browser }) => {
     const players = (latestGame(bia) as unknown as { players: { name: string; status: string }[] }).players;
     return players.find((p) => p.name.toLowerCase() === 'ana')?.status;
   }, { timeout: 25_000 }).toBe('offline');
-  await expect(cell(bia.page, 'PASSAR')).toBeVisible({ timeout: 25_000 });
+  await findWord(bia.page, 'PASSAR', 25_000);
 });

@@ -1,9 +1,9 @@
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
 import './index.css';
-import { GameProvider } from './state/GameProvider.tsx';
+import { App } from './app/App.tsx';
 import { ToastManager } from './components/Toast.tsx';
+import { GameProvider } from './state/GameProvider.tsx';
 
 // Dev-only playgrounds for the Pixi engine and motion; stripped from production builds.
 const devPages = {
