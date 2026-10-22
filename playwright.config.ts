@@ -4,6 +4,9 @@ const PORT = 5174;
 
 export default defineConfig({
   testDir: './e2e',
+  // Pixi pages render with software WebGL in headless Chromium; a cold dev
+  // server plus parallel workers can take most of the default 30 s to boot.
+  timeout: 60_000,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

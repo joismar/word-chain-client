@@ -74,12 +74,17 @@ test('keeps working with reduced motion forced on', async ({ page }) => {
 });
 
 test('applies edited tokens live', async ({ page }) => {
+  // Relative timing: load slows both swaps alike, only the token differs.
+  const swap = async () => {
+    const t0 = Date.now();
+    await playsAndSettles(page, () => button(page, 'Trocar tela').click());
+    return Date.now() - t0;
+  };
+  const baseline = await swap();
   await page.getByText('Tokens', { exact: true }).click();
-  // The slider tops out at 1500 ms.
+  // The slider tops out at 1500 ms, far above the default exit.
   await page.getByLabel('duration.exit').press('End');
   await expect(page.getByLabel('duration.exit')).toHaveValue('1500');
-  await button(page, 'Trocar tela').click();
-  // A 1.5 s exit is still running well after the default would have ended.
-  await page.waitForTimeout(800);
-  await expect(status(page)).not.toHaveText('animações: 0');
+  const slowed = await swap();
+  expect(slowed - baseline).toBeGreaterThan(700);
 });

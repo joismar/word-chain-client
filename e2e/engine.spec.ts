@@ -86,6 +86,8 @@ test('keeps cells clickable after a resize', async ({ page }) => {
 });
 
 test('tears the stage down and builds a new one on remount', async ({ page }) => {
+  // Three renderer inits; software WebGL under a parallel run takes a while.
+  test.slow();
   for (let i = 1; i <= 2; i++) {
     await clickCell(page, 3, 0);
     await expect(log(page)).toContainText('tap remount remount:0');
