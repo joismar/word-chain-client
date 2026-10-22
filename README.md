@@ -15,10 +15,11 @@ Cliente web em React para o jogo multiplayer em tempo real **Word Chain** (Encad
   - [Ações Enviadas pelo Cliente](#ações-enviadas-pelo-cliente)
   - [Eventos Recebidos do Servidor](#eventos-recebidos-do-servidor)
   - [Modelos de Dados](#modelos-de-dados)
-- [Sistema de Grid Layout (Branch `new-grid-layout`)](#-sistema-de-grid-layout-branch-new-grid-layout)
+- [Tabuleiro: cenas, engine e motion](#-tabuleiro-cenas-engine-e-motion)
   - [Sistema de Coordenadas Centrado](#sistema-de-coordenadas-centrado)
-  - [Animações com `@react-spring/web`](#animações-com-react-springweb)
-  - [Input Customizado na Grade](#input-customizado-na-grade)
+  - [Cenas puras](#cenas-puras)
+  - [Corrente](#corrente)
+  - [Texto e teclado](#texto-e-teclado)
 - [Estrutura de Pastas](#-estrutura-de-pastas)
 - [Instalação e Execução](#-instalação-e-execução)
 - [Próximos Passos](#-próximos-passos)
@@ -30,7 +31,7 @@ Cliente web em React para o jogo multiplayer em tempo real **Word Chain** (Encad
 O **Word Chain** é um jogo de vocabulário e agilidade mental onde:
 1. Um jogador cria uma sala (*Host*) ou entra em uma existente via código (*Join*).
 2. O Host define configurações da partida (duração de 3 ou 5 minutos, penalidade de repetição de palavras).
-3. Durante a partida, os jogadores se revezam enviando palavras que devem começar com as letras finais da palavra anterior (ou sobreposição válida calculada por `countOverlapStartEnd`).
+3. Durante a partida, os jogadores se revezam enviando palavras que devem começar com as letras finais da palavra anterior (ou sobreposição válida calculada por `countOverlap`, em `lib/overlap.ts`).
 4. Cada rodada conta com timer geral da partida e timer por turno (15 segundos).
 5. No fim do tempo, a tela de encerramento exibe o ranking final e pontuações calculadas.
 
@@ -43,7 +44,8 @@ O **Word Chain** é um jogo de vocabulário e agilidade mental onde:
 - **Estilização**: [Tailwind CSS 4](https://tailwindcss.com/)
 - **Estado**: [XState v5](https://stately.ai/docs) (`gameMachine` + `socketActor`)
 - **Protocolo**: [zod](https://zod.dev/) espelhando o JSON Schema do backend (protocolo v2)
-- **Animações de UI**: [@react-spring/web](https://www.react-spring.dev/) no grid atual; [anime.js v4](https://animejs.com/) na engine Pixi (F3)
+- **Renderização**: [PixiJS v8](https://pixijs.com/) (WebGPU → WebGL), um canvas para o tabuleiro inteiro
+- **Animações**: [anime.js v4](https://animejs.com/) avançado pelo ticker do Pixi
 - **Comunicação em Tempo Real**: WebSocket nativo integrado a AWS API Gateway WebSocket
 - **Testes**: Vitest (unitários) e Playwright (e2e)
 
@@ -69,7 +71,7 @@ A arquitetura alvo e as fases da refatoração estão em [docs/refactor-plan.md]
 └───────────────▲─────────────────┘      → playing → ended
                 │ useGame()
 ┌───────────────▼─────────────────┐
-│        React UI Screens         │  (Home, Lobby, Game, End / GridLayout)
+│  App → scenes → Stage (Pixi)    │  (cenas puras → TileSpec[] → canvas)
 └─────────────────────────────────┘
 ```
 
@@ -104,16 +106,14 @@ O servidor também manda `error` (`{ code, message }`, com `requestId` nulo quan
 
 ---
 
-## 🎨 Sistema de Grid Layout (Branch `new-grid-layout`)
+## 🎨 Tabuleiro: cenas, engine e motion
 
-A branch `new-grid-layout` reformula toda a experiência de interface do Word Chain, transformando a visualização em uma grade 2D interativa baseada em células tipográficas dinâmicas.
+O jogo inteiro é um tabuleiro de letras desenhado num único canvas Pixi. As telas não posicionam elementos: cada uma é uma função pura que devolve a lista de tiles, e a engine faz o diff por `key`.
 
 ### Sistema de Coordenadas Centrado
 
-- A grade calcula dinamicamente linhas e colunas ímpares com base no `useVisualViewport`:
-  $$\text{gridRows} = \text{round}\left(\frac{\text{viewportHeight}}{\text{itemSize} + \text{itemGap}}\right)$$
-- O centro exato da tela é o ponto **`(0, 0)`**.
-- Células e palavras são indexadas por strings `"linha,coluna"` (ex: `"-4,-3"`, `"0,0"`, `"4,5"`).
+- O centro da tela é a célula **`(0, 0)`**; linhas crescem para baixo, colunas para a direita.
+- O tamanho da célula se adapta à tela (`engine/layout.ts`), com pelo menos 15 colunas no celular.
 
 ```
          (-Y) Topo
@@ -123,19 +123,22 @@ A branch `new-grid-layout` reformula toda a experiência de interface do Word Ch
          (+Y) Base
 ```
 
-### Animações com `@react-spring/web`
+### Cenas puras
 
-O hook `useWordAnimations.ts` gerencia 3 níveis de animações reativas:
-1. **Propagate Hover**: Efeito ondulatório nos caracteres vizinhos ao passar o mouse sobre uma letra (`propagateProps`).
-2. **Hidden/Reveal Scale**: Animação de entrada e saída com efeito elástico escalonado letra a letra (`hiddenProps`).
-3. **Spatial Shift**: Deslocamento físico de palavras na grade de uma coordenada antiga para uma nova (`newIndexProps`).
+`src/scenes/*.ts` (home, lobby, settings, game, end) recebem o estado do jogo mais o que só a tela sabe (modo do menu, texto digitado, foco) e devolvem `{ tiles, fields }`. São testadas em Vitest sem canvas, com snapshots em texto do tabuleiro.
 
-### Input Customizado na Grade (`CustomInput.tsx`)
+- **`key` estável** é o que dá o motion: o "CRIAR" vira "APELIDO" trocando as letras nos mesmos tiles, o `<` desliza entre telas, e a palavra digitada usa a `key` da próxima palavra da corrente, então quando o servidor aceita, as letras voam do campo até o lugar delas.
+- **Ações:** tiles com `action` são clicáveis; o `App` traduz o toque em comandos da máquina (`host`, `ready`, `pass`...).
+- **Efeitos pontuais** (`app/useBoardEffects.ts`): tremida na palavra recusada (pelo `code` de erro do pedido `word`), pulso na cor de quem joga a cada troca de turno e batida dos relógios nos últimos 10 s.
 
-Combina um `<input>` nativo transparente (que captura teclado físico e virtual mobile) com blocos renderizados na grade:
-- Cursor piscante sincronizado com o índice da letra digitada (`animate-blink`).
-- Converte entradas automaticamente para minúsculas.
-- Renderização visual das letras respeitando o design system de blocos com relevo e sombra.
+### Corrente
+
+Cada palavra começa embaixo das letras que divide com a anterior (`lib/overlap.ts`), formando uma escada; as letras sobrepostas ficam verdes. As 6 palavras mais novas aparecem, a mais nova embaixo; ao chegar uma nova, as outras sobem e as antigas saem pelo topo. O trecho visível fica centralizado e, quando não cabe na largura, a palavra mais nova fica encostada na direita e as antigas são cortadas na borda.
+
+### Texto e teclado
+
+- Os campos (apelido, sala, palavra) são `<input>` reais e invisíveis sobre as células (`app/HiddenInput.tsx`): teclado do celular, IME e colar funcionam de forma nativa, e o canvas só desenha o conteúdo.
+- O texto vindo do servidor passa por `toBoardText` (maiúsculas, sem acento, `?` para o que a fonte não tem).
 
 ---
 
@@ -143,7 +146,7 @@ Combina um `<input>` nativo transparente (que captura teclado físico e virtual 
 
 ```
 word-chain-client/
-├── e2e/                         # Playwright: smoke e partida completa (match.spec.ts)
+├── e2e/                         # Playwright: tela inicial, engine, motion e partida completa (match.spec.ts)
 ├── src/
 │   ├── protocol/
 │   │   ├── schema.ts            # Protocolo v2 em zod
@@ -154,16 +157,14 @@ word-chain-client/
 │   │   ├── selectors.ts         # Derivações puras (host, turno, timers)
 │   │   ├── GameProvider.tsx     # Monta a máquina com o socket real
 │   │   └── useGame.ts           # Hook usado pelas telas
-│   ├── components/              # GridLayout, CustomInput, Toast...
-│   ├── hooks/                   # useWordAnimations, useVisualViewport...
+│   ├── components/Toast.tsx     # Avisos (DOM, fora do canvas)
+│   ├── scenes/                  # Telas como funções puras → TileSpec[] (F4)
 │   ├── engine/                  # Engine Pixi: Stage, layout, TileLayer, Tile, pool (F2)
 │   ├── motion/                  # Tokens, coreografias puras, Director (anime.js) e ponte com o ticker (F3)
-│   ├── app/                     # GameCanvas e HiddenInput (ponte React ↔ engine)
+│   ├── app/                     # App, GameCanvas, HiddenInput, estado local da UI e efeitos
 │   ├── theme/palette.ts         # Cores dos tiles
 │   ├── dev/                     # Playgrounds só de dev: /dev/engine e /dev/motion
-│   ├── screens/grid/            # HomeGrid, LobbyGrid, SettingsGrid, GameGrid, EndGrid
-│   ├── lib/env.ts               # Leitura de VITE_WS_URL
-│   ├── App.tsx
+│   ├── lib/                     # env (VITE_WS_URL), overlap da corrente, sanitize
 │   └── main.tsx
 ├── package.json
 └── vite.config.ts
@@ -213,6 +214,8 @@ Aponte o cliente para ele com `VITE_WS_URL=ws://localhost:3001` no `.env.local` 
 ```bash
 E2E_WS_URL=ws://localhost:3001 npm run e2e
 ```
+
+O e2e sobe o Vite na porta 5174 e reaproveita um servidor que já esteja nela; se a porta estiver ocupada por outro `npm run dev`, use `E2E_PORT=5175`.
 
 ---
 
