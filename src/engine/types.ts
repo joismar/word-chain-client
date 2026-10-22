@@ -20,6 +20,13 @@ export interface TileSpec {
   action?: string;
 }
 
+/** The specs entering, updating and exiting in one sync. */
+export interface Batch {
+  enter: readonly TileSpec[];
+  update: readonly { prev: TileSpec; next: TileSpec }[];
+  exit: readonly TileSpec[];
+}
+
 export type EngineEvent =
   | { type: 'tap'; action: string; key: string }
   | { type: 'hover'; action: string | null; key: string | null };

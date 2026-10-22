@@ -5,16 +5,21 @@ import './index.css';
 import { GameProvider } from './state/GameProvider.tsx';
 import { ToastManager } from './components/Toast.tsx';
 
-// Dev-only playground for the Pixi engine; stripped from production builds.
-const EngineDemo = import.meta.env.DEV && location.pathname.startsWith('/dev/engine')
-  ? lazy(() => import('./dev/EngineDemo.tsx'))
-  : null;
+// Dev-only playgrounds for the Pixi engine and motion; stripped from production builds.
+const devPages = {
+  '/dev/engine': () => import('./dev/EngineDemo.tsx'),
+  '/dev/motion': () => import('./dev/MotionPlayground.tsx'),
+};
+const devPage = import.meta.env.DEV
+  ? Object.entries(devPages).find(([path]) => location.pathname.startsWith(path))?.[1]
+  : undefined;
+const DevPage = devPage ? lazy(devPage) : null;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {EngineDemo ? (
+    {DevPage ? (
       <Suspense>
-        <EngineDemo />
+        <DevPage />
       </Suspense>
     ) : (
       <>

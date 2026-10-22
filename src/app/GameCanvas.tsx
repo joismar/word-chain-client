@@ -9,18 +9,22 @@ type GameCanvasProps = {
   onEvent?: (event: EngineEvent) => void;
   /** DOM laid over the canvas in board coordinates (e.g. HiddenInput). */
   overlay?: (board: Board) => React.ReactNode;
+  /** The live stage once it exists, null after teardown (effects, motion settings). */
+  onStage?: (stage: Stage | null) => void;
 };
 
 /** Mounts the Pixi stage over the visible viewport and feeds it tiles. */
-export function GameCanvas({ tiles, onEvent, overlay }: GameCanvasProps) {
+export function GameCanvas({ tiles, onEvent, overlay, onStage }: GameCanvasProps) {
   const hostRef = React.useRef<HTMLDivElement>(null);
   const onEventRef = React.useRef(onEvent);
+  const onStageRef = React.useRef(onStage);
   const [stage, setStage] = React.useState<Stage | null>(null);
   const [viewport, setViewport] = React.useState(readViewport);
   const [board, setBoard] = React.useState<Board | null>(null);
 
   React.useEffect(() => {
     onEventRef.current = onEvent;
+    onStageRef.current = onStage;
   });
 
   React.useEffect(() => {
@@ -36,6 +40,7 @@ export function GameCanvas({ tiles, onEvent, overlay }: GameCanvasProps) {
       s.resize(readViewport());
       setStage(s);
       setBoard(s.board);
+      onStageRef.current?.(s);
     });
     const unwatch = watchViewport((next) => {
       setViewport(next);
@@ -46,6 +51,7 @@ export function GameCanvas({ tiles, onEvent, overlay }: GameCanvasProps) {
     return () => {
       controller.abort();
       unwatch();
+      if (created) onStageRef.current?.(null);
       created?.destroy();
       setStage(null);
     };

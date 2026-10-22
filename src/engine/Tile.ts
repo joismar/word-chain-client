@@ -1,8 +1,9 @@
 import { BitmapFont, BitmapFontManager, BitmapText, Container, Graphics, Rectangle } from 'pixi.js';
+import { restMotion, type TileMotion } from '@src/motion/choreography';
 import { BOARD, TONES } from '@src/theme/palette';
 import { cellToPoint, type Board } from './layout';
 import type { TileView } from './TileLayer';
-import type { TileSpec } from './types';
+import type { TileSpec, TileTone } from './types';
 
 export const TILE_FONT = 'TileFont';
 const FONT_SIZE = 48;
@@ -24,30 +25,46 @@ export function installTileFont(resolution: number) {
   });
 }
 
-export type TilePointer = 'tap' | 'over' | 'out';
+export type TilePointer = 'tap' | 'over' | 'out' | 'down' | 'up';
 
-/** One letter cell: a shadow block, a raised face and its glyph. */
+/**
+ * One letter cell: a shadow block, a raised face and its glyph. The tile
+ * itself sits on its cell and owns the hit area; `body` carries the drawing
+ * and takes the motion channels, so animation never moves what you click.
+ */
 export class Tile extends Container implements TileView {
   spec: TileSpec | null = null;
+  /** Animated by the director; applied on every render. */
+  readonly motion: TileMotion = restMotion();
+  private readonly body = new Container();
   private readonly shadow = new Graphics();
   private readonly face = new Graphics();
   private readonly caret = new Graphics();
+  private readonly overlay = new Graphics();
   private readonly glyph = new BitmapText({ text: '', style: { fontFamily: TILE_FONT, fontSize: FONT_SIZE }, anchor: 0.5 });
   private drawn = '';
+  private pitch = 0;
 
   constructor(onPointer: (kind: TilePointer, spec: TileSpec) => void) {
     super();
-    this.addChild(this.shadow, this.face, this.caret, this.glyph);
+    this.body.addChild(this.shadow, this.face, this.caret, this.glyph, this.overlay);
+    this.addChild(this.body);
+    this.overlay.alpha = 0;
     const forward = (kind: TilePointer) => () => {
       if (this.spec?.action) onPointer(kind, this.spec);
     };
     this.on('pointertap', forward('tap'));
     this.on('pointerover', forward('over'));
     this.on('pointerout', forward('out'));
+    this.on('pointerdown', forward('down'));
+    this.on('pointerup', forward('up'));
+    this.on('pointerupoutside', forward('up'));
+    this.onRender = () => this.applyMotion();
   }
 
   apply(spec: TileSpec, board: Board) {
     this.spec = spec;
+    this.pitch = board.pitch;
     const { x, y } = cellToPoint(board, spec.row, spec.col);
     this.position.set(x, y);
     this.redraw(spec, board.cell);
@@ -62,6 +79,18 @@ export class Tile extends Container implements TileView {
     this.eventMode = interactive ? 'static' : 'passive';
     this.cursor = interactive ? 'pointer' : 'default';
     this.hitArea = interactive ? new Rectangle(-board.pitch / 2, -board.pitch / 2, board.pitch, board.pitch) : null;
+    this.applyMotion();
+  }
+
+  /** Stops answering the pointer while an exit plays. */
+  leave() {
+    this.eventMode = 'none';
+    this.cursor = 'default';
+  }
+
+  /** Colour of the flash overlay. */
+  setFlashTone(tone: TileTone) {
+    this.overlay.tint = TONES[tone].face;
   }
 
   /** Back to a blank state before returning to the pool. */
@@ -69,9 +98,17 @@ export class Tile extends Container implements TileView {
     this.spec = null;
     this.eventMode = 'passive';
     this.hitArea = null;
-    this.alpha = 1;
-    this.scale.set(1);
-    this.rotation = 0;
+    Object.assign(this.motion, restMotion());
+    this.applyMotion();
+  }
+
+  private applyMotion() {
+    const m = this.motion;
+    this.body.position.set((m.x + m.nudge) * this.pitch, (m.y + m.lift) * this.pitch);
+    this.body.scale.set(m.scale * m.press * m.pulse);
+    this.body.alpha = m.alpha;
+    this.overlay.alpha = m.flash;
+    this.caret.alpha = m.caret;
   }
 
   private redraw(spec: TileSpec, cell: number) {
@@ -85,6 +122,7 @@ export class Tile extends Container implements TileView {
     this.shadow.clear().roundRect(-half, -half, cell, cell, radius).fill(tone.shadow);
     this.face.clear();
     if (spec.variant !== 'slot') this.face.roundRect(-half, -half, cell, cell * 0.9, radius).fill(tone.face);
+    this.overlay.clear().roundRect(-half, -half, cell, cell, radius).fill(0xffffff);
     this.caret.clear();
     if (spec.variant === 'slot' && spec.active) {
       this.caret.roundRect(-half + cell * 0.15, half - cell * 0.28, cell * 0.7, cell * 0.08, radius).fill(BOARD.cursor);

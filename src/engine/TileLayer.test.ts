@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { computeBoard, type Board } from './layout';
 import { Pool } from './pool';
 import { TileLayer, type Choreography, type TileView } from './TileLayer';
-import type { TileSpec } from './types';
+import type { Batch, TileSpec } from './types';
 
 class FakeView implements TileView {
   static made = 0;
@@ -10,9 +10,13 @@ class FakeView implements TileView {
   spec: TileSpec | null = null;
   board: Board | null = null;
   destroyed = false;
+  left = false;
   apply(spec: TileSpec, board: Board) {
     this.spec = spec;
     this.board = board;
+  }
+  leave() {
+    this.left = true;
   }
 }
 
@@ -95,6 +99,44 @@ describe('TileLayer', () => {
     expect(calls).toEqual(['enter a', 'update A->B']);
   });
 
+  it('hands every hook the whole batch, with the previous spec of updates', () => {
+    const batches: Batch[] = [];
+    const { layer } = setup({
+      enter: (_v, _s, batch) => void batches.push(batch),
+      update: (_v, _p, _n, batch) => void batches.push(batch),
+      exit: (_v, _s, batch) => void batches.push(batch),
+    });
+    layer.sync([tile('a'), tile('b', 'B', 1)], board);
+    layer.sync([tile('a', 'A', 3), tile('c')], board);
+    const last = batches.at(-1)!;
+    expect(new Set(batches.slice(2))).toEqual(new Set([last]));
+    expect(last.enter.map((s) => s.key)).toEqual(['c']);
+    expect(last.update).toEqual([{ prev: tile('a'), next: tile('a', 'A', 3) }]);
+    expect(last.exit.map((s) => s.key)).toEqual(['b']);
+  });
+
+  it('stops an exiting tile taking input and cancels its motion when it retires', async () => {
+    const exit = deferred();
+    const cancelled: FakeView[] = [];
+    const { layer } = setup({ exit: () => exit.promise, cancel: (v) => void cancelled.push(v) });
+    layer.sync([tile('a')], board);
+    const view = layer.get('a')!;
+    layer.sync([], board);
+    expect(view.left).toBe(true);
+    expect(cancelled).toEqual([]);
+    exit.resolve();
+    await exit.promise;
+    await Promise.resolve();
+    expect(cancelled).toEqual([view]);
+  });
+
+  it('lists live tiles but not exiting ones', () => {
+    const { layer } = setup({ exit: () => new Promise(() => {}) });
+    layer.sync([tile('a'), tile('b', 'B', 1)], board);
+    layer.sync([tile('b', 'B', 1)], board);
+    expect([...layer.entries()].map((e) => e.spec.key)).toEqual(['b']);
+  });
+
   it('re-applies every tile on a new board', () => {
     const { layer } = setup();
     layer.sync([tile('a')], board);
@@ -105,7 +147,8 @@ describe('TileLayer', () => {
 
   it('destroys live, exiting and pooled tiles on destroy', async () => {
     const exit = deferred();
-    const { layer, mounted } = setup({ exit: () => exit.promise });
+    const cancelled = new Set<FakeView>();
+    const { layer, mounted } = setup({ exit: () => exit.promise, cancel: (v) => void cancelled.add(v) });
     layer.sync([tile('a'), tile('b')], board);
     const leaving = layer.get('a')!;
     const staying = layer.get('b')!;
@@ -114,6 +157,7 @@ describe('TileLayer', () => {
     expect(mounted.size).toBe(0);
     expect(staying.destroyed).toBe(true);
     expect(leaving.destroyed).toBe(true);
+    expect(cancelled).toEqual(new Set([leaving, staying]));
     exit.resolve();
     await exit.promise;
     expect(mounted.size).toBe(0);

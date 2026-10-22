@@ -1,31 +1,49 @@
-import { Application, BitmapFontManager, Container } from 'pixi.js';
+import { Application, BitmapFontManager, Container, UPDATE_PRIORITY } from 'pixi.js';
+import type { MotionEffect } from '@src/motion/choreography';
+import { Director } from '@src/motion/director';
+import { prefersReducedMotion, watchReducedMotion } from '@src/motion/reduced';
+import { bindAnimeToTicker } from '@src/motion/ticker-bridge';
+import { tokens as defaultTokens, type MotionTokens } from '@src/motion/tokens';
 import { BOARD } from '@src/theme/palette';
 import { BoardBackground } from './Board';
 import { HoverTracker } from './hover';
 import { computeBoard, type Board, type BoardOptions, type Viewport } from './layout';
 import { Pool } from './pool';
 import { installTileFont, Tile, TILE_FONT } from './Tile';
-import { TileLayer, type Choreography } from './TileLayer';
+import { TileLayer } from './TileLayer';
 import type { EngineEvent, TileSpec } from './types';
+
+export interface MotionOptions {
+  tokens?: MotionTokens;
+  /** Forces reduced motion on or off; unset follows the OS setting. */
+  reduced?: boolean;
+}
 
 export interface StageOptions {
   viewport: Viewport;
   onEvent?: (event: EngineEvent) => void;
   board?: BoardOptions;
-  choreography?: Partial<Choreography<Tile>>;
+  motion?: MotionOptions;
 }
 
 // Pixi keeps global pools and caches; overlapping apps (StrictMode mounts
 // twice) would tear each other's resources down, so lifecycles run in turn.
 let lifecycle: Promise<unknown> = Promise.resolve();
 
-/** The Pixi application: board background, tile layer and pointer events. */
+/** The Pixi application: board background, tile layer, pointer events and motion. */
 export class Stage {
   private readonly world = new Container();
   private readonly background = new BoardBackground();
   private readonly tiles = new Container();
   private readonly layer: TileLayer<Tile>;
   private readonly hover: HoverTracker;
+  private readonly director: Director<Tile>;
+  private readonly unbindTicker: () => void;
+  private readonly unwatchReduced: () => void;
+  private motionTokens: MotionTokens;
+  private reducedOverride: boolean | undefined;
+  private systemReduced = prefersReducedMotion();
+  private hoveredAction: string | null = null;
   private specs: readonly TileSpec[] = [];
   private current: Board;
   private destroyed = false;
@@ -43,6 +61,8 @@ export class Stage {
         autoDensity: true,
         resolution: window.devicePixelRatio || 1,
         preference: 'webgpu',
+        // Frames are drawn on demand: on changes, and while something animates.
+        autoStart: false,
       });
       const stage = new Stage(app, options);
       if (signal?.aborted) {
@@ -58,15 +78,33 @@ export class Stage {
 
   private constructor(private readonly app: Application, private readonly options: StageOptions) {
     installTileFont(app.renderer.resolution);
-    const emit = (event: EngineEvent) => options.onEvent?.(event);
-    this.hover = new HoverTracker(emit);
+    this.motionTokens = options.motion?.tokens ?? defaultTokens;
+    this.reducedOverride = options.motion?.reduced;
+    this.unwatchReduced = watchReducedMotion((reduced) => (this.systemReduced = reduced));
+    this.director = new Director<Tile>(() => ({
+      tokens: this.motionTokens,
+      reduced: this.reducedOverride ?? this.systemReduced,
+    }), () => {
+      if (!this.destroyed && !app.ticker.started) app.ticker.start();
+    });
+    this.unbindTicker = bindAnimeToTicker(app.ticker);
+    // After the frame is drawn, sleep until the next animation starts.
+    app.ticker.add(() => {
+      if (!this.director.busy) app.ticker.stop();
+    }, undefined, UPDATE_PRIORITY.UTILITY);
+
+    this.hover = new HoverTracker((event) => {
+      if (event.type === 'hover') this.onHover(event.action, event.key);
+      options.onEvent?.(event);
+    });
     this.current = computeBoard(options.viewport, options.board);
 
     const pool = new Pool<Tile>(
       () => new Tile((kind, spec) => {
-        if (kind === 'tap') emit({ type: 'tap', action: spec.action!, key: spec.key });
+        if (kind === 'tap') options.onEvent?.({ type: 'tap', action: spec.action!, key: spec.key });
         else if (kind === 'over') this.hover.over(spec);
-        else this.hover.out(spec);
+        else if (kind === 'out') this.hover.out(spec);
+        else this.director.press(this.viewsOf(spec.action!), kind === 'down');
       }),
       (tile) => tile.reset(),
       (tile) => tile.destroy({ children: true }),
@@ -75,7 +113,7 @@ export class Stage {
       pool,
       mount: (tile) => this.tiles.addChild(tile),
       unmount: (tile) => this.tiles.removeChild(tile),
-      choreography: options.choreography,
+      choreography: this.director,
     });
 
     this.world.addChild(this.background, this.tiles);
@@ -91,6 +129,11 @@ export class Stage {
     return this.app.canvas;
   }
 
+  /** Transitions in flight (0 when the board is at rest) and how many ever started. */
+  get motionStats(): { active: number; started: number } {
+    return { active: this.director.active, started: this.director.started };
+  }
+
   setTiles(specs: readonly TileSpec[]) {
     if (this.destroyed) return;
     this.specs = specs;
@@ -99,6 +142,17 @@ export class Stage {
     // Hit-testing reads world transforms, which only refresh on render; draw
     // now so a click right after a change lands on the new layout.
     this.app.render();
+  }
+
+  /** One-off feedback on top of the tile join (shake, flash, turn pulse, timer). */
+  play(effect: MotionEffect) {
+    if (this.destroyed) return;
+    this.director.play(effect, this.layer.entries());
+  }
+
+  setMotion(options: MotionOptions) {
+    if ('tokens' in options) this.motionTokens = options.tokens ?? defaultTokens;
+    if ('reduced' in options) this.reducedOverride = options.reduced;
   }
 
   resize(viewport: Viewport) {
@@ -116,8 +170,22 @@ export class Stage {
     if (this.destroyed) return;
     this.destroyed = true;
     this.layer.destroy();
+    this.director.destroy();
+    this.unbindTicker();
+    this.unwatchReduced();
     this.app.destroy({ removeView: true, releaseGlobalResources: true }, { children: true });
     BitmapFontManager.uninstall(TILE_FONT);
+  }
+
+  private onHover(action: string | null, key: string | null) {
+    const entered = action !== null && action !== this.hoveredAction;
+    this.hoveredAction = action;
+    if (!entered) return;
+    this.director.ripple([...this.layer.entries()].filter((e) => e.spec.action === action), key!);
+  }
+
+  private viewsOf(action: string): Tile[] {
+    return [...this.layer.entries()].filter((e) => e.spec.action === action).map((e) => e.view);
   }
 
   private layout() {
