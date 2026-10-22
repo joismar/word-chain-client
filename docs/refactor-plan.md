@@ -148,8 +148,10 @@ Regra: **nenhum número mágico de animação fora de `tokens.ts`**.
 A engine roda isolada em `/dev/engine` (só em dev). O app continua no `GridLayout` até a F4 portar as cenas; os eventos `tap`/`hover` chegam à máquina quando as cenas existirem.
 
 ### F3 — Motion
-- [ ] `ticker-bridge` (anime ↔ Pixi), `tokens.ts`, `choreography.ts`
-- [ ] Playground de motion (`/dev/motion`) para ajustar tokens visualmente
+- [x] `ticker-bridge` (anime ↔ Pixi), `tokens.ts`, `choreography.ts`
+- [x] Playground de motion (`/dev/motion`) para ajustar tokens visualmente
+
+As coreografias são planos puros (`choreography.ts`) executados por um `Director` com anime.js; o ticker do Pixi só roda enquanto há animação (render sob demanda). Ficam para depois: as letras sobrepostas se fundindo com brilho e partículas (F5, `FxLayer`) e o pulso de turno percorrendo as células vazias do fundo (hoje percorre os tiles; F5). O alinhamento por sobreposição na corrente é da F4.
 
 ### F4 — Cenas
 - [ ] `home` → `lobby` → `settings` → `game` → `end` como funções puras + testes de snapshot de `TileSpec[]`

@@ -43,7 +43,7 @@ O **Word Chain** é um jogo de vocabulário e agilidade mental onde:
 - **Estilização**: [Tailwind CSS 4](https://tailwindcss.com/)
 - **Estado**: [XState v5](https://stately.ai/docs) (`gameMachine` + `socketActor`)
 - **Protocolo**: [zod](https://zod.dev/) espelhando o JSON Schema do backend (protocolo v2)
-- **Animações de UI**: [@react-spring/web](https://www.react-spring.dev/) (até a engine Pixi da refatoração)
+- **Animações de UI**: [@react-spring/web](https://www.react-spring.dev/) no grid atual; [anime.js v4](https://animejs.com/) na engine Pixi (F3)
 - **Comunicação em Tempo Real**: WebSocket nativo integrado a AWS API Gateway WebSocket
 - **Testes**: Vitest (unitários) e Playwright (e2e)
 
@@ -157,9 +157,10 @@ word-chain-client/
 │   ├── components/              # GridLayout, CustomInput, Toast...
 │   ├── hooks/                   # useWordAnimations, useVisualViewport...
 │   ├── engine/                  # Engine Pixi: Stage, layout, TileLayer, Tile, pool (F2)
+│   ├── motion/                  # Tokens, coreografias puras, Director (anime.js) e ponte com o ticker (F3)
 │   ├── app/                     # GameCanvas e HiddenInput (ponte React ↔ engine)
 │   ├── theme/palette.ts         # Cores dos tiles
-│   ├── dev/EngineDemo.tsx       # Playground da engine em /dev/engine (só em dev)
+│   ├── dev/                     # Playgrounds só de dev: /dev/engine e /dev/motion
 │   ├── screens/grid/            # HomeGrid, LobbyGrid, SettingsGrid, GameGrid, EndGrid
 │   ├── lib/env.ts               # Leitura de VITE_WS_URL
 │   ├── App.tsx
