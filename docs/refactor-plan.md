@@ -1,7 +1,7 @@
 # Plano de Refatoração — Word Chain
 
 > Escrito em 2026-10-20 a partir da leitura do código (não da documentação existente).
-> Decisões tomadas: **PixiJS v8 + anime.js v4**, **evoluir o grid de tiles**, **React 19 como casca**, **backend redesenhado junto**.
+> Decisões tomadas: **PixiJS v8 + anime.js v4**, **evoluir o grid de tiles**, **React 19 como casca**, **backend redesenhado junto**, **Commit Mono** nos tiles, **visual flat e minimalista** (sem relevo).
 
 ---
 
@@ -115,10 +115,10 @@ Regra: **nenhum número mágico de animação fora de `tokens.ts`**.
 
 ## 3. Direção visual (evolução do grid)
 
-- Paleta em **OKLCH** com luminância consistente entre as cores dos jogadores (hoje stone-600 e amber-600 têm contrastes bem diferentes)
-- Tiles com **relevo por shader** (bevel + sombra de contato) em vez de dois `div`s empilhados
-- Células vazias do fundo quase imperceptíveis, reagindo levemente ao cursor/toque
-- Tipografia: monoespaçada com personalidade, renderizada em **BitmapText/MSDF** (nítida em qualquer escala). Candidatas: Departure Mono, Commit Mono, Fragment Mono. **Decisão pendente**
+- Paleta em **OKLCH** com a mesma luminosidade e croma em todas as faces; só o matiz muda, e o contraste letra/face fica em AA (4,5:1) para todos os tons. Nove tons, um por cor de jogador mais o neutro
+- **Flat e minimalista**: o tile é uma face lisa, sem o bloco de sombra; o slot vazio é a face com opacidade baixa. O relevo por shader foi testado (chanfro + sombra de contato) e descartado por parecer datado
+- Células vazias do fundo quase imperceptíveis; a troca de turno passa por elas como uma onda na cor de quem joga
+- Tipografia: **Commit Mono** 600 (via `@fontsource/commit-mono`), também no DOM. Escolhida comparando com Departure Mono e Fragment Mono num protótipo em Pixi
 - Tamanho de célula adaptativo: mínimo de colunas garantido no mobile (hoje as palavras cortam em telas estreitas)
 
 ---
@@ -161,7 +161,12 @@ As coreografias são planos puros (`choreography.ts`) executados por um `Directo
 O app passou a ser um único canvas Pixi; o grid DOM, o react-spring e os hooks antigos saíram. A palavra digitada usa a key da próxima palavra da corrente, então a palavra aceita voa até a escada. Shake, pulso de turno e tick dos relógios vêm do estado (`useBoardEffects`). O Pixi agora entra no bundle de produção (cerca de 715 kB, 220 kB gzip); o orçamento é da F7. As telas usam coordenadas fixas pensadas para 15 colunas: o ajuste fino para telas baixas (paisagem com teclado aberto) é da F6.
 
 ### F5 — Visual e FX
-- [ ] Paleta OKLCH, fonte MSDF, shader de relevo, `FxLayer` (partículas de corrente, flashes)
+- [x] Paleta OKLCH (`theme/oklch.ts` + `theme/palette.ts`, testada: gamut, mesma luminosidade, contraste AA, um tom por cor de jogador)
+- [x] Commit Mono nos tiles e no DOM
+- [x] ~~Shader de relevo~~: descartado em favor do visual flat
+- [x] `FxLayer` (partículas onde a palavra nova se liga à corrente, onda de turno nas células vazias)
+
+A fonte continua num atlas de BitmapText gerado em runtime (48 px × DPR), agora esperando a Commit Mono carregar antes de desenhar: os tiles só ficam menores que o atlas, então MSDF não traria ganho visível e exigiria um passo de build para gerar o atlas. As partículas são quadrados lisos na cor da sobreposição, saem das letras compartilhadas depois que a palavra pousa e somem encolhendo; os planos (`motion/fx.ts`) são puros e os números ficam em `tokens.ts`. Com `prefers-reduced-motion`, partículas e onda não tocam.
 
 ### F6 — Acessibilidade e mobile
 - [ ] Região `aria-live` anunciando turno, palavra aceita/recusada, tempo restante
@@ -213,7 +218,7 @@ Ler o SKILL.md de cada skill de terceiros antes de instalar.
 
 ## 7. Decisões pendentes
 
-1. Fonte (Departure Mono / Commit Mono / Fragment Mono / outra)
+1. ~~Fonte~~: Commit Mono (F5)
 2. IaC: SAM ou CDK
 3. Backend continua em Python ou migra para TypeScript (Node 22) para compartilhar tipos diretamente com o front. A recomendação atual é **Python + JSON Schema**, por ser a menor ruptura
 4. O que fazer com `.agents/`: remover ou manter fora do fluxo do Claude Code

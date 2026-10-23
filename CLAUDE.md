@@ -20,7 +20,7 @@ npm run e2e        # Playwright (desktop + mobile), sobe o Vite na porta 5174 (E
 - O e2e aponta para um socket inalcançável (`ws://127.0.0.1:9`) para nunca tocar o backend real. Use `E2E_WS_URL` para apontar para um backend de teste; sem ele, `e2e/match.spec.ts` é pulado.
 - Backend local para testar ponta a ponta sem deploy: em `../word-chain-backend/lambda`, `.venv/Scripts/python -m local.server --port 3001`, depois `E2E_WS_URL=ws://localhost:3001 npm run e2e` (ou `VITE_WS_URL` no `.env.local` para jogar no navegador).
 
-## Estado atual do código (pós-F4)
+## Estado atual do código (pós-F5)
 
 - Protocolo v2: `src/protocol/schema.ts` (zod) espelha `src/protocol/v2.schema.json`, cópia do schema exportado pelo backend. `schema.test.ts` falha se divergirem; atualize com `npm run protocol:sync` depois de mudar o protocolo no backend.
 - Estado: `src/state/gameMachine.ts` (XState v5) com o `socketActor` invocado. As telas usam `useGame()` (`src/state/useGame.ts`); seletores puros em `selectors.ts`. Decisões por `code` de erro, nunca pelo texto.
@@ -30,6 +30,9 @@ npm run e2e        # Playwright (desktop + mobile), sobe o Vite na porta 5174 (E
 - Keys importam para o motion: o campo da palavra usa a key da próxima palavra da corrente (`inputWordId`), então a palavra aceita voa até a escada; o `<` tem a key `back` em todas as telas. A corrente (`chainTiles`) alinha por sobreposição (`lib/overlap.ts`), mostra as 6 mais novas e centraliza o trecho visível.
 - Efeitos do jogo em `app/useBoardEffects.ts`: shake quando `lastError.request === 'word'`, pulso na troca de turno, tick nos últimos 10 s dos relógios.
 - Texto do servidor passa por `toBoardText` (`lib/sanitize.ts`); `BOARD_SYMBOLS` é a lista de símbolos que a fonte dos tiles instala.
+- Visual (F5): flat e minimalista, sem relevo (o tile é uma face lisa; o slot é a face com `SLOT_ALPHA`). Cores definidas em OKLCH em `theme/palette.ts` (todas as faces com a mesma luminosidade e croma; `palette.test.ts` cobra gamut e contraste AA) e convertidas por `theme/oklch.ts`. O fundo de `index.css` espelha `BOARD_COLORS.background`.
+- Fonte: Commit Mono (`@fontsource/commit-mono`, importada em `main.tsx`). `Stage.create` espera `loadTileFont()` antes de instalar o atlas, senão o BitmapText assa a fonte de fallback.
+- `FxLayer` (`engine/FxLayer.ts`): o que não é tile. Partículas quando uma palavra entra na corrente (`stage.play({ type: 'link', ... })`, disparado por `useBoardEffects` quando a corrente cresce) e onda nas células vazias na troca de turno (junto do `pulse`). Planos puros em `motion/fx.ts`; desenha por frame enquanto há algo tocando e mantém o ticker acordado.
 - Em dev, `GameCanvas` expõe os tiles em `window.__boardTiles`; o e2e acha palavras no tabuleiro por ali (`e2e/board.ts`: `findWord`, `clickWord`).
 - Engine Pixi (`src/engine/`, F2): `Stage` (Application, ciclo de vida serializado por causa do StrictMode), `layout.ts` (geometria do tabuleiro, puro), `TileLayer` (join por `key`; hooks de coreografia recebem o lote inteiro de enter/update/exit), `Tile` (BitmapText tingido), `HiddenInput` (input real e invisível sobre o slot). Demo em `npm run dev` → `/dev/engine`, só em dev.
 - `Stage.setTiles` renderiza na hora quando algo mudou: o hit-testing do Pixi lê transforms que só atualizam no render.

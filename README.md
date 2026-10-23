@@ -159,10 +159,10 @@ word-chain-client/
 │   │   └── useGame.ts           # Hook usado pelas telas
 │   ├── components/Toast.tsx     # Avisos (DOM, fora do canvas)
 │   ├── scenes/                  # Telas como funções puras → TileSpec[] (F4)
-│   ├── engine/                  # Engine Pixi: Stage, layout, TileLayer, Tile, pool (F2)
-│   ├── motion/                  # Tokens, coreografias puras, Director (anime.js) e ponte com o ticker (F3)
+│   ├── engine/                  # Engine Pixi: Stage, layout, TileLayer, Tile, pool (F2), FxLayer (F5)
+│   ├── motion/                  # Tokens, coreografias puras, Director (anime.js), ponte com o ticker (F3) e planos de FX (F5)
 │   ├── app/                     # App, GameCanvas, HiddenInput, estado local da UI e efeitos
-│   ├── theme/palette.ts         # Cores dos tiles
+│   ├── theme/                   # Paleta OKLCH dos tiles e conversão para sRGB
 │   ├── dev/                     # Playgrounds só de dev: /dev/engine e /dev/motion
 │   ├── lib/                     # env (VITE_WS_URL), overlap da corrente, sanitize
 │   └── main.tsx
