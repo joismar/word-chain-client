@@ -130,6 +130,12 @@ describe('effects', () => {
     expect(effectTargets({ type: 'pulse', tone: 'amber' }, live)).toHaveLength(4);
   });
 
+  it('links from the shared letters only, and leaves the tiles to the fx layer', () => {
+    const link = { type: 'link', word: 'input', letters: 1, tone: 'emerald' } as const;
+    expect(effectTargets(link, live).map((s) => s.key)).toEqual(['input:0']);
+    expect(planEffect(link, live, ctx).size).toBe(0);
+  });
+
   it('shakes and flashes rose on an invalid word', () => {
     const plans = planEffect({ type: 'shake', word: 'input' }, live, ctx);
     const [flash, shake] = plans.get('input:0')!;

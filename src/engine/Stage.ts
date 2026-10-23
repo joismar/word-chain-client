@@ -1,15 +1,16 @@
 import { Application, BitmapFontManager, Container, UPDATE_PRIORITY } from 'pixi.js';
-import type { MotionEffect } from '@src/motion/choreography';
+import { effectTargets, type MotionEffect } from '@src/motion/choreography';
 import { Director } from '@src/motion/director';
 import { prefersReducedMotion, watchReducedMotion } from '@src/motion/reduced';
 import { bindAnimeToTicker } from '@src/motion/ticker-bridge';
 import { tokens as defaultTokens, type MotionTokens } from '@src/motion/tokens';
 import { BOARD } from '@src/theme/palette';
 import { BoardBackground } from './Board';
+import { FxLayer } from './FxLayer';
 import { HoverTracker } from './hover';
 import { computeBoard, type Board, type BoardOptions, type Viewport } from './layout';
 import { Pool } from './pool';
-import { installTileFont, Tile, TILE_FONT } from './Tile';
+import { installTileFont, loadTileFont, Tile, TILE_FONT } from './Tile';
 import { TileLayer } from './TileLayer';
 import type { EngineEvent, TileSpec } from './types';
 
@@ -38,6 +39,7 @@ export class Stage {
   private readonly layer: TileLayer<Tile>;
   private readonly hover: HoverTracker;
   private readonly director: Director<Tile>;
+  private readonly fx: FxLayer;
   private readonly unbindTicker: () => void;
   private readonly unwatchReduced: () => void;
   private motionTokens: MotionTokens;
@@ -51,6 +53,8 @@ export class Stage {
   /** Resolves to null when `signal` aborts before the renderer is ready. */
   static create(host: HTMLElement, options: StageOptions, signal?: AbortSignal): Promise<Stage | null> {
     const run = lifecycle.then(async () => {
+      if (signal?.aborted) return null;
+      await loadTileFont();
       if (signal?.aborted) return null;
       const app = new Application();
       await app.init({
@@ -81,16 +85,17 @@ export class Stage {
     this.motionTokens = options.motion?.tokens ?? defaultTokens;
     this.reducedOverride = options.motion?.reduced;
     this.unwatchReduced = watchReducedMotion((reduced) => (this.systemReduced = reduced));
-    this.director = new Director<Tile>(() => ({
-      tokens: this.motionTokens,
-      reduced: this.reducedOverride ?? this.systemReduced,
-    }), () => {
+    const context = () => ({ tokens: this.motionTokens, reduced: this.reducedOverride ?? this.systemReduced });
+    const wake = () => {
       if (!this.destroyed && !app.ticker.started) app.ticker.start();
-    });
+    };
+    this.director = new Director<Tile>(context, wake);
+    this.fx = new FxLayer(context, wake);
     this.unbindTicker = bindAnimeToTicker(app.ticker);
+    app.ticker.add(() => this.fx.update(this.current));
     // After the frame is drawn, sleep until the next animation starts.
     app.ticker.add(() => {
-      if (!this.director.busy) app.ticker.stop();
+      if (!this.director.busy && !this.fx.busy) app.ticker.stop();
     }, undefined, UPDATE_PRIORITY.UTILITY);
 
     this.hover = new HoverTracker((event) => {
@@ -116,7 +121,7 @@ export class Stage {
       choreography: this.director,
     });
 
-    this.world.addChild(this.background, this.tiles);
+    this.world.addChild(this.background, this.fx.under, this.tiles, this.fx.over);
     app.stage.addChild(this.world);
     this.layout();
   }
@@ -144,10 +149,15 @@ export class Stage {
     if (changed) this.app.render();
   }
 
-  /** One-off feedback on top of the tile join (shake, flash, turn pulse, timer). */
+  /** One-off feedback on top of the tile join (shake, flash, turn pulse, timer, chain link). */
   play(effect: MotionEffect) {
     if (this.destroyed) return;
+    if (effect.type === 'link') {
+      this.fx.burst(effectTargets(effect, [...this.layer.entries()].map((e) => e.spec)), effect.tone);
+      return;
+    }
     this.director.play(effect, this.layer.entries());
+    if (effect.type === 'pulse') this.fx.pulse(effect.tone, this.current);
   }
 
   setMotion(options: MotionOptions) {
@@ -171,6 +181,7 @@ export class Stage {
     this.destroyed = true;
     this.layer.destroy();
     this.director.destroy();
+    this.fx.destroy();
     this.unbindTicker();
     this.unwatchReduced();
     this.app.destroy({ removeView: true, releaseGlobalResources: true }, { children: true });

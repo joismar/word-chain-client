@@ -14,6 +14,7 @@
     "protocol:sync": "node -e \"require('fs').copyFileSync('../word-chain-backend/lambda/protocol/v2.schema.json','src/protocol/v2.schema.json')\""
   },
   "dependencies": {
+    "@fontsource/commit-mono": "^5.3.0",
     "@xstate/react": "^6.1.0",
     "animejs": "^4.5.0",
     "pixi.js": "^8.22.0",

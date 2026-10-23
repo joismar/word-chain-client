@@ -3,6 +3,7 @@ import { GameCanvas } from '@src/app/GameCanvas';
 import type { Stage } from '@src/engine/Stage';
 import { inputTiles, wordTiles } from '@src/engine/join';
 import type { EngineEvent, TileSpec, TileTone } from '@src/engine/types';
+import { countOverlap } from '@src/lib/overlap';
 import { cloneTokens, type MotionTokens } from '@src/motion/tokens';
 
 const WORDS = ['CASA', 'SAPO', 'POTE', 'TELA', 'LAGO', 'GOTA', 'TAMPA'];
@@ -20,6 +21,7 @@ const RANGES: Record<string, [number, number, number]> = {
   scale: [0.2, 1.6, 0.01],
   damping: [0, 1, 0.01],
   opacity: [0, 1, 0.01],
+  count: [0, 16, 1],
 };
 
 const NO_STATS = { active: 0, started: 0 };
@@ -66,6 +68,17 @@ export default function MotionPlayground() {
   React.useEffect(() => {
     if (timerOn) stage?.play({ type: 'tick', word: 'timer', urgent: seconds <= 3 });
   }, [timerOn, seconds, stage]);
+
+  // Once the accepted word is in the chain, burst out of the letters it shares.
+  const newest = chain.at(-1)?.id;
+  React.useEffect(() => {
+    if (chain.length < 2) return;
+    const [prev, next] = chain.slice(-2);
+    const letters = countOverlap(prev.word, next.word);
+    if (letters > 0) stage?.play({ type: 'link', word: next.id, letters, tone: 'emerald' });
+    // Only a new word bursts, not every chain re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newest, stage]);
 
   // An empty field submits the whole target, so the button works on its own.
   const accept = () => {

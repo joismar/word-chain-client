@@ -61,8 +61,10 @@ export type MotionEffect =
   /** Invalid word: damped horizontal shake plus a rose flash. */
   | { type: 'shake'; word: string }
   | { type: 'flash'; word: string; tone: TileTone }
-  /** Turn change: a pulse in the player's colour across every tile. */
+  /** Turn change: a pulse in the player's colour across every tile (and a wave over the empty cells). */
   | { type: 'pulse'; tone: TileTone }
+  /** A word joined the chain: particles out of its first `letters`, the ones it shares with the word before. */
+  | { type: 'link'; word: string; letters: number; tone: TileTone }
   /** Timer beat; `urgent` for the last seconds. */
   | { type: 'tick'; word: string; urgent?: boolean };
 
@@ -158,7 +160,9 @@ export function planExit(spec: TileSpec, batch: Batch, { tokens, reduced }: Moti
 export function effectTargets(effect: MotionEffect, specs: readonly TileSpec[]): TileSpec[] {
   if (effect.type === 'pulse') return [...specs];
   const prefix = `${effect.word}:`;
-  return specs.filter((s) => s.key.startsWith(prefix));
+  const word = specs.filter((s) => s.key.startsWith(prefix));
+  if (effect.type !== 'link') return word;
+  return word.filter((s) => Number(s.key.slice(prefix.length)) < effect.letters);
 }
 
 const flash = (tokens: MotionTokens, tone: TileTone, peak: number, delay = 0): Tween => ({

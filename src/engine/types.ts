@@ -1,5 +1,5 @@
 /** Colour family of a tile; the palette maps each to concrete colours. */
-export type TileTone = 'stone' | 'amber' | 'emerald' | 'sky' | 'purple' | 'rose';
+export type TileTone = 'stone' | 'brown' | 'amber' | 'orange' | 'rose' | 'pink' | 'purple' | 'sky' | 'emerald';
 
 /**
  * One letter cell on the board. Scenes return a list of these; the engine

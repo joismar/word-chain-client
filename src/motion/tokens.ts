@@ -30,6 +30,12 @@ export const tokens = {
     /** One cursor breath (half the loop). */
     breathe: 600,
     ripple: 220,
+    /** How long an accepted word takes to land in the chain, before its link bursts. */
+    land: 420,
+    /** Life of one link particle. */
+    burst: 520,
+    /** One empty cell's beat in the turn wave across the board. */
+    wave: 360,
   },
   distance: {
     /** How far a typed letter falls into its slot. */
@@ -38,6 +44,10 @@ export const tokens = {
     lift: 0.12,
     /** Peak horizontal offset of an invalid-word shake. */
     shake: 0.18,
+    /** How far link particles fly from the shared letters. */
+    burst: 0.9,
+    /** Side of a link particle. */
+    particle: 0.2,
   },
   scale: {
     enter: 0.4,
@@ -58,6 +68,12 @@ export const tokens = {
     pulse: 0.45,
     /** Dimmest point of a cursor breath. */
     breathe: 0.25,
+    /** Peak tint of an empty cell in the turn wave. */
+    wave: 0.3,
+  },
+  count: {
+    /** Particles per shared letter when a word links into the chain. */
+    particles: 5,
   },
 } as const;
 

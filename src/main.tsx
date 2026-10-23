@@ -1,5 +1,7 @@
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
+import '@fontsource/commit-mono/400.css';
+import '@fontsource/commit-mono/600.css';
 import './index.css';
 import { App } from './app/App.tsx';
 import { ToastManager } from './components/Toast.tsx';
