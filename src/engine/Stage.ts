@@ -1,16 +1,16 @@
-import { Application, BitmapFontManager, Container, UPDATE_PRIORITY } from 'pixi.js';
+import { Application, Container, UPDATE_PRIORITY } from 'pixi.js';
 import { effectTargets, type MotionEffect } from '@src/motion/choreography';
 import { Director } from '@src/motion/director';
 import { prefersReducedMotion, watchReducedMotion } from '@src/motion/reduced';
 import { bindAnimeToTicker } from '@src/motion/ticker-bridge';
 import { tokens as defaultTokens, type MotionTokens } from '@src/motion/tokens';
 import { BOARD } from '@src/theme/palette';
-import { BoardBackground } from './Board';
+import { BoardBackground, coveredCells } from './Board';
 import { FxLayer } from './FxLayer';
 import { HoverTracker } from './hover';
 import { computeBoard, type Board, type BoardOptions, type Viewport } from './layout';
 import { Pool } from './pool';
-import { installTileFont, loadTileFont, Tile, TILE_FONT } from './Tile';
+import { installTileFont, loadTileFont, Tile, uninstallTileFont } from './Tile';
 import { TileLayer } from './TileLayer';
 import type { EngineEvent, TileSpec } from './types';
 
@@ -143,6 +143,7 @@ export class Stage {
     if (this.destroyed) return;
     this.specs = specs;
     const changed = this.layer.sync(specs, this.current);
+    this.background.draw(this.current, coveredCells(specs));
     this.hover.prune(specs);
     // Hit-testing reads world transforms, which only refresh on render; draw
     // now so a click right after a change lands on the new layout.
@@ -185,7 +186,7 @@ export class Stage {
     this.unbindTicker();
     this.unwatchReduced();
     this.app.destroy({ removeView: true, releaseGlobalResources: true }, { children: true });
-    BitmapFontManager.uninstall(TILE_FONT);
+    uninstallTileFont();
   }
 
   private onHover(action: string | null, key: string | null) {
@@ -201,6 +202,6 @@ export class Stage {
 
   private layout() {
     this.world.position.set(this.current.originX, this.current.originY);
-    this.background.draw(this.current);
+    this.background.draw(this.current, coveredCells(this.specs));
   }
 }

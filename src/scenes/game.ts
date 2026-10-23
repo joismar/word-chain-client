@@ -1,11 +1,12 @@
-import type { TileSpec } from '@src/engine/types';
+import type { TileSpec, TileTone } from '@src/engine/types';
 import { chainOffsets, countOverlap } from '@src/lib/overlap';
 import { toBoardText } from '@src/lib/sanitize';
 import type { GameState } from '@src/protocol/schema';
 import type { Clock } from '@src/state/selectors';
 import { playerTone } from '@src/theme/palette';
-import { centred, clip, fieldTiles, text } from './text';
-import type { Area, Field, Scene } from './types';
+import { countdown as countdownTokens } from '@src/theme/tokens';
+import { centred, clip, fieldTiles, isCompact, text } from './text';
+import type { Area, Field, HudPlayer, HudTime, Scene } from './types';
 
 /** Whole seconds left, as the board shows them. */
 export interface GameTimes {
@@ -23,15 +24,20 @@ export interface PlayState {
   focused: boolean;
   /** A word or pass is waiting for the server. */
   pending: boolean;
+  /** The server refused the word in the field. */
+  wordError: boolean;
 }
 
 export const WORD_LENGTH = 12;
-const HEADER_ROW = -6;
-/** The newest word sits here; older ones climb, one row each. */
-const CHAIN_BOTTOM = 1;
-export const CHAIN_ROWS = 6;
+/** The input row; the newest chain word sits two rows above, older ones climb. */
 const INPUT_ROW = 3;
-const BUTTON_ROW = 5;
+const COMPACT_INPUT_ROW = 1;
+export const CHAIN_ROWS = 6;
+export const COMPACT_CHAIN_ROWS = 3;
+/** The big countdown tile is centred here, under PARTIDA / INICIA EM. */
+const COUNTDOWN_ROW = 3;
+/** Length of a turn; mirrors TURN_MS in the backend (entities/session.py), which the protocol doesn't send. */
+export const TURN_MS = 15_000;
 /** Clocks beat once a second for their last seconds, harder for the very last. */
 export const TICK_SECONDS = 10;
 export const URGENT_TICK_SECONDS = 3;
@@ -53,7 +59,6 @@ export const chainWordId = (index: number) => `chain-${index}`;
  */
 export const inputWordId = (game: GameState) => chainWordId(game.chain.length);
 
-const clockText = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
 /**
  * The chain as a staircase: each word starts under the letters it shares
@@ -61,12 +66,12 @@ const clockText = (seconds: number) => `${Math.floor(seconds / 60)}:${String(sec
  * off the top. The visible stretch is centred; when it is wider than the
  * board, the newest word keeps to the right edge and older ones are cut.
  */
-export function chainTiles(game: GameState, area: Area): TileSpec[] {
+export function chainTiles(game: GameState, area: Area, bottom = INPUT_ROW - 2, rows = CHAIN_ROWS): TileSpec[] {
   const words = game.chain.map((w) => toBoardText(w.word));
   if (words.length === 0) return [];
   const offsets = chainOffsets(words);
   const last = words.length - 1;
-  const first = Math.max(0, words.length - CHAIN_ROWS);
+  const first = Math.max(0, words.length - rows);
   const visible = words.map((_, i) => i).slice(first);
   const left = Math.min(...visible.map((i) => offsets[i]));
   const right = Math.max(...visible.map((i) => offsets[i] + words[i].length));
@@ -78,53 +83,73 @@ export function chainTiles(game: GameState, area: Area): TileSpec[] {
     const word = words[i];
     const overlap = i > 0 ? countOverlap(words[i - 1], word) : 0;
     const tone = i === last ? 'amber' : 'stone';
-    return text(chainWordId(i), word, CHAIN_BOTTOM - (last - i), shift + offsets[i]).map((tile, k) => ({
+    return text(chainWordId(i), word, bottom - (last - i), shift + offsets[i]).map((tile, k) => ({
       ...tile, tone: k < overlap ? 'emerald' as const : tone,
     }));
   });
 }
 
+/** The start countdown: 3, 2, 1, each a bigger tile in a hotter tone. */
+function countdownTile(seconds: number): TileSpec {
+  const n = Math.min(3, Math.max(1, seconds));
+  const tone: TileTone = countdownTokens.tones[n];
+  return { key: 'countdown:0', char: String(seconds), row: COUNTDOWN_ROW, col: 0, tone, span: countdownTokens.spans[n] };
+}
+
 export function gameScene(state: PlayState, area: Area): Scene {
   const { game, playerId, times, pending } = state;
+  const compact = isCompact(area);
   const started = times.startsIn === 0;
   const myTurn = playerId !== null && game.turnPlayerId === playerId;
-  const turnPlayer = game.players.find((p) => p.id === game.turnPlayerId);
   const canPlay = myTurn && started && !pending;
   const fields: Field[] = [];
   const tiles: TileSpec[] = [];
 
-  if (times.match !== null) {
-    tiles.push(...text('match', clockText(times.match), HEADER_ROW, -6, {
-      tone: times.match <= URGENT_MATCH_SECONDS ? 'rose' : 'stone',
-    }));
-  }
-  if (started && times.turn !== null) {
-    const label = `${times.turn}S`;
-    tiles.push(...text('turn', label, HEADER_ROW, 7 - label.length, {
-      tone: times.turn <= URGENT_TURN_SECONDS ? 'rose' : playerTone(turnPlayer?.color),
-    }));
-  }
-
-  tiles.push(...chainTiles(game, area));
+  const matchTotal = game.config.time * 60;
+  const matchLeft = started ? times.match ?? matchTotal : matchTotal;
+  const clock: HudTime = {
+    seconds: matchLeft,
+    fraction: matchTotal > 0 ? Math.min(1, matchLeft / matchTotal) : 0,
+    urgent: started && matchLeft <= URGENT_MATCH_SECONDS,
+  };
+  const players: HudPlayer[] = game.players.map((p) => {
+    const active = started && p.id === game.turnPlayerId;
+    const turn = active && times.turn !== null
+      ? { seconds: times.turn, fraction: Math.min(1, (times.turn * 1000) / TURN_MS), urgent: times.turn <= URGENT_TURN_SECONDS }
+      : undefined;
+    return { id: p.id, name: toBoardText(p.name), tone: playerTone(p.color), score: p.score, ...(active && { active }), ...(turn && { turn }) };
+  });
 
   if (!started) {
-    const label = `COMECA EM ${times.startsIn}`;
-    tiles.push(...text('message', label, INPUT_ROW, centred(label.length), { tone: 'amber' }));
-  } else if (myTurn) {
-    const field: Field = { id: 'word', row: INPUT_ROW, col: -6, length: WORD_LENGTH, label: 'Palavra', value: state.typed };
-    fields.push(field);
     tiles.push(
-      ...fieldTiles(inputWordId(game), field, state.focused, { tone: 'amber' }),
-      ...text('pass', 'PASSAR', BUTTON_ROW, -6, { tone: 'rose', ...(canPlay && { action: 'pass' }) }),
-      ...text('submit', pending ? '...' : '↵', BUTTON_ROW, 5, {
-        tone: 'emerald', ...(canPlay && state.typed !== '' && { action: 'submit' }),
-      }),
+      ...text('countdown-title', 'PARTIDA', -4, centred(7), { tone: 'amber' }),
+      ...text('countdown-label', 'INICIA EM', -3, centred(9), { tone: 'amber' }),
+      countdownTile(times.startsIn),
     );
-  } else {
-    const label = `VEZ DE ${turnPlayer?.name ?? 'OUTRO'}`;
-    const shown = toBoardText(label).slice(0, area.cols);
-    tiles.push(...text('message', shown, INPUT_ROW, centred(shown.length), { tone: playerTone(turnPlayer?.color) }));
+    return { tiles: clip(tiles, area), fields, hud: { clock, players, actions: [], compact } };
   }
 
-  return { tiles: clip(tiles, area), fields };
+  // Someone else's turn: the field stays, dimmed, so their accepted word still flies up from it.
+  const row = compact ? COMPACT_INPUT_ROW : INPUT_ROW;
+  tiles.push(...chainTiles(game, area, row - 2, compact ? COMPACT_CHAIN_ROWS : CHAIN_ROWS));
+  const field: Field = { id: 'word', row, col: -6, length: WORD_LENGTH, label: 'Palavra', value: myTurn ? state.typed : '' };
+  const error = myTurn && state.wordError;
+  tiles.push(...fieldTiles(inputWordId(game), field, myTurn && state.focused, {
+    tone: error ? 'rose' : 'stone', ...(!myTurn && { disabled: true }),
+  }));
+  if (myTurn) fields.push(field);
+
+  return {
+    tiles: clip(tiles, area),
+    fields,
+    hud: {
+      clock,
+      players,
+      actions: [
+        { id: 'pass', label: 'PASSAR', tone: 'rose', disabled: !canPlay },
+        { id: 'submit', label: 'ENVIAR', glyph: '↵', tone: 'emerald', primary: true, disabled: !canPlay || state.typed === '' },
+      ],
+      compact,
+    },
+  };
 }

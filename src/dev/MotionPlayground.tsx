@@ -22,6 +22,7 @@ const RANGES: Record<string, [number, number, number]> = {
   damping: [0, 1, 0.01],
   opacity: [0, 1, 0.01],
   count: [0, 16, 1],
+  curve: [-1, 2, 0.01],
 };
 
 const NO_STATS = { active: 0, started: 0 };

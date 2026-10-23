@@ -13,6 +13,10 @@ export interface UiState {
   config: GameConfig;
   copied: boolean;
   typed: string;
+  /** The server refused the typed word; cleared as soon as it changes. */
+  wordError: boolean;
+  /** Latest notice from the server, shown in the HUD until it times out. */
+  notice: string | null;
   focused: FieldId | null;
   /** A field the shell should focus; cleared once any field gains or loses focus. */
   focusTarget: FieldId | null;
@@ -25,12 +29,15 @@ export type UiAction =
   | { type: 'focus'; id: FieldId; focused: boolean }
   | { type: 'request-focus'; id: FieldId }
   | { type: 'settings'; open: boolean }
-  | { type: 'toggle'; setting: 'time' | 'repetition' }
+  | { type: 'config'; config: Partial<GameConfig> }
   | { type: 'copied'; copied: boolean }
+  | { type: 'word-error' }
+  | { type: 'notice'; text: string | null }
   | { type: 'clear-typed' };
 
 export const DEFAULT_CONFIG: GameConfig = { time: 3, repetition: true };
-const TIME_CHOICES = [3, 5];
+/** Match lengths the host can pick, in minutes. */
+export const TIME_CHOICES = [3, 5] as const;
 
 export const initialUi: UiState = {
   mode: 'menu',
@@ -40,6 +47,8 @@ export const initialUi: UiState = {
   config: DEFAULT_CONFIG,
   copied: false,
   typed: '',
+  wordError: false,
+  notice: null,
   focused: null,
   focusTarget: null,
 };
@@ -49,8 +58,8 @@ const FIELD_STATE: Record<FieldId, 'player' | 'room' | 'typed'> = { player: 'pla
 export function uiReducer(state: UiState, action: UiAction): UiState {
   switch (action.type) {
     case 'screen':
-      // Each screen starts fresh, as if it had just mounted; the config survives.
-      return { ...initialUi, config: state.config };
+      // Each screen starts fresh, as if it had just mounted; the config and a notice survive.
+      return { ...initialUi, config: state.config, notice: state.notice };
     case 'mode':
       return {
         ...state,
@@ -60,7 +69,7 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
         focusTarget: action.mode === 'menu' ? null : 'player',
       };
     case 'field':
-      return { ...state, [FIELD_STATE[action.id]]: action.value };
+      return { ...state, [FIELD_STATE[action.id]]: action.value, ...(action.id === 'word' && { wordError: false }) };
     case 'focus':
       if (action.focused) return { ...state, focused: action.id, focusTarget: null };
       return state.focused === action.id ? { ...state, focused: null, focusTarget: null } : state;
@@ -68,16 +77,15 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
       return { ...state, focusTarget: action.id };
     case 'settings':
       return { ...state, settings: action.open };
-    case 'toggle': {
-      const { time, repetition } = state.config;
-      const config = action.setting === 'time'
-        ? { time: TIME_CHOICES[(TIME_CHOICES.indexOf(time) + 1) % TIME_CHOICES.length], repetition }
-        : { time, repetition: !repetition };
-      return { ...state, config };
-    }
+    case 'config':
+      return { ...state, config: { ...state.config, ...action.config } };
     case 'copied':
       return { ...state, copied: action.copied };
+    case 'word-error':
+      return { ...state, wordError: true };
+    case 'notice':
+      return { ...state, notice: action.text };
     case 'clear-typed':
-      return state.typed === '' ? state : { ...state, typed: '' };
+      return state.typed === '' && !state.wordError ? state : { ...state, typed: '', wordError: false };
   }
 }

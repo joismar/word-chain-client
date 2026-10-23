@@ -30,12 +30,18 @@ describe('uiReducer', () => {
     expect(state.focused).toBeNull();
   });
 
-  it('toggles the settings and keeps them across screens', () => {
-    const state = run({ type: 'toggle', setting: 'time' }, { type: 'toggle', setting: 'repetition' });
+  it('changes the settings and keeps them, and a notice, across screens', () => {
+    const state = run({ type: 'config', config: { time: 5 } }, { type: 'config', config: { repetition: false } });
     expect(state.config).toEqual({ time: 5, repetition: false });
-    expect(uiReducer(state, { type: 'toggle', setting: 'time' }).config.time).toBe(3);
-    const next = uiReducer({ ...state, typed: 'X', settings: true }, { type: 'screen', screen: 'game' });
-    expect(next).toEqual({ ...initialUi, config: state.config });
+    const next = uiReducer({ ...state, typed: 'X', settings: true, notice: 'Sala cheia.' }, { type: 'screen', screen: 'game' });
+    expect(next).toEqual({ ...initialUi, config: state.config, notice: 'Sala cheia.' });
+  });
+
+  it('marks a refused word until it is edited or cleared', () => {
+    const refused = run({ type: 'field', id: 'word', value: 'XYZ' }, { type: 'word-error' });
+    expect(refused.wordError).toBe(true);
+    expect(uiReducer(refused, { type: 'field', id: 'word', value: 'XY' }).wordError).toBe(false);
+    expect(uiReducer(refused, { type: 'clear-typed' })).toMatchObject({ typed: '', wordError: false });
   });
 
   it('keeps the same object when there is nothing to clear', () => {

@@ -1,15 +1,15 @@
-import { animate, spring, utils, type AnimationParams, type JSAnimation } from 'animejs';
+import { animate, cubicBezier, spring, utils, type AnimationParams, type JSAnimation } from 'animejs';
 import type { Choreography, TileView } from '@src/engine/TileLayer';
-import type { Batch, TileSpec, TileTone } from '@src/engine/types';
+import type { Batch, TileSpec } from '@src/engine/types';
 import {
   planEffect, planEnter, planExit, planPress, planRipple, planUpdate,
-  type Channel, type MotionContext, type MotionEffect, type TileMotion, type Tween,
+  type Channel, type FlashTone, type MotionContext, type MotionEffect, type TileMotion, type Tween,
 } from './choreography';
 
 /** A view the director can animate: motion channels plus an overlay colour. */
 export interface MotionTarget extends TileView {
   readonly motion: TileMotion;
-  setFlashTone(tone: TileTone): void;
+  setFlashTone(tone: FlashTone): void;
 }
 
 type Live<V> = Iterable<{ view: V; spec: TileSpec }>;
@@ -123,7 +123,7 @@ export class Director<V extends MotionTarget> implements Choreography<V> {
         params.ease = spring(tokens.spring[timing.spring]);
       } else {
         params.duration = timing.duration;
-        params.ease = timing.ease ?? 'outQuad';
+        params.ease = timing.bezier ? cubicBezier(...timing.bezier) : timing.ease ?? 'outQuad';
       }
       if (tween.breathe) {
         params.loop = true;

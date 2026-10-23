@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PlayerColor } from '@src/protocol/schema';
 import { clampChroma, contrast, inGamut, oklchToLinear, toHex } from './oklch';
-import { BOARD, playerTone, TONE_COLORS, TONES } from './palette';
+import { BOARD, BOARD_COLORS, HUD_COLORS, pieceColors, playerTone, TONE_COLORS, TONES } from './palette';
 
 describe('oklch', () => {
   it('converts the reference points of sRGB', () => {
@@ -58,5 +58,36 @@ describe('palette', () => {
     const mapped = PlayerColor.options.map(playerTone);
     expect(new Set(mapped).size).toBe(PlayerColor.options.length);
     expect(playerTone(null)).toBe('stone');
+  });
+});
+
+describe('HUD pieces', () => {
+  const tones = Object.keys(TONES) as (keyof typeof TONES)[];
+  const variants = ['solid', 'neutral', 'soft', 'disabled'] as const;
+
+  it('fits every piece colour in sRGB', () => {
+    for (const variant of variants) {
+      for (const tone of tones) {
+        const { face, text, shadow } = pieceColors(variant, tone);
+        for (const color of [face, text, shadow]) expect(inGamut(color), `${variant} ${tone}`).toBe(true);
+      }
+    }
+    for (const [name, color] of Object.entries(HUD_COLORS)) expect(inGamut(color), name).toBe(true);
+  });
+
+  it('keeps labels readable on every enabled piece (WCAG AA)', () => {
+    for (const variant of ['solid', 'neutral', 'soft'] as const) {
+      for (const tone of tones) {
+        const { face, text } = pieceColors(variant, tone);
+        expect(contrast(toHex(text), toHex(face)), `${variant} ${tone}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it('keeps HUD text readable on the board and in the drawer', () => {
+    for (const ground of [BOARD_COLORS.background, HUD_COLORS.drawerSurface]) {
+      expect(contrast(toHex(HUD_COLORS.ink), toHex(ground))).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(toHex(HUD_COLORS.muted), toHex(ground))).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });

@@ -4,14 +4,14 @@ Jogo multiplayer de corrente de palavras (pt-BR). Front React + Vite falando por
 
 **Refatoração em andamento:** `docs/refactor-plan.md` é a fonte da verdade sobre a arquitetura alvo e as fases (F0–F7, U1, B1–B3). Leia antes de mudar estrutura, estado, renderização ou motion.
 
-**Fase atual: U1 (redesenho da UI, HUD × tabuleiro).** F6, F7 e B3 ficam bloqueadas até ela terminar. Plano e telas em `docs/u1-ui-plan.md`; tokens e regras visuais em `docs/design-system.md` (nenhum número visual fora dos arquivos de tokens); referência viva em `docs/design/index.html` (com `npm run dev`, abra `/docs/design/`).
+**U1 concluída (HUD × tabuleiro); próximas: F6, F7 e B3.** Telas e decisões em `docs/u1-ui-plan.md`; tokens e regras visuais em `docs/design-system.md` (nenhum número visual fora de `theme/palette.ts`, `theme/tokens.ts` e `motion/tokens.ts`); referência viva em `docs/design/index.html` (com `npm run dev`, abra `/docs/design/`).
 
 ## Comandos
 
 ```bash
 npm run dev        # Vite em --host (porta 5173)
 npm run build      # tsc -b && vite build
-npm run lint       # ESLint 10 (há erros conhecidos no código legado, ver abaixo)
+npm run lint       # ESLint 10
 npm test           # Vitest (unitários, *.test.ts ao lado do código)
 npm run e2e        # Playwright (desktop + mobile), sobe o Vite na porta 5174 (E2E_PORT muda)
 ```
@@ -22,20 +22,21 @@ npm run e2e        # Playwright (desktop + mobile), sobe o Vite na porta 5174 (E
 - O e2e aponta para um socket inalcançável (`ws://127.0.0.1:9`) para nunca tocar o backend real. Use `E2E_WS_URL` para apontar para um backend de teste; sem ele, `e2e/match.spec.ts` é pulado.
 - Backend local para testar ponta a ponta sem deploy: em `../word-chain-backend/lambda`, `.venv/Scripts/python -m local.server --port 3001`, depois `E2E_WS_URL=ws://localhost:3001 npm run e2e` (ou `VITE_WS_URL` no `.env.local` para jogar no navegador).
 
-## Estado atual do código (pós-F5)
+## Estado atual do código (pós-U1)
 
 - Protocolo v2: `src/protocol/schema.ts` (zod) espelha `src/protocol/v2.schema.json`, cópia do schema exportado pelo backend. `schema.test.ts` falha se divergirem; atualize com `npm run protocol:sync` depois de mudar o protocolo no backend.
 - Estado: `src/state/gameMachine.ts` (XState v5) com o `socketActor` invocado. As telas usam `useGame()` (`src/state/useGame.ts`); seletores puros em `selectors.ts`. Decisões por `code` de erro, nunca pelo texto.
 - Timers vêm dos prazos do servidor (`startedAt`/`endsAt`/`turnDeadline` + offset de `serverTime`); o cliente só manda `timeout` quando o prazo vence, nunca `pass` automático.
-- O app é um único canvas: `src/app/App.tsx` junta `useGame()`, o estado local da UI (`app/ui.ts`, reducer puro: modo do menu, texto digitado, foco, config do host) e `sceneFor` (`src/scenes/index.ts`), e passa os tiles ao `GameCanvas`, com um `HiddenInput` por campo da cena. Toques em tiles com `action` viram comandos da máquina no `onAction` do `App`.
-- Cenas (`src/scenes/*`, F4): funções puras `(estado, área) → { tiles, fields }`, testadas com snapshots em texto (`scenes/testing.ts`: `ascii` e `words`). As coordenadas fixas das telas assumem pelo menos 15 colunas e ~13 linhas; o que sai da área é cortado (`clip`).
-- Keys importam para o motion: o campo da palavra usa a key da próxima palavra da corrente (`inputWordId`), então a palavra aceita voa até a escada; o `<` tem a key `back` em todas as telas. A corrente (`chainTiles`) alinha por sobreposição (`lib/overlap.ts`), mostra as 6 mais novas e centraliza o trecho visível.
+- O app é um único canvas: `src/app/App.tsx` junta `useGame()`, o estado local da UI (`app/ui.ts`, reducer puro: modo do menu, texto digitado, foco, config do host) e `sceneFor` (`src/scenes/index.ts`), e passa os tiles ao `GameCanvas`, com um `HiddenInput` por campo da cena e o `Hud` por cima. Toques em tiles com `action` e cliques nas ações do HUD viram comandos da máquina no `onAction` do `App`. Avisos do servidor (`notice`) entram em `ui.notice` e aparecem como mensagem no HUD por 3 s.
+- Cenas (`src/scenes/*`): funções puras `(estado, área) → { tiles, fields, hud }`, testadas com snapshots em texto (`scenes/testing.ts`: `ascii`, `words` e `hud`). Na grade só fica o que é jogo; título, relógio, jogadores, ações, mensagem e drawer são o `hud`, semântico e sem estilo. Abaixo de `board.compactRows` linhas (teclado aberto) a cena fica `compact`. O que sai da área é cortado (`clip`).
+- Keys importam para o motion: o campo da palavra usa a key da próxima palavra da corrente (`inputWordId`), então a palavra aceita voa até a escada (na vez do outro o campo fica desabilitado, mas com as mesmas keys). A corrente (`chainTiles`) alinha por sobreposição (`lib/overlap.ts`), mostra as 6 mais novas e centraliza o trecho visível.
 - Efeitos do jogo em `app/useBoardEffects.ts`: shake quando `lastError.request === 'word'`, pulso na troca de turno, tick nos últimos 10 s dos relógios.
 - Texto do servidor passa por `toBoardText` (`lib/sanitize.ts`); `BOARD_SYMBOLS` é a lista de símbolos que a fonte dos tiles instala.
-- Visual (F5): flat e minimalista, sem relevo (o tile é uma face lisa; o slot é a face com `SLOT_ALPHA`). Cores definidas em OKLCH em `theme/palette.ts` (todas as faces com a mesma luminosidade e croma; `palette.test.ts` cobra gamut e contraste AA) e convertidas por `theme/oklch.ts`. O fundo de `index.css` espelha `BOARD_COLORS.background`.
+- Visual: o tile é uma face sobre uma faixa de sombra na base da casa (`tile.shadow`); o slot é a face translúcida, sem faixa (`SLOT_ALPHA`, `SLOT_DISABLED_ALPHA`). As casas vazias perto da borda somem ao acaso (`engine/edgeFade.ts`, nunca sob um tile). `TileSpec.span` faz um tile de n×n casas (a contagem, com atlas de dígitos próprio). Cores em OKLCH em `theme/palette.ts` (faces, peças de HUD via `pieceColors`; `palette.test.ts` cobra gamut e contraste AA), convertidas por `theme/oklch.ts`; geometria em `theme/tokens.ts`. O fundo de `index.css` espelha `BOARD_COLORS.background`.
+- HUD (`src/app/hud/`): `Hud` monta barra de título, relógio, chips, mensagem (`role="status"`), ações e `SettingsDrawer` com `Piece`/`PieceButton`. É filho do `GameCanvas`, então acompanha o `visualViewport`. `hud.css` não tem números: lê variáveis de `hudCssVars` e `motionCssVars`, e as cores das peças vêm inline.
 - Fonte: Commit Mono (`@fontsource/commit-mono`, importada em `main.tsx`). `Stage.create` espera `loadTileFont()` antes de instalar o atlas, senão o BitmapText assa a fonte de fallback.
 - `FxLayer` (`engine/FxLayer.ts`): o que não é tile. Partículas quando uma palavra entra na corrente (`stage.play({ type: 'link', ... })`, disparado por `useBoardEffects` quando a corrente cresce) e onda nas células vazias na troca de turno (junto do `pulse`). Planos puros em `motion/fx.ts`; desenha por frame enquanto há algo tocando e mantém o ticker acordado.
-- Em dev, `GameCanvas` expõe os tiles em `window.__boardTiles`; o e2e acha palavras no tabuleiro por ali (`e2e/board.ts`: `findWord`, `clickWord`).
+- Em dev, `GameCanvas` expõe os tiles em `window.__boardTiles`; o e2e acha palavras no tabuleiro por ali (`e2e/board.ts`: `findWord`, `clickWord`). O HUD é DOM: `hudButton(page, 'PASSAR')` e `turnChip(page, 'ANA')`.
 - Engine Pixi (`src/engine/`, F2): `Stage` (Application, ciclo de vida serializado por causa do StrictMode), `layout.ts` (geometria do tabuleiro, puro), `TileLayer` (join por `key`; hooks de coreografia recebem o lote inteiro de enter/update/exit), `Tile` (BitmapText tingido), `HiddenInput` (input real e invisível sobre o slot). Demo em `npm run dev` → `/dev/engine`, só em dev.
 - `Stage.setTiles` renderiza na hora quando algo mudou: o hit-testing do Pixi lê transforms que só atualizam no render.
 - Render sob demanda: o ticker do Pixi (`autoStart: false`) só roda enquanto há animação (o `Director` acorda o ticker, que dorme quando nada está tocando). Sem isso a página fica com a CPU saturada no e2e (WebGL por software) e gasta bateria no celular.
@@ -49,8 +50,8 @@ npm run e2e        # Playwright (desktop + mobile), sobe o Vite na porta 5174 (E
 
 - Texto de UI em pt-BR; código, identificadores e commits em inglês.
 - Commits no padrão Conventional Commits (o repo usa commitizen e semantic-release).
-- Motion: nenhum número mágico de animação fora de `src/motion/tokens.ts`.
-- Cenas futuras (`src/scenes/*`) são funções puras `(estado, viewport) → TileSpec[]`, testáveis sem canvas.
+- Nenhum número mágico de animação fora de `src/motion/tokens.ts`, nem número visual fora de `src/theme/tokens.ts` e `src/theme/palette.ts`.
+- Cenas (`src/scenes/*`) são funções puras `(estado, área) → Scene`, testáveis sem canvas.
 - Antes de usar APIs de PixiJS v8, anime.js v4, XState v5 ou zod, confira a doc atual (skills `pixijs-*` e Context7).
 
 ## Gotchas

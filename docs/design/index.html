@@ -225,7 +225,7 @@
       {
         id: 'countdown', title: 'Contagem', note: 'Sem a primeira palavra. O tile do número cresce a cada segundo: 3×3, 5×5, 7×7 casas.',
         build: () => ({
-          play: [...word('PARTIDA', -4, centred(7), 'amber'), ...word('COMEÇA EM', -3, centred(9), 'amber')],
+          play: [...word('PARTIDA', -4, centred(7), 'amber'), ...word('INICIA EM', -3, centred(9), 'amber')],
           countdown: { row: 3 },
           hud: { clock: { text: '3:00', progress: 1 }, players: PLAYERS },
         }),

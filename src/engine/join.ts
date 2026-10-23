@@ -8,7 +8,8 @@ export interface TileJoin {
 
 const same = (a: TileSpec, b: TileSpec) =>
   a.char === b.char && a.row === b.row && a.col === b.col && a.tone === b.tone
-  && a.variant === b.variant && a.active === b.active && a.action === b.action;
+  && a.variant === b.variant && a.active === b.active && a.action === b.action
+  && a.disabled === b.disabled && a.span === b.span;
 
 /** Data join by key: what to create, what changed, and which keys left. */
 export function joinTiles(prev: ReadonlyMap<string, TileSpec>, next: readonly TileSpec[]): TileJoin {

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { boardReady, clickWord, findWord } from './board';
+import { boardReady, clickWord, findWord, hudButton, turnChip } from './board';
 
 /**
  * A full match between two players against a real backend. Needs E2E_WS_URL,
@@ -71,7 +71,8 @@ test('two players play a match end to end', async ({ browser }) => {
   await clickWord(ana.page, 'CRIAR');
   await ana.page.getByLabel('Apelido').fill('Ana');
   await ana.page.keyboard.press('Enter');
-  await findWord(ana.page, 'PRONTO');
+  await expect(hudButton(ana.page, 'PRONTO')).toBeVisible({ timeout: 10_000 });
+  await expect(ana.page.getByRole('heading', { name: /^SALA: / })).toBeVisible();
   const room = latestGame(ana).name;
 
   // Bia joins with the room code in upper case.
@@ -79,26 +80,28 @@ test('two players play a match end to end', async ({ browser }) => {
   await bia.page.getByLabel('Apelido').fill('Bia');
   await bia.page.getByLabel('Sala').fill(room.toUpperCase());
   await bia.page.keyboard.press('Enter');
-  await findWord(bia.page, 'PRONTO');
+  await expect(hudButton(bia.page, 'PRONTO')).toBeVisible({ timeout: 10_000 });
+  await expect(hudButton(bia.page, 'INICIAR')).toHaveCount(0);
   await findWord(ana.page, 'BIA');
 
   // Both ready, Ana starts; the start countdown shows before play.
-  await clickWord(ana.page, 'PRONTO');
-  await clickWord(bia.page, 'PRONTO');
-  await findWord(ana.page, 'ESPERAR');
-  await findWord(bia.page, 'ESPERAR');
-  await clickWord(ana.page, 'INICIAR');
-  await findWord(bia.page, 'COMECA EM \\d');
+  await hudButton(ana.page, 'PRONTO').click();
+  await hudButton(bia.page, 'PRONTO').click();
+  await expect(hudButton(ana.page, 'ESPERAR')).toBeVisible();
+  await expect(hudButton(bia.page, 'ESPERAR')).toBeVisible();
+  await hudButton(ana.page, 'INICIAR').click();
+  await findWord(bia.page, 'INICIA EM');
 
-  // Ana (host, first in turn order) plays a valid word.
-  await findWord(ana.page, 'PASSAR');
-  await findWord(bia.page, 'VEZ DE ANA');
+  // Ana (host, first in turn order) plays a valid word; Bia sees the turn on Ana's chip.
+  await expect(hudButton(ana.page, 'PASSAR')).toBeEnabled({ timeout: 10_000 });
+  await expect(turnChip(bia.page, 'ANA')).toBeVisible();
+  await expect(hudButton(bia.page, 'PASSAR')).toBeDisabled();
   const first = latestGame(ana).chain.at(-1)!.word;
   const word = nextWord(first, [first]);
   await ana.page.getByLabel('Palavra').fill(word.toUpperCase());
   await ana.page.keyboard.press('Enter');
   await findWord(bia.page, word.toUpperCase());
-  await findWord(ana.page, 'VEZ DE BIA');
+  await expect(turnChip(ana.page, 'BIA')).toBeVisible();
   // The reply follows the broadcast, so it may land after the screen updates.
   await expect.poll(() => ana.received.find((m) => m.type === 'ack' && m.payload.points !== null)
     ?.payload.points).toBeGreaterThan(0);
@@ -109,26 +112,26 @@ test('two players play a match end to end', async ({ browser }) => {
   await bia.page.keyboard.press('Enter');
   await expect.poll(() => bia.received.some((m) => m.type === 'error'
     && (m.payload as { code: string }).code === 'INEXISTENT_WORD')).toBe(true);
-  await expect(bia.page.getByText('Palavra não existe.')).toBeVisible();
+  await expect(bia.page.getByRole('status')).toHaveText('PALAVRA NÃO EXISTE');
   await expect(bia.page.getByLabel('Palavra')).toHaveValue('XYZWQ');
   expect(latestGame(bia).turnPlayerId).toBe(myId(bia));
 
   // Bia reloads mid-turn: the saved session comes back on a new connection.
   await bia.page.reload();
   await boardReady(bia.page);
-  await findWord(bia.page, 'PASSAR');
+  await expect(hudButton(bia.page, 'PASSAR')).toBeEnabled({ timeout: 10_000 });
   expect(bia.sent.some((m) => m.type === 'reconnect')).toBe(true);
 
   // Bia lets her turn run out: the server deadline passes it back to Ana,
   // claimed by a client `timeout` (no client-side PASS).
-  await findWord(ana.page, 'PASSAR', 25_000);
+  await expect(hudButton(ana.page, 'PASSAR')).toBeEnabled({ timeout: 25_000 });
   const timeouts = [...ana.sent, ...bia.sent].filter((m) => m.type === 'timeout');
   expect(timeouts.length).toBeGreaterThan(0);
   expect(bia.sent.filter((m) => m.type === 'pass')).toEqual([]);
 
   // Ana passes by tapping the button; the turn goes to Bia.
-  await clickWord(ana.page, 'PASSAR');
-  await findWord(ana.page, 'VEZ DE BIA');
+  await hudButton(ana.page, 'PASSAR').click();
+  await expect(turnChip(ana.page, 'BIA')).toBeVisible();
 
   // Ana leaves; Bia sees her go offline and keeps the turn.
   await ana.page.close();
@@ -136,5 +139,5 @@ test('two players play a match end to end', async ({ browser }) => {
     const players = (latestGame(bia) as unknown as { players: { name: string; status: string }[] }).players;
     return players.find((p) => p.name.toLowerCase() === 'ana')?.status;
   }, { timeout: 25_000 }).toBe('offline');
-  await findWord(bia.page, 'PASSAR', 25_000);
+  await expect(hudButton(bia.page, 'PASSAR')).toBeEnabled({ timeout: 25_000 });
 });

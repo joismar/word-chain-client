@@ -11,12 +11,14 @@ type GameCanvasProps = {
   overlay?: (board: Board) => React.ReactNode;
   /** The live stage once it exists, null after teardown (effects, motion settings). */
   onStage?: (stage: Stage | null) => void;
+  /** DOM laid over the canvas from the start (the HUD), sized to the visible viewport. */
+  children?: React.ReactNode;
 };
 
 type DevWindow = Window & { __boardTiles?: readonly TileSpec[] };
 
 /** Mounts the Pixi stage over the visible viewport and feeds it tiles. */
-export function GameCanvas({ tiles, onEvent, overlay, onStage }: GameCanvasProps) {
+export function GameCanvas({ tiles, onEvent, overlay, onStage, children }: GameCanvasProps) {
   const hostRef = React.useRef<HTMLDivElement>(null);
   const onEventRef = React.useRef(onEvent);
   const onStageRef = React.useRef(onStage);
@@ -72,6 +74,7 @@ export function GameCanvas({ tiles, onEvent, overlay, onStage }: GameCanvasProps
     >
       <div ref={hostRef} className="absolute inset-0" data-testid="game-canvas" data-ready={stage ? true : undefined} />
       {board && overlay?.(board)}
+      {children}
     </div>
   );
 }

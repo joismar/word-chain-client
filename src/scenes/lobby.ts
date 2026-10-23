@@ -1,8 +1,8 @@
 import { toBoardText } from '@src/lib/sanitize';
-import type { GameState } from '@src/protocol/schema';
+import type { GameConfig, GameState } from '@src/protocol/schema';
 import { playerTone } from '@src/theme/palette';
-import { clip, text } from './text';
-import type { Area, Scene } from './types';
+import { centred, clip, isCompact, text } from './text';
+import type { Area, HudAction, Scene } from './types';
 
 /** Long names are cut so the ready mark stays on the board. */
 const NAME_CELLS = 10;
@@ -10,13 +10,20 @@ const NAME_CELLS = 10;
 export interface LobbyState {
   game: GameState;
   playerId: string | null;
-  /** The room code was just copied. */
+  /** The room name was just copied. */
   copied: boolean;
   readyPending: boolean;
   startPending: boolean;
+  /** The settings drawer is open over the room. */
+  settings: boolean;
+  /** The host's local settings, sent with `start`. */
+  config: GameConfig;
 }
 
-/** Room code, players with their ready mark, and the ready/start buttons. */
+/**
+ * The players with their ready mark, one cell after the longest name; the
+ * room name, settings and buttons are HUD.
+ */
 export function lobbyScene(state: LobbyState, area: Area): Scene {
   const { game, playerId, readyPending, startPending } = state;
   const busy = readyPending || startPending;
@@ -24,28 +31,34 @@ export function lobbyScene(state: LobbyState, area: Area): Scene {
   const amReady = me?.status === 'ready';
   const isHost = playerId !== null && game.hostId === playerId;
 
-  const tiles = [
-    ...text('back', '<', -7, -5, { tone: 'emerald', action: 'leave' }),
-    ...text('settings', '⚙', -7, 5, { tone: 'stone', action: 'settings' }),
-    ...text('room-label', 'SALA', -5, -5, { tone: 'stone' }),
-    ...text('room', state.copied ? 'COPIADO' : game.name, -4, -5, {
-      tone: state.copied ? 'emerald' : 'amber', action: 'copy',
-    }),
-    ...game.players.flatMap((player, i) => {
-      const row = -2 + i;
-      const name = toBoardText(player.name).slice(0, NAME_CELLS);
-      const ready = player.status === 'ready';
-      return [
-        ...text(`player-${player.id}`, name, row, -5, { tone: playerTone(player.color) }),
-        ...text(`status-${player.id}`, ready ? '✓' : '✕', row, -4 + name.length, { tone: ready ? 'emerald' : 'rose' }),
-      ];
-    }),
-    ...text('ready', readyPending ? '...' : amReady ? 'ESPERAR' : 'PRONTO', 4, -5, {
-      tone: 'emerald', ...(!busy && { action: 'ready' }),
-    }),
-    ...(isHost ? text('start', startPending ? '...' : 'INICIAR', 5, -5, {
-      tone: 'amber', ...(!busy && { action: 'start' }),
-    }) : []),
-  ];
-  return { tiles: clip(tiles, area), fields: [] };
+  const names = game.players.map((p) => toBoardText(p.name).slice(0, NAME_CELLS));
+  const longest = Math.max(0, ...names.map((n) => n.length));
+  const col = centred(longest + 2);
+  const top = centred(game.players.length);
+  const tiles = game.players.flatMap((player, i) => {
+    const ready = player.status === 'ready';
+    return [
+      ...text(`player-${player.id}`, names[i], top + i, col, { tone: playerTone(player.color) }),
+      ...text(`status-${player.id}`, ready ? '✓' : '✕', top + i, col + longest + 1, { tone: ready ? 'emerald' : 'rose' }),
+    ];
+  });
+
+  const actions: HudAction[] = [amReady
+    ? { id: 'ready', label: 'ESPERAR', tone: 'stone', disabled: busy }
+    : { id: 'ready', label: 'PRONTO', tone: 'emerald', disabled: busy }];
+  if (isHost) actions.push({ id: 'start', label: 'INICIAR', tone: 'amber', primary: true, disabled: busy });
+
+  return {
+    tiles: clip(tiles, area),
+    fields: [],
+    hud: {
+      back: 'leave',
+      title: `SALA: ${game.name.toUpperCase()}`,
+      copy: { copied: state.copied },
+      settings: true,
+      actions,
+      ...(state.settings && { drawer: { config: isHost ? state.config : game.config, editable: isHost } }),
+      compact: isCompact(area),
+    },
+  };
 }

@@ -169,9 +169,9 @@ O app passou a ser um único canvas Pixi; o grid DOM, o react-spring e os hooks 
 
 A fonte continua num atlas de BitmapText gerado em runtime (48 px × DPR), agora esperando a Commit Mono carregar antes de desenhar: os tiles só ficam menores que o atlas, então MSDF não traria ganho visível e exigiria um passo de build para gerar o atlas. As partículas são quadrados lisos na cor da sobreposição, saem das letras compartilhadas depois que a palavra pousa e somem encolhendo; os planos (`motion/fx.ts`) são puros e os números ficam em `tokens.ts`. Com `prefers-reduced-motion`, partículas e onda não tocam.
 
-### U1 — Redesenho da UI: HUD × tabuleiro (bloqueia F6, F7 e B3)
+### U1 — Redesenho da UI: HUD × tabuleiro
 
-Hoje relógio, placar, voltar, configurar e botões usam o mesmo tile das palavras do jogo. A U1 separa as duas coisas sem perder o tabuleiro de letras: a grade atual cobre a tela, com as bordas se desfazendo num degradê pixelado; os tiles voltam a ter a faixa de sombra; o HUD sai da grade e vira DOM, em peças com sombra dura. **Nada das fases seguintes começa antes de a U1 terminar.**
+**Concluída.** Relógio, placar, voltar, configurar e botões usavam o mesmo tile das palavras do jogo. A U1 separou as duas coisas sem perder o tabuleiro de letras: a grade atual cobre a tela, com as bordas se desfazendo num degradê pixelado; os tiles voltaram a ter a faixa de sombra; o HUD saiu da grade e virou DOM (`src/app/hud/`), em peças com sombra dura. As cenas devolvem `{ tiles, fields, hud }`.
 
 - Plano, telas e passos: `docs/u1-ui-plan.md`
 - Tokens e regras visuais: `docs/design-system.md`
@@ -179,15 +179,11 @@ Hoje relógio, placar, voltar, configurar e botões usam o mesmo tile das palavr
 
 ### F6 — Acessibilidade e mobile
 
-> Bloqueada até a U1 terminar.
-
-- [ ] Região `aria-live` anunciando turno, palavra aceita/recusada, tempo restante
+- [ ] Região `aria-live` anunciando turno, palavra aceita/recusada, tempo restante (a U1 já tem a região da mensagem no HUD, `role="status"`, e botões com rótulo)
 - [ ] Navegação por teclado completa; foco visível desenhado no canvas
 - [ ] Teste em Android intermediário: meta de 60 fps estável
 
 ### F7 — Qualidade
-
-> Bloqueada até a U1 terminar.
 
 - [ ] Playwright: fluxo host → join (2 contextos) → partida → fim
 - [ ] Orçamento de bundle (Pixi com imports seletivos) e de frame
@@ -212,8 +208,6 @@ Hoje relógio, placar, voltar, configurar e botões usam o mesmo tile das palavr
 - [x] AWS Lambda Powertools (logs estruturados, tracing) no lugar de `print(json.dumps(event))`
 
 ### B3 — Infraestrutura como código
-
-> Bloqueada até a U1 terminar.
 
 - [ ] Versionar API Gateway WebSocket, Lambda, tabelas `sessions`/`players` + GSI `name-index` e TTL (SAM ou CDK, **decisão pendente**)
 - [ ] Ambientes `dev`/`prod`; deploy via OIDC do GitHub (sem access keys fixas nos secrets)

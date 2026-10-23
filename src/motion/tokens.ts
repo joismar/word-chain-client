@@ -36,6 +36,12 @@ export const tokens = {
     burst: 520,
     /** One empty cell's beat in the turn wave across the board. */
     wave: 360,
+    /** The countdown tile popping in at each new number. */
+    countdownPop: 520,
+    /** A HUD piece sinking under the finger. */
+    press: 90,
+    /** The settings drawer sliding in. */
+    drawer: 240,
   },
   distance: {
     /** How far a typed letter falls into its slot. */
@@ -58,6 +64,8 @@ export const tokens = {
     press: 0.9,
     tick: 1.08,
     tickUrgent: 1.18,
+    /** The countdown tile pops from here. */
+    countdownFrom: 0.35,
   },
   damping: {
     /** Each swing of a shake is this fraction of the one before. */
@@ -70,6 +78,13 @@ export const tokens = {
     breathe: 0.25,
     /** Peak tint of an empty cell in the turn wave. */
     wave: 0.3,
+    /** Light flash on the countdown tile as a number lands. */
+    countdownFlash: 0.6,
+  },
+  /** Cubic Bézier control points. */
+  curve: {
+    /** Overshooting pop of the countdown tile. */
+    pop: { x1: 0.2, y1: 1.6, x2: 0.4, y2: 1 },
   },
   count: {
     /** Particles per shared letter when a word links into the chain. */
@@ -81,6 +96,15 @@ type Widen<T> = { -readonly [K in keyof T]: T[K] extends number ? number : Widen
 
 export type MotionTokens = Widen<typeof tokens>;
 export type SpringName = keyof MotionTokens['spring'];
+
+/** `--motion-*` custom properties for the HUD stylesheet (CSS transitions). */
+export function motionCssVars(source: MotionTokens = tokens): Record<string, string> {
+  return {
+    '--motion-press': `${source.duration.press}ms`,
+    '--motion-drawer': `${source.duration.drawer}ms`,
+    '--motion-fade': `${source.duration.fade}ms`,
+  };
+}
 
 export function cloneTokens(source: MotionTokens = tokens): MotionTokens {
   return structuredClone(source) as MotionTokens;

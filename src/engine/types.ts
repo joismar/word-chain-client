@@ -16,6 +16,10 @@ export interface TileSpec {
   /** `slot` is an empty input cell; `active` marks where the next letter goes. */
   variant?: 'solid' | 'slot';
   active?: boolean;
+  /** A slot of a field that can't take input right now (dimmer, no caret). */
+  disabled?: boolean;
+  /** Side in cells (odd) of a big tile centred on (row, col), like the countdown number. */
+  span?: number;
   /** Tiles with an action are clickable; tiles sharing it act as one button. */
   action?: string;
 }

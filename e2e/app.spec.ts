@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { boardReady, clickWord, expectNoWord, findWord } from './board';
+import { boardReady, clickWord, expectNoWord, findWord, hudButton } from './board';
 
 // No backend here (the socket points nowhere): the home screen works offline.
 let errors: string[] = [];
@@ -15,10 +15,11 @@ test.afterEach(() => {
   expect(errors).toEqual([]);
 });
 
-test('shows the menu on the canvas', async ({ page }) => {
+test('shows the menu on the canvas under the logo', async ({ page }) => {
   await findWord(page, 'CRIAR');
   await findWord(page, 'ENTRAR');
   await expect(page.locator('canvas')).toHaveCount(1);
+  await expect(page.getByRole('img', { name: 'Word Chain' })).toBeVisible();
 });
 
 test('opens the nickname field, types into it and goes back', async ({ page }) => {
@@ -28,7 +29,8 @@ test('opens the nickname field, types into it and goes back', async ({ page }) =
   await findWord(page, 'APELIDO');
   await page.keyboard.type('joão');
   await findWord(page, 'JOAO');
-  await clickWord(page, '<');
+  await expect(hudButton(page, 'CRIAR SALA')).toBeEnabled();
+  await hudButton(page, 'Voltar').click();
   await expect(input).toHaveCount(0);
   await findWord(page, 'CRIAR');
 });

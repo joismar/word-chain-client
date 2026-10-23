@@ -191,3 +191,22 @@ describe('planPress', () => {
     expect(planPress(true, reduced)).toEqual([]);
   });
 });
+
+describe('countdown pop', () => {
+  const big = (char: string, span: number) => spec('countdown:0', 3, 0, { char, span });
+
+  it('pops a big tile in with a light flash', () => {
+    const tweens = planEnter(big('3', 3), empty, ctx);
+    expect(tweens[0]).toMatchObject({
+      from: { scale: tokens.scale.countdownFrom },
+      to: { scale: 1 },
+      timing: { duration: tokens.duration.countdownPop, bezier: [0.2, 1.6, 0.4, 1] },
+    });
+    expect(tweens[1]).toMatchObject({ from: { flash: tokens.opacity.countdownFlash }, to: { flash: 0 }, tint: 'light' });
+  });
+
+  it('pops again on every new number, and just swaps it under reduced motion', () => {
+    expect(planUpdate(big('3', 3), big('2', 5), empty, ctx)[0].to).toEqual({ scale: 1 });
+    expect(planUpdate(big('3', 3), big('2', 5), empty, reduced)).toEqual([]);
+  });
+});

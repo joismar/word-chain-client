@@ -2,7 +2,7 @@
 
 > Fonte dos tokens visuais da U1 (`docs/u1-ui-plan.md`). A referência viva é `docs/design/index.html` (com `npm run dev`, abra `/docs/design/`): cada ajuste do painel corresponde a um token desta página, e "Copiar ajustes" gera os valores. O zoom da galeria não é token.
 >
-> Ao implementar, os tokens vão para o código e esta página aponta para lá: cores em `src/theme/palette.ts`, geometria e HUD num novo `src/theme/tokens.ts`, animação em `src/motion/tokens.ts`. Nenhum número visual fora desses arquivos (a mesma regra que o motion já segue).
+> No código: cores em `src/theme/palette.ts`, geometria, fade, contagem e HUD em `src/theme/tokens.ts`, animação em `src/motion/tokens.ts`. Nenhum número visual fora desses arquivos (a mesma regra que o motion já segue): o HUD lê tudo como variáveis CSS (`hudCssVars`, `motionCssVars`). Os arquivos de código são a fonte; esta página resume e explica. Paddings, espaçamentos e tracking das peças também viraram tokens (`hud.*Padding`, `hud.*TrackingEm`, `drawer.padding*`), sem entrar nas tabelas abaixo.
 
 ## 1. Princípios
 
@@ -67,7 +67,10 @@ Novos:
 | `board.edgeFade.curve` | `1.4` | Expoente da queda: `chance = density × (1 − d/depth)^curve`, com `d` = casas até a borda mais próxima |
 | `board.edgeFade.seed` | `7` | Semente do sorteio; o sorteio é um hash estável de `(row, col, seed)`, então nada pisca entre telas nem em re-render |
 | `countdown.spans` | `3, 5, 7` casas | Lado do tile do número para 3, 2 e 1 (cresce a cada segundo; tamanho = `n × pitch − gap`) |
-| `countdown.tones` | amber, orange, rose | Tom do número para 3, 2 e 1 |
+| `countdown.tones` | amber, orange, rose | Tom do número para 3, 2 e 1 (números maiores usam o do 3) |
+| `tile.glyph` | `0.55` da casa | Tamanho da letra |
+| `tile.caret` | inset `0.15`, topo `0.28` acima da base, espessura `0.08` | Cursor no próximo slot |
+| `board.compactRows` | `25` | Abaixo disso (teclado aberto) o HUD vira uma linha e a corrente mostra 3 palavras |
 
 Só casas **vazias** somem no fade: tiles nunca. Com 15 colunas e `depth 3`, o conteúdo das telas (até 12 colunas de campo) não encosta na faixa mais rala.
 
@@ -111,12 +114,13 @@ Só casas **vazias** somem no fade: tiles nunca. Com 15 colunas e `depth 3`, o c
 | `duration.countdownPop` | `520 ms`, `cubic-bezier(.2, 1.6, .4, 1)` | Pop do tile da contagem a cada número |
 | `scale.countdownFrom` | `0.35` | Escala inicial do pop |
 | `opacity.countdownFlash` | brilho `1.6 → 1` | Flash do número ao entrar (no Pixi: canal `flash`) |
-| `press` (HUD) | desce `hud.shadow` px, sem sombra | Pressionar uma peça de HUD |
+| `press` (HUD) | desce `hud.shadow` px, sem sombra, em `duration.press` `90 ms` | Pressionar uma peça de HUD |
+| `duration.drawer` | `240 ms` | Drawer entrando (sobe no celular, desliza da direita no desktop) |
 
 `prefers-reduced-motion`: o pop vira troca simples de número; o shake e o caret seguem as regras atuais.
 
 ## 7. Tipos de texto na grade
 
-- Texto fixo de interface na grade (`PARTIDA`, `COMEÇA EM`, `APELIDO`, `SALA`) usa o tom `amber`.
+- Texto fixo de interface na grade (`PARTIDA`, `INICIA EM`, `APELIDO`, `SALA`) usa o tom `amber`.
 - Campos (letras digitadas e casas vazias) usam `stone`; erro troca para `rose` com shake.
-- A fonte dos tiles precisa de `Ç` (`COMEÇA`): incluir em `BOARD_SYMBOLS` / no atlas. Texto vindo do servidor continua passando por `toBoardText`.
+- Todo texto da grade passa por `toBoardText` (sem acentos nem `Ç`); por isso a contagem diz `INICIA EM`. O DOM do HUD mostra acentos normalmente.

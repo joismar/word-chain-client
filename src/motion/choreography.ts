@@ -26,14 +26,20 @@ export interface TileMotion {
 
 export type Channel = keyof TileMotion;
 
+/** Colour of the flash overlay: a tone's face, or white for a brightening flash. */
+export type FlashTone = TileTone | 'light';
+
 export const restMotion = (): TileMotion => ({
   x: 0, y: 0, lift: 0, nudge: 0, scale: 1, press: 1, pulse: 1, alpha: 1, flash: 0, caret: 1,
 });
 
 export type Timing =
   | { spring: SpringName }
-  /** `ease` is an anime.js ease name; duration 0 sets the values at once. */
-  | { duration: number; ease?: string };
+  /**
+   * `ease` is an anime.js ease name, `bezier` cubic Bézier control points
+   * (x1, y1, x2, y2) instead; duration 0 sets the values at once.
+   */
+  | { duration: number; ease?: string; bezier?: readonly [number, number, number, number] };
 
 export interface Tween {
   /** Added to the current values first (FLIP: keeps an in-flight offset). */
@@ -47,7 +53,7 @@ export interface Tween {
   /** Loops forever, back and forth (cursor breath). */
   breathe?: boolean;
   /** Overlay colour for the `flash` channel. */
-  tint?: TileTone;
+  tint?: FlashTone;
 }
 
 export interface MotionContext {
@@ -96,9 +102,22 @@ function caretTweens(spec: TileSpec, { tokens, reduced }: MotionContext): Tween[
   }];
 }
 
+/** A big tile (the countdown) lands with an overshooting pop and a light flash. */
+function popTweens({ tokens }: MotionContext): Tween[] {
+  const { x1, y1, x2, y2 } = tokens.curve.pop;
+  const timing = { duration: tokens.duration.countdownPop, bezier: [x1, y1, x2, y2] as const };
+  return [
+    { from: { scale: tokens.scale.countdownFrom, alpha: 1 }, to: { scale: 1 }, timing },
+    { from: { flash: tokens.opacity.countdownFlash }, to: { flash: 0 }, timing: { duration: tokens.duration.countdownPop, ease: 'outQuad' }, tint: 'light' },
+  ];
+}
+
+const spans = (spec: TileSpec) => (spec.span ?? 1) > 1;
+
 export function planEnter(spec: TileSpec, batch: Batch, ctx: MotionContext): Tween[] {
   const { tokens, reduced } = ctx;
   if (reduced) return [{ ...fade(tokens, 1), from: { alpha: 0 } }];
+  if (spans(spec)) return popTweens(ctx);
   const delay = waveDelay(spec, batch.enter, 'out', tokens.stagger.wave);
   return [
     { from: { alpha: 0 }, ...fade(tokens, 1, delay) },
@@ -110,6 +129,8 @@ export function planEnter(spec: TileSpec, batch: Batch, ctx: MotionContext): Twe
 export function planUpdate(prev: TileSpec, next: TileSpec, batch: Batch, ctx: MotionContext): Tween[] {
   const { tokens, reduced } = ctx;
   const tweens: Tween[] = [];
+  // Reduced motion: the number just swaps.
+  if (spans(next) && (prev.char !== next.char || prev.span !== next.span)) return reduced ? [] : popTweens(ctx);
 
   const dc = prev.col - next.col;
   const dr = prev.row - next.row;

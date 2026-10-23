@@ -4,7 +4,6 @@ import '@fontsource/commit-mono/400.css';
 import '@fontsource/commit-mono/600.css';
 import './index.css';
 import { App } from './app/App.tsx';
-import { ToastManager } from './components/Toast.tsx';
 import { GameProvider } from './state/GameProvider.tsx';
 
 // Dev-only playgrounds for the Pixi engine and motion; stripped from production builds.
@@ -24,12 +23,9 @@ createRoot(document.getElementById('root')!).render(
         <DevPage />
       </Suspense>
     ) : (
-      <>
-        <GameProvider>
-          <App />
-        </GameProvider>
-        <ToastManager />
-      </>
+      <GameProvider>
+        <App />
+      </GameProvider>
     )}
   </StrictMode>
 );

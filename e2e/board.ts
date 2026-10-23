@@ -44,6 +44,16 @@ export async function clickWord(page: Page, text: string, timeout?: number) {
   await page.mouse.click(rect.x + rect.width / 2, rect.y + rect.height / 2);
 }
 
+/** A HUD button by its visible label (or aria-label), exactly. */
+export function hudButton(page: Page, name: string) {
+  return page.getByTestId('hud').getByRole('button', { name, exact: true });
+}
+
+/** The player chip of whoever has the turn. */
+export function turnChip(page: Page, name: string) {
+  return page.getByTestId('hud').getByLabel(new RegExp(`^${name}, \\d+ pontos, na vez$`));
+}
+
 /** The canvas is up and the first scene is on it. */
 export async function boardReady(page: Page) {
   await expect(page.getByTestId('game-canvas')).toHaveAttribute('data-ready', 'true', { timeout: 15_000 });

@@ -1,3 +1,5 @@
+import { board as boardTokens } from '../theme/tokens';
+
 export interface Viewport {
   width: number;
   height: number;
@@ -27,9 +29,9 @@ export interface Board {
 }
 
 const DEFAULTS: Required<BoardOptions> = {
-  maxPitch: 28.8,
-  minCols: 15,
-  gapRatio: 0.2 / 1.8,
+  maxPitch: boardTokens.maxPitch,
+  minCols: boardTokens.minCols,
+  gapRatio: boardTokens.gapRatio,
 };
 
 const odd = (n: number) => (n % 2 === 0 ? n + 1 : n);
@@ -60,6 +62,11 @@ export function cellToPoint(board: Board, row: number, col: number) {
 
 export function pointToCell(board: Board, x: number, y: number) {
   return { row: Math.round(y / board.pitch) || 0, col: Math.round(x / board.pitch) || 0 };
+}
+
+/** Side in pixels of a tile spanning `span` cells (gaps inside it included). */
+export function spanSize(board: Board, span = 1) {
+  return (span - 1) * board.pitch + board.cell;
 }
 
 /** Screen rectangle (CSS pixels) covering `length` cells from (row, col) rightwards. */

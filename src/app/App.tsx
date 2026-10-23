@@ -8,11 +8,14 @@ import { gameTimes } from '@src/scenes/game';
 import { useGame, useNow } from '@src/state/useGame';
 import { GameCanvas } from './GameCanvas';
 import { HiddenInput } from './HiddenInput';
+import { Hud } from './hud/Hud';
 import { initialUi, uiReducer } from './ui';
 import { useBoardEffects } from './useBoardEffects';
 import { useViewport } from './useViewport';
 
 const COPIED_MS = 2_000;
+/** How long a notice from the server stays above the actions. */
+const NOTICE_MS = 3_000;
 
 /** Tracks a value across renders and reports when it changes (state adjusted during render). */
 function useChanged<T>(value: T): boolean {
@@ -28,9 +31,10 @@ export function App() {
   const { screen, pending } = game;
   const [ui, dispatch] = React.useReducer(uiReducer, initialUi);
   const [stage, setStage] = React.useState<Stage | null>(null);
-  const { emit } = useEventSystem();
+  const { subscribe } = useEventSystem();
 
-  const board = computeBoard(useViewport());
+  const viewport = useViewport();
+  const board = computeBoard(viewport);
   const area = React.useMemo<Area>(() => ({ rows: board.rows, cols: board.cols }), [board.rows, board.cols]);
   const { startsIn, match, turn } = gameTimes(game.clock(useNow()));
   const times = React.useMemo(() => ({ startsIn, match, turn }), [startsIn, match, turn]);
@@ -43,6 +47,14 @@ export function App() {
   if (useChanged(screen)) dispatch({ type: 'screen', screen });
   if (useChanged(`${state?.chain.length}|${canType}`)) dispatch({ type: 'clear-typed' });
   if (useChanged(canType) && canType) dispatch({ type: 'request-focus', id: 'word' });
+  if (useChanged(game.lastError) && game.lastError?.request === 'word') dispatch({ type: 'word-error' });
+
+  React.useEffect(() => subscribe('infoToast', (text: string) => dispatch({ type: 'notice', text })), [subscribe]);
+  React.useEffect(() => {
+    if (!ui.notice) return;
+    const id = setTimeout(() => dispatch({ type: 'notice', text: null }), NOTICE_MS);
+    return () => clearTimeout(id);
+  }, [ui.notice]);
 
   React.useEffect(() => {
     if (!ui.copied) return;
@@ -73,7 +85,6 @@ export function App() {
   function copyRoom() {
     if (!state) return;
     navigator.clipboard?.writeText(state.name).catch(() => {});
-    emit('infoToast', `Código da sala copiado: ${state.name.toUpperCase()}`);
     dispatch({ type: 'copied', copied: true });
   }
 
@@ -91,9 +102,6 @@ export function App() {
       case 'settings':
       case 'close-settings':
         return dispatch({ type: 'settings', open: action === 'settings' });
-      case 'time':
-      case 'repetition':
-        return dispatch({ type: 'toggle', setting: action });
       case 'copy':
         return copyRoom();
       case 'ready':
@@ -133,6 +141,13 @@ export function App() {
           autoFocus={ui.focusTarget === field.id}
         />
       ))}
-    />
+    >
+      <Hud
+        hud={scene.hud}
+        width={viewport.width}
+        onAction={onAction}
+        onConfig={(config) => dispatch({ type: 'config', config })}
+      />
+    </GameCanvas>
   );
 }

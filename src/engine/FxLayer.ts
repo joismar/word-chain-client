@@ -2,6 +2,8 @@ import { Container, Graphics } from 'pixi.js';
 import type { MotionContext } from '@src/motion/choreography';
 import { burstEnd, particleAt, planBurst, waveAlpha, waveEnd, type Cell, type Particle } from '@src/motion/fx';
 import { TONES } from '@src/theme/palette';
+import { tile as tileTokens } from '@src/theme/tokens';
+import { isFaded } from './edgeFade';
 import type { Board } from './layout';
 import type { TileTone } from './types';
 
@@ -86,13 +88,13 @@ export class FxLayer {
     if (this.wave) {
       const t = now - this.wave.start;
       const half = cell / 2;
-      const radius = Math.max(1, cell * 0.08);
+      const radius = Math.max(1, cell * tileTokens.radius);
       const rowSpan = (board.rows - 1) / 2;
       const colSpan = (board.cols - 1) / 2;
       for (let row = -rowSpan; row <= rowSpan; row++) {
         for (let col = -colSpan; col <= colSpan; col++) {
           const alpha = waveAlpha({ row, col }, t, ctx);
-          if (alpha > 0) {
+          if (alpha > 0 && !isFaded(row, col, board)) {
             waveCells.roundRect(col * pitch - half, row * pitch - half, cell, cell, radius)
               .fill({ color: this.wave.color, alpha });
           }
