@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Referência de design</title>
+  <link rel="stylesheet" href="./reference.css">
+  <style>
+    :root {
+      --radius: 0.08;
+      --hud-radius: 6;
+      --hud-shadow: 3;
+      --tile-shadow: 0.1;
+    }
+
+    /* Board: the current grid (theme/palette.ts BOARD_COLORS), edge cells
+       dropped at random for a pixelated fade. */
+    .f {
+      --bg: oklch(0.268 0.007 34.3);
+      --empty: oklch(0.228 0.006 34.3);
+      --neutral: oklch(0.355 0.01 50);
+      --ink: oklch(0.93 0.01 60);
+      --muted: oklch(0.72 0.01 60);
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .f .cell { position: absolute; border-radius: calc(var(--radius) * var(--cell)); background: var(--empty); }
+
+    /* A tile is a face over a darker strip at the bottom of its own cell
+       (the strip is --tile-shadow of the cell), so it never leaves the cell. */
+    .f .tile:not(.slot) {
+      padding-bottom: calc(var(--tile-shadow) * var(--cell));
+      box-shadow: inset 0 calc(-1 * var(--tile-shadow) * var(--cell)) 0 oklch(calc(var(--face-l) - 0.12) calc(var(--face-c) * var(--cm, 1)) var(--h, 60));
+    }
+    .f .tile.slot.disabled { --slot-a: 0.14; }
+    .f .tile.big { z-index: 3; }
+    .f .tile.big.pop { animation: pop 520ms cubic-bezier(.2, 1.6, .4, 1); }
+    @keyframes pop {
+      0% { scale: 0.35; filter: brightness(1.6); }
+      60% { filter: brightness(1.15); }
+      100% { scale: 1; filter: none; }
+    }
+
+    /* ------------------------------------------------------------- HUD */
+    .f .hud { position: absolute; z-index: 4; }
+    .f .bar { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; gap: 10px; top: 14px; left: 14px; right: 14px; min-height: 40px; }
+    .f .bar > :nth-child(2) { justify-self: center; display: flex; align-items: center; gap: 10px; }
+    .f .players { top: 64px; left: 14px; right: 14px; display: flex; justify-content: center; gap: 8px; }
+    .f .actions { bottom: 18px; left: 16px; right: 16px; display: flex; justify-content: center; gap: 10px; }
+    .f .toast-row { bottom: 84px; left: 0; right: 0; display: flex; justify-content: center; }
+
+    /* Every HUD piece shares one material: a face with a little rounding
+       and a hard shadow underneath, like a raised tile. */
+    .f .piece {
+      --pl: 0.53;
+      --pc: var(--face-c);
+      position: relative;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      border-radius: calc(var(--hud-radius) * 1px);
+      background: oklch(var(--pl) var(--pc) var(--h, 60));
+      color: oklch(0.97 0.02 var(--h, 60));
+      box-shadow: 0 calc(var(--hud-shadow) * 1px) 0 oklch(calc(var(--pl) - 0.15) var(--pc) var(--h, 60));
+      font-weight: 600; letter-spacing: 0.06em; white-space: nowrap;
+      overflow: hidden;
+    }
+    .f .piece.neutral { --pl: 0.355; --pc: 0.012; color: var(--ink); }
+    .f .piece.soft { --pl: 0.355; --pc: 0.03; color: oklch(0.82 0.1 var(--h, 60)); }
+    .f .piece.disabled { --pl: 0.3; --pc: 0.008; color: oklch(0.55 0.01 60); box-shadow: none; translate: 0 calc(var(--hud-shadow) * 1px); }
+    .f .piece.action { cursor: pointer; }
+    .f .piece.action:active { translate: 0 calc(var(--hud-shadow) * 1px); box-shadow: none; }
+
+    .f .icon { width: 40px; height: 40px; font-size: 17px; }
+    .f .title { font-size: 15px; font-weight: 600; letter-spacing: 0.16em; }
+    .f .copy { width: 30px; height: 30px; }
+    .f .copy svg { width: 15px; height: 15px; }
+
+    .f .button { flex: 1; max-width: 230px; height: 50px; font-size: 15px; letter-spacing: 0.1em; }
+    .f .button .glyph { font-size: 18px; }
+
+    .f .clock { min-width: 84px; height: 38px; padding: 0 14px; font-size: 17px; font-variant-numeric: tabular-nums; }
+    .f .meter { position: absolute; left: 0; bottom: 0; height: 3px; background: currentColor; opacity: 0.45; }
+
+    .f .chip { height: 34px; padding: 0 12px 0 4px; font-size: 13px; }
+    .f .chip .mini {
+      width: 26px; height: 26px; display: grid; place-items: center; border-radius: calc(var(--hud-radius) * 0.7px);
+      background: oklch(var(--face-l) var(--face-c) var(--h)); color: oklch(0.97 0.02 var(--h)); font-size: 14px;
+    }
+    .f .chip.active .mini { background: oklch(0.96 0.02 var(--h)); color: oklch(0.45 var(--face-c) var(--h)); }
+    .f .chip .score { font-weight: 400; opacity: 0.75; font-variant-numeric: tabular-nums; }
+    .f .chip .secs { font-variant-numeric: tabular-nums; }
+    .f .chip.small { height: 30px; font-size: 11px; gap: 6px; padding-right: 8px; }
+    .f .chip.small .mini { width: 22px; height: 22px; font-size: 12px; }
+
+    .f .toast { height: 32px; padding: 0 14px; font-size: 12px; letter-spacing: 0.1em; }
+
+    .f .logo { position: relative; width: 208px; height: 64px; margin-top: 22px; }
+
+    /* ------------------------------------------------- settings drawer */
+    .f .scrim { position: absolute; inset: 0; z-index: 6; background: oklch(0.12 0.005 34 / 0.6); }
+    .f .sheet {
+      position: absolute; z-index: 7; left: 0; right: 0; bottom: 0;
+      display: grid; gap: 4px; padding: 10px 20px 24px;
+      background: oklch(0.235 0.008 40); color: var(--ink);
+      border-radius: 16px 16px 0 0; box-shadow: 0 -1px 0 oklch(0.33 0.01 40);
+    }
+    .f .sheet.side { left: auto; top: 0; width: 380px; border-radius: 16px 0 0 16px; align-content: start; padding-top: 22px; }
+    .f .sheet .handle { justify-self: center; width: 40px; height: 4px; border-radius: 2px; background: oklch(0.42 0.01 40); margin-bottom: 10px; }
+    .f .sheet.side .handle { display: none; }
+    .f .sheet header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .f .sheet h3 { margin: 0; font-size: 14px; letter-spacing: 0.16em; }
+    .f .sheet .close { width: 34px; height: 34px; font-size: 14px; }
+    .f .option { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; padding: 14px 0; border-top: 1px solid oklch(0.3 0.008 40); }
+    .f .option strong { font-size: 14px; font-weight: 600; }
+    .f .option span { grid-column: 1; font-size: 12px; color: var(--muted); }
+    .f .option > :last-child { grid-column: 2; grid-row: 1 / span 2; }
+    .f .option.future { opacity: 0.45; }
+    .f .segmented { display: flex; gap: 6px; }
+    .f .segmented .piece { height: 32px; padding: 0 10px; font-size: 12px; }
+    .f .switch { width: 52px; height: 30px; justify-content: flex-start; padding: 0 4px; }
+    .f .switch.on { justify-content: flex-end; }
+    .f .switch .knob { width: 22px; height: 22px; border-radius: calc(var(--hud-radius) * 0.6px); background: oklch(0.97 0.01 var(--h)); }
+    .f .sheet .note { font-size: 12px; color: var(--muted); padding-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="intro">
+      <h1>Word Chain · referência de design</h1>
+      <p>A direção escolhida na U1, tela a tela. Tokens e regras em <code>docs/design-system.md</code>; passos de implementação em <code>docs/u1-ui-plan.md</code>. Os ajustes ao lado mudam a página ao vivo e "Copiar ajustes" gera os valores para os tokens.</p>
+      <ul>
+        <li><strong>Fundo</strong>: a grade atual. Perto das bordas da tela as casas somem ao acaso, mais quanto mais perto da borda, num degradê pixelado.</li>
+        <li><strong>HUD</strong>: título, relógio, jogadores e botões no mesmo material: face lisa, cantos levemente arredondados e uma sombra dura embaixo.</li>
+        <li><strong>Tabuleiro</strong>: só o que é jogo: participantes, a corrente, o campo da palavra e a contagem. Tiles com a face sobre uma faixa mais escura na base da casa; campos de texto em cinza.</li>
+        <li><strong>Configurações</strong>: drawer com texto comum (de baixo no celular, de lado no desktop), pronto para crescer.</li>
+      </ul>
+    </header>
+    <main class="gallery" id="gallery"></main>
+    <aside class="panel">
+      <h2>Ajustes</h2>
+      <div id="controls"></div>
+    </aside>
+  </div>
+
+  <script type="module">
+    import { CHAIN, PLAYERS, centred, chain, controls, div, field, gallery, place, tileEl, word } from './reference.js';
+
+    const HUES = { stone: 60, brown: 55, amber: 75, orange: 48, rose: 18, pink: 350, purple: 305, sky: 240, emerald: 160 };
+
+    /* ------------------------------------------------------------ screens */
+
+    const button = (text, tone, extra = {}) => ({ text, tone, ...extra });
+
+    function gameScreen(area, { typed = '', mine = true, error = false, words = CHAIN } = {}) {
+      const compact = area.rows < 25;
+      const input = compact ? 1 : 3;
+      const span = (area.cols - 1) / 2;
+      const chainTiles = chain(words, input - 2, compact ? 3 : 6, area).filter((t) => Math.abs(t.c) <= span);
+      let slots = field(mine ? typed : '', input, -6, 12, error ? 'rose' : 'stone', mine && !error);
+      if (error) slots = slots.map((t) => ({ ...t, shake: true }));
+      if (!mine) slots = slots.map((t) => ({ ...t, disabled: true }));
+      const turn = mine ? PLAYERS[0] : PLAYERS[1];
+      return {
+        play: [...chainTiles, ...slots],
+        hud: {
+          compact,
+          clock: { text: '2:41', progress: 0.9 },
+          players: PLAYERS.map((p) => (p.id === turn.id ? { ...p, active: true, seconds: error ? 9 : 12, progress: error ? 0.45 : 0.6 } : p)),
+          actions: [
+            button('PASSAR', 'rose', { disabled: !mine }),
+            button('ENVIAR', 'emerald', { glyph: '↵', primary: true, disabled: !mine || !typed }),
+          ],
+          toast: error ? { text: 'PALAVRA NÃO EXISTE', tone: 'rose' } : null,
+        },
+      };
+    }
+
+    function lobby(guest) {
+      const players = guest ? PLAYERS.map((p) => ({ ...p, ready: true })) : PLAYERS;
+      const mark = -3 + Math.max(...players.map((p) => p.name.length)) + 1;
+      const play = players.flatMap((p, i) => [
+        ...word(p.name, i - 1, -3, p.tone),
+        ...word(p.ready ? '✓' : '✕', i - 1, mark, p.ready ? 'emerald' : 'rose'),
+      ]);
+      return {
+        play,
+        hud: {
+          back: '<', settings: '⚙', title: 'SALA: LAGOA', copy: true,
+          actions: guest ? [button('ESPERAR', 'stone')] : [button('PRONTO', 'emerald'), button('INICIAR', 'amber', { primary: true })],
+        },
+      };
+    }
+
+    const SCREENS = [
+      {
+        id: 'home', title: 'Início', note: 'Logo no HUD; CRIAR e ENTRAR continuam sendo palavras na grade.',
+        build: () => ({ play: [...word('CRIAR', -1, -2, 'amber', { action: true }), ...word('ENTRAR', 1, -3, 'amber', { action: true })], hud: { logo: true } }),
+      },
+      {
+        id: 'host', title: 'Criar sala', note: 'Campo na grade; a ação vai para a base.',
+        build: () => ({
+          play: [...word('APELIDO', -2, -5, 'amber'), ...field('ANA', 0, -5, 10, 'stone')],
+          hud: { back: '<', title: 'CRIAR', actions: [button('CRIAR SALA', 'emerald', { glyph: '↵', primary: true })] },
+        }),
+      },
+      {
+        id: 'join', title: 'Entrar', note: 'Dois campos; foco no campo da sala.',
+        build: () => ({
+          play: [
+            ...word('APELIDO', -4, -5, 'amber'), ...field('BIA', -2, -5, 10, 'stone', false),
+            ...word('SALA', 1, -5, 'amber'), ...field('LAGO', 3, -5, 6, 'stone'),
+          ],
+          hud: { back: '<', title: 'ENTRAR', actions: [button('ENTRAR', 'emerald', { glyph: '↵', primary: true })] },
+        }),
+      },
+      { id: 'lobby', title: 'Sala (host)', note: 'Nome da sala no título, com copiar. Na grade, só os participantes.', build: () => lobby(false) },
+      { id: 'lobby-guest', title: 'Sala (convidado, pronto)', note: 'Quem não é host só tem ESPERAR.', build: () => lobby(true) },
+      {
+        id: 'settings', title: 'Configurações (host)', note: 'Drawer por cima da sala, em texto. A terceira opção só mostra como a lista cresce.',
+        build: () => ({ ...lobby(false), drawer: { host: true } }),
+      },
+      {
+        id: 'settings-guest', title: 'Configurações (convidado)', note: 'Mesmo drawer, só leitura.',
+        build: () => ({ ...lobby(true), drawer: { host: false } }),
+      },
+      {
+        id: 'countdown', title: 'Contagem', note: 'Sem a primeira palavra. O tile do número cresce a cada segundo: 3×3, 5×5, 7×7 casas.',
+        build: () => ({
+          play: [...word('PARTIDA', -4, centred(7), 'amber'), ...word('COMEÇA EM', -3, centred(9), 'amber')],
+          countdown: { row: 3 },
+          hud: { clock: { text: '3:00', progress: 1 }, players: PLAYERS },
+        }),
+      },
+      { id: 'my-turn', title: 'Minha vez', note: 'Relógio e jogadores no mesmo material dos botões.', build: (area) => gameScreen(area, { words: CHAIN.slice(0, 2) }) },
+      { id: 'other-turn', title: 'Vez do outro', note: 'Campo desabilitado sob a corrente; a vez aparece só no placar do topo.', build: (area) => gameScreen(area, { words: CHAIN.slice(0, 2), mine: false }) },
+      { id: 'typing', title: 'Corrente longa, digitando', note: 'Seis palavras; a escada passa da largura e corta as mais antigas.', build: (area) => gameScreen(area, { typed: 'OLH' }) },
+      { id: 'error', title: 'Palavra inválida', note: 'Shake e rose no campo; mensagem em peça acima dos botões.', build: (area) => gameScreen(area, { typed: 'XYZWQ', error: true }) },
+      { id: 'keyboard', title: 'Minha vez, teclado aberto', note: 'HUD numa linha, 3 palavras.', keyboard: true, build: (area) => gameScreen(area, { typed: 'OLH' }) },
+      {
+        id: 'end', title: 'Fim', note: 'FIM no título; na grade, só os participantes.',
+        build: () => {
+          const ranked = [...PLAYERS].sort((a, b) => b.score - a.score);
+          return {
+            play: ranked.flatMap((p, i) => [
+              ...word(String(i + 1), i - 1, -5, 'stone'),
+              ...word(p.name, i - 1, -3, p.tone),
+              ...word(String(p.score).padStart(2, ' '), i - 1, 3, i === 0 ? 'amber' : 'stone'),
+            ]),
+            hud: { title: 'FIM', actions: [button('NOVO JOGO', 'amber', { primary: true })] },
+          };
+        },
+      },
+    ];
+
+    /* --------------------------------------------------------------- HUD */
+
+    function el(tag, className, text) {
+      const e = document.createElement(tag);
+      if (className) e.className = className;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    function piece(className, tone = 'stone', text) {
+      const e = el('div', `piece ${className}`, text);
+      e.style.setProperty('--h', String(HUES[tone]));
+      if (tone === 'stone') e.style.setProperty('--pc', '0.012');
+      return e;
+    }
+
+    const COPY_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>';
+
+    function meter(progress) {
+      const m = el('div', 'meter');
+      m.style.width = `${progress * 100}%`;
+      return m;
+    }
+
+    function chip(p, small) {
+      const c = piece(`chip${small ? ' small' : ''}${p.active ? ' active' : ' neutral'}`, p.active ? p.tone : 'stone');
+      c.style.setProperty('--h', String(HUES[p.tone]));
+      const mini = el('div', 'mini', p.name[0]);
+      c.append(mini, el('span', '', p.name), el('span', 'score', String(p.score)));
+      if (p.active) c.append(el('span', 'secs', `${p.seconds}s`), meter(p.progress));
+      return c;
+    }
+
+    function logo() {
+      const box = el('div', 'logo');
+      const put = (text, row, col) => [...text].forEach((ch, i) => {
+        const t = el('div', 'tile', ch);
+        t.dataset.tone = 'amber';
+        Object.assign(t.style, { left: `${(col + i) * 26}px`, top: `${row * 26}px`, width: '23px', height: '23px', fontSize: '14px' });
+        box.append(t);
+      });
+      put('WORD', 0, 2);
+      put('CHAIN', 1, 3);
+      return box;
+    }
+
+    function drawer(frame, d, wide) {
+      frame.append(el('div', 'scrim'));
+      const sheet = el('div', `sheet${wide ? ' side' : ''}`);
+      sheet.append(el('div', 'handle'));
+      const header = el('header');
+      header.append(el('h3', '', 'CONFIGURAÇÕES'), piece('icon close neutral action', 'stone', '✕'));
+      sheet.append(header);
+
+      const option = (name, desc, control, future) => {
+        const o = el('div', `option${future ? ' future' : ''}`);
+        o.append(el('strong', '', name), el('span', '', desc), control);
+        sheet.append(o);
+      };
+      const segmented = (values, selected, tone) => {
+        const s = el('div', 'segmented');
+        for (const v of values) {
+          const on = v === selected;
+          s.append(piece(`${on ? '' : 'neutral'}${d.host ? ' action' : ''}${!d.host && !on ? ' disabled' : ''}`, on ? tone : 'stone', v));
+        }
+        return s;
+      };
+      const toggle = piece(`switch on${d.host ? ' action' : ''}`, 'purple');
+      toggle.append(el('div', 'knob'));
+
+      option('Tempo de partida', 'Duração total da partida', segmented(['3 MIN', '5 MIN'], '3 MIN', 'sky'));
+      option('Repetir palavras', 'Palavras já usadas podem voltar', toggle);
+      option('Tempo por turno', 'Exemplo de opção futura', segmented(['15 S', '20 S', '30 S'], '20 S', 'amber'), true);
+      if (!d.host) sheet.append(el('div', 'note', 'Só quem criou a sala altera as configurações.'));
+      frame.append(sheet);
+    }
+
+    function hud(frame, h) {
+      if (h.back || h.title || h.settings || h.logo || (h.clock && h.compact)) {
+        const bar = el('div', 'hud bar');
+        const [left, mid, right] = [el('div'), el('div'), el('div')];
+        if (h.back) left.append(piece('icon neutral action', 'stone', h.back));
+        if (h.settings) right.append(piece('icon neutral action', 'stone', h.settings));
+        if (h.title) mid.append(el('div', 'title', h.title));
+        if (h.copy) {
+          const copy = piece('copy neutral action', 'stone');
+          copy.innerHTML = COPY_ICON;
+          copy.title = 'Copiar nome da sala';
+          mid.append(copy);
+        }
+        if (h.logo) mid.append(logo());
+        if (h.clock && h.compact) {
+          bar.style.gridTemplateColumns = 'auto 1fr';
+          const clock = piece('clock neutral', 'stone', h.clock.text);
+          clock.append(meter(h.clock.progress));
+          left.replaceWith(clock);
+          mid.style.justifySelf = 'end';
+          mid.style.gap = '6px';
+          h.players.forEach((p) => mid.append(chip(p, true)));
+          bar.append(clock, mid);
+        } else {
+          bar.append(left, mid, right);
+        }
+        frame.append(bar);
+      }
+      if (h.clock && !h.compact) {
+        const top = el('div', 'hud bar');
+        top.style.gridTemplateColumns = '1fr';
+        const clock = piece('clock neutral', 'stone', h.clock.text);
+        clock.append(meter(h.clock.progress));
+        top.append(clock);
+        clock.style.justifySelf = 'center';
+        const row = el('div', 'hud players');
+        h.players.forEach((p) => row.append(chip(p)));
+        frame.append(top, row);
+      }
+      if (h.toast) {
+        const row = el('div', 'hud toast-row');
+        row.append(piece('toast', h.toast.tone, h.toast.text));
+        frame.append(row);
+      }
+      if (h.actions?.length) {
+        const row = el('div', 'hud actions');
+        for (const b of h.actions) {
+          const btn = piece(`button${b.primary || b.tone === 'stone' ? '' : ' soft'}${b.disabled ? ' disabled' : ' action'}${b.tone === 'stone' ? ' neutral' : ''}`, b.tone);
+          btn.append(el('span', '', b.text));
+          if (b.glyph) btn.append(el('span', 'glyph', b.glyph));
+          row.append(btn);
+        }
+        frame.append(row);
+      }
+    }
+
+    /* ------------------------------------------------------------- board */
+
+    /** Stable pseudo-random number in [0, 1) for a cell. */
+    function noise(r, c, seed) {
+      const x = Math.sin(r * 127.1 + c * 311.7 + seed * 74.7) * 43758.5453;
+      return x - Math.floor(x);
+    }
+
+    /** Cells near the screen edge drop out, more often the closer they are. */
+    function dropped(r, c, area, params) {
+      const edge = Math.min(r - area.top, -area.top - r, c - area.left, -area.left - c);
+      if (edge >= params.depth) return false;
+      const chance = params.density * (1 - edge / params.depth) ** params.curve;
+      return noise(r, c, params.seed) < chance;
+    }
+
+    const COUNT = [{ n: '3', span: 3, tone: 'amber' }, { n: '2', span: 5, tone: 'orange' }, { n: '1', span: 7, tone: 'rose' }];
+    let timers = [];
+
+    function countdown(frame, area, row, gap) {
+      let i = 0;
+      const big = el('div', 'tile big');
+      frame.append(big);
+      const show = () => {
+        const { n, span, tone } = COUNT[i];
+        const size = span * area.pitch - gap;
+        place(big, area, row, 0, size);
+        big.style.setProperty('--cell', `${size}px`);
+        big.dataset.tone = tone;
+        big.textContent = n;
+        big.style.fontSize = `${size * 0.62}px`;
+        big.style.borderRadius = `${size * 0.08}px`;
+        big.classList.remove('pop');
+        void big.offsetWidth;
+        big.classList.add('pop');
+        i = (i + 1) % COUNT.length;
+      };
+      show();
+      timers.push(setInterval(show, 1000));
+    }
+
+    function render(scene, area, params) {
+      const frame = div('f');
+      const cell = area.pitch * (1 - params.gap);
+      frame.style.setProperty('--cell', `${cell}px`);
+      for (let r = area.top; r <= -area.top; r++) {
+        for (let c = area.left; c <= -area.left; c++) {
+          if (!dropped(r, c, area, params)) place(div('cell', frame), area, r, c, cell);
+        }
+      }
+      scene.play.forEach((t, i) => frame.append(tileEl(t, area, cell, i)));
+      if (scene.countdown) countdown(frame, area, scene.countdown.row, area.pitch - cell);
+      hud(frame, scene.hud);
+      if (scene.drawer) drawer(frame, scene.drawer, area.width > 700);
+      return frame;
+    }
+
+    const root = document.getElementById('gallery');
+    let frameId = 0;
+    controls(document.getElementById('controls'), 'design-reference', [
+      { key: 'depth', label: 'Fade da borda: profundidade (casas)', value: 3, min: 1, max: 8, step: 1 },
+      { key: 'density', label: 'Fade da borda: densidade', value: 0.5, min: 0, max: 1, step: 0.05 },
+      { key: 'curve', label: 'Fade da borda: curva', value: 1.4, min: 0.5, max: 3, step: 0.1 },
+      { key: 'seed', label: 'Fade da borda: sorteio', value: 7, min: 1, max: 50, step: 1 },
+      { key: 'hudRadius', label: 'HUD: arredondamento (px)', value: 6, min: 0, max: 16, step: 1, css: '--hud-radius' },
+      { key: 'hudShadow', label: 'HUD: sombra (px)', value: 3, min: 0, max: 6, step: 1, css: '--hud-shadow' },
+      { key: 'tileShadow', label: 'Tiles: sombra (fração da casa)', value: 0.1, min: 0, max: 0.2, step: 0.01, css: '--tile-shadow' },
+      { key: 'radius', label: 'Tiles: arredondamento', value: 0.08, min: 0, max: 0.4, step: 0.01, css: '--radius' },
+      { key: 'gap', label: 'Espaço entre casas', value: 0.11, min: 0.04, max: 0.3, step: 0.01 },
+      { key: 'zoom', label: 'Zoom da galeria', value: 0.75, min: 0.4, max: 1, step: 0.05, css: '--gallery-zoom' },
+    ], (params) => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        timers.forEach(clearInterval);
+        timers = [];
+        gallery(root, (scene, area) => render(scene, area, params), SCREENS, ['typing', 'lobby', 'settings']);
+      });
+    });
+  </script>
+</body>
+</html>

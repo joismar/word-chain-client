@@ -1,7 +1,7 @@
 # Plano de Refatoração — Word Chain
 
 > Escrito em 2026-10-20 a partir da leitura do código (não da documentação existente).
-> Decisões tomadas: **PixiJS v8 + anime.js v4**, **evoluir o grid de tiles**, **React 19 como casca**, **backend redesenhado junto**, **Commit Mono** nos tiles, **visual flat e minimalista** (sem relevo).
+> Decisões tomadas: **PixiJS v8 + anime.js v4**, **evoluir o grid de tiles**, **React 19 como casca**, **backend redesenhado junto**, **Commit Mono** nos tiles, **visual minimalista** (face lisa sobre uma faixa de sombra, sem relevo por shader), **HUD em DOM separado do tabuleiro** (U1).
 
 ---
 
@@ -116,10 +116,11 @@ Regra: **nenhum número mágico de animação fora de `tokens.ts`**.
 ## 3. Direção visual (evolução do grid)
 
 - Paleta em **OKLCH** com a mesma luminosidade e croma em todas as faces; só o matiz muda, e o contraste letra/face fica em AA (4,5:1) para todos os tons. Nove tons, um por cor de jogador mais o neutro
-- **Flat e minimalista**: o tile é uma face lisa, sem o bloco de sombra; o slot vazio é a face com opacidade baixa. O relevo por shader foi testado (chanfro + sombra de contato) e descartado por parecer datado
+- **Minimalista**: o tile é uma face lisa sobre uma faixa de sombra na base da própria casa (a F5 tirou a faixa e a U1 devolve); o slot vazio é a face com opacidade baixa. O relevo por shader foi testado (chanfro + sombra de contato) e descartado por parecer datado
 - Células vazias do fundo quase imperceptíveis; a troca de turno passa por elas como uma onda na cor de quem joga
 - Tipografia: **Commit Mono** 600 (via `@fontsource/commit-mono`), também no DOM. Escolhida comparando com Departure Mono e Fragment Mono num protótipo em Pixi
 - Tamanho de célula adaptativo: mínimo de colunas garantido no mobile (hoje as palavras cortam em telas estreitas)
+- HUD separado do tabuleiro, em DOM, com material de peça (face lisa, sombra dura); bordas da grade em degradê pixelado: U1 (`docs/u1-ui-plan.md`, `docs/design-system.md`)
 
 ---
 
@@ -168,19 +169,33 @@ O app passou a ser um único canvas Pixi; o grid DOM, o react-spring e os hooks 
 
 A fonte continua num atlas de BitmapText gerado em runtime (48 px × DPR), agora esperando a Commit Mono carregar antes de desenhar: os tiles só ficam menores que o atlas, então MSDF não traria ganho visível e exigiria um passo de build para gerar o atlas. As partículas são quadrados lisos na cor da sobreposição, saem das letras compartilhadas depois que a palavra pousa e somem encolhendo; os planos (`motion/fx.ts`) são puros e os números ficam em `tokens.ts`. Com `prefers-reduced-motion`, partículas e onda não tocam.
 
+### U1 — Redesenho da UI: HUD × tabuleiro (bloqueia F6, F7 e B3)
+
+Hoje relógio, placar, voltar, configurar e botões usam o mesmo tile das palavras do jogo. A U1 separa as duas coisas sem perder o tabuleiro de letras: a grade atual cobre a tela, com as bordas se desfazendo num degradê pixelado; os tiles voltam a ter a faixa de sombra; o HUD sai da grade e vira DOM, em peças com sombra dura. **Nada das fases seguintes começa antes de a U1 terminar.**
+
+- Plano, telas e passos: `docs/u1-ui-plan.md`
+- Tokens e regras visuais: `docs/design-system.md`
+- Referência viva: `docs/design/index.html` (com `npm run dev`, abra `/docs/design/`)
+
 ### F6 — Acessibilidade e mobile
+
+> Bloqueada até a U1 terminar.
+
 - [ ] Região `aria-live` anunciando turno, palavra aceita/recusada, tempo restante
 - [ ] Navegação por teclado completa; foco visível desenhado no canvas
 - [ ] Teste em Android intermediário: meta de 60 fps estável
 
 ### F7 — Qualidade
+
+> Bloqueada até a U1 terminar.
+
 - [ ] Playwright: fluxo host → join (2 contextos) → partida → fim
 - [ ] Orçamento de bundle (Pixi com imports seletivos) e de frame
 - [ ] Atualizar README a partir do código final
 
 ---
 
-## 5. Backend (redesenho em paralelo)
+## 5. Backend (redesenho em paralelo) - ../word-chain-backend
 
 ### B1 — Hotfix (antes de F1, destrava os testes ponta a ponta)
 - [x] `start(time, repetition)` aceitando a config real; persistir `config` na sessão e enviá-la no `GameData`
@@ -197,6 +212,9 @@ A fonte continua num atlas de BitmapText gerado em runtime (48 px × DPR), agora
 - [x] AWS Lambda Powertools (logs estruturados, tracing) no lugar de `print(json.dumps(event))`
 
 ### B3 — Infraestrutura como código
+
+> Bloqueada até a U1 terminar.
+
 - [ ] Versionar API Gateway WebSocket, Lambda, tabelas `sessions`/`players` + GSI `name-index` e TTL (SAM ou CDK, **decisão pendente**)
 - [ ] Ambientes `dev`/`prod`; deploy via OIDC do GitHub (sem access keys fixas nos secrets)
 
@@ -222,3 +240,4 @@ Ler o SKILL.md de cada skill de terceiros antes de instalar.
 2. IaC: SAM ou CDK
 3. Backend continua em Python ou migra para TypeScript (Node 22) para compartilhar tipos diretamente com o front. A recomendação atual é **Python + JSON Schema**, por ser a menor ruptura
 4. O que fazer com `.agents/`: remover ou manter fora do fluxo do Claude Code
+5. ~~Estilo da UI (U1)~~: grade atual com fade pixelado nas bordas, tiles com faixa de sombra e HUD em DOM (`docs/u1-ui-plan.md`)

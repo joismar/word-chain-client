@@ -2,7 +2,9 @@
 
 Jogo multiplayer de corrente de palavras (pt-BR). Front React + Vite falando por WebSocket com o backend em `../word-chain-backend` (AWS API Gateway WebSocket + Lambda Python + DynamoDB).
 
-**Refatoração em andamento:** `docs/refactor-plan.md` é a fonte da verdade sobre a arquitetura alvo e as fases (F0–F7, B1–B3). Leia antes de mudar estrutura, estado, renderização ou motion.
+**Refatoração em andamento:** `docs/refactor-plan.md` é a fonte da verdade sobre a arquitetura alvo e as fases (F0–F7, U1, B1–B3). Leia antes de mudar estrutura, estado, renderização ou motion.
+
+**Fase atual: U1 (redesenho da UI, HUD × tabuleiro).** F6, F7 e B3 ficam bloqueadas até ela terminar. Plano e telas em `docs/u1-ui-plan.md`; tokens e regras visuais em `docs/design-system.md` (nenhum número visual fora dos arquivos de tokens); referência viva em `docs/design/index.html` (com `npm run dev`, abra `/docs/design/`).
 
 ## Comandos
 
