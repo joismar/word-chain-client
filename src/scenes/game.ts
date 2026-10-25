@@ -29,11 +29,8 @@ export interface PlayState {
 }
 
 export const WORD_LENGTH = 12;
-/** The input row; the newest chain word sits two rows above, older ones climb. */
-const INPUT_ROW = 3;
-const COMPACT_INPUT_ROW = 1;
-export const CHAIN_ROWS = 6;
-export const COMPACT_CHAIN_ROWS = 3;
+/** Most chain words on the board; older ones scroll off the top. */
+export const CHAIN_ROWS = 5;
 /** The big countdown tile is centred here, under PARTIDA / INICIA EM. */
 const COUNTDOWN_ROW = 3;
 /** Length of a turn; mirrors TURN_MS in the backend (entities/session.py), which the protocol doesn't send. */
@@ -61,12 +58,29 @@ export const inputWordId = (game: GameState) => chainWordId(game.chain.length);
 
 
 /**
+ * Where play sits: the input on the last row the HUD leaves free (right above
+ * the message and the actions), the newest chain word two rows over it, and as
+ * many older words as fit under the clock and chips, up to CHAIN_ROWS.
+ */
+export function playRows(area: Area): { input: number; chainBottom: number; chainRows: number } {
+  const span = (area.rows - 1) / 2;
+  const { top, bottom } = area.clear ?? { top: -span, bottom: span };
+  const chainBottom = bottom - 2;
+  return { input: bottom, chainBottom, chainRows: Math.max(1, Math.min(CHAIN_ROWS, chainBottom - top + 1)) };
+}
+
+/**
  * The chain as a staircase: each word starts under the letters it shares
  * with the one before, the newest at the bottom. Older words scroll up and
  * off the top. The visible stretch is centred; when it is wider than the
  * board, the newest word keeps to the right edge and older ones are cut.
  */
-export function chainTiles(game: GameState, area: Area, bottom = INPUT_ROW - 2, rows = CHAIN_ROWS): TileSpec[] {
+export function chainTiles(
+  game: GameState,
+  area: Area,
+  bottom = playRows(area).chainBottom,
+  rows = playRows(area).chainRows,
+): TileSpec[] {
   const words = game.chain.map((w) => toBoardText(w.word));
   if (words.length === 0) return [];
   const offsets = chainOffsets(words);
@@ -130,8 +144,8 @@ export function gameScene(state: PlayState, area: Area): Scene {
   }
 
   // Someone else's turn: the field stays, dimmed, so their accepted word still flies up from it.
-  const row = compact ? COMPACT_INPUT_ROW : INPUT_ROW;
-  tiles.push(...chainTiles(game, area, row - 2, compact ? COMPACT_CHAIN_ROWS : CHAIN_ROWS));
+  const { input: row, chainBottom, chainRows } = playRows(area);
+  tiles.push(...chainTiles(game, area, chainBottom, chainRows));
   const field: Field = { id: 'word', row, col: -6, length: WORD_LENGTH, label: 'Palavra', value: myTurn ? state.typed : '' };
   const error = myTurn && state.wordError;
   tiles.push(...fieldTiles(inputWordId(game), field, myTurn && state.focused, {

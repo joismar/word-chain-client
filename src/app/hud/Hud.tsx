@@ -34,7 +34,7 @@ const ROOT_STYLE = {
   '--logo-shadow': css(logo.shadow),
 } as React.CSSProperties;
 
-const LOGO: [string, number, number][] = [['WORD', 0, 2], ['CHAIN', 1, 3]];
+const LOGO: [string, number, number][] = [['WORD', 0, 0], ['CHAIN', 1, 1]];
 
 /** Seconds as M:SS. */
 const clockText = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;

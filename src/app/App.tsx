@@ -5,9 +5,11 @@ import type { EngineEvent } from '@src/engine/types';
 import { useEventSystem } from '@src/hooks/useEventSystem';
 import { sceneFor, type Area, type FieldId } from '@src/scenes';
 import { gameTimes } from '@src/scenes/game';
+import { isCompact } from '@src/scenes/text';
 import { useGame, useNow } from '@src/state/useGame';
 import { GameCanvas } from './GameCanvas';
 import { HiddenInput } from './HiddenInput';
+import { hudClearRows } from './hud/clearRows';
 import { Hud } from './hud/Hud';
 import { initialUi, uiReducer } from './ui';
 import { useBoardEffects } from './useBoardEffects';
@@ -35,7 +37,11 @@ export function App() {
 
   const viewport = useViewport();
   const board = computeBoard(viewport);
-  const area = React.useMemo<Area>(() => ({ rows: board.rows, cols: board.cols }), [board.rows, board.cols]);
+  const { top, bottom } = hudClearRows(board, isCompact(board));
+  const area = React.useMemo<Area>(
+    () => ({ rows: board.rows, cols: board.cols, clear: { top, bottom } }),
+    [board.rows, board.cols, top, bottom],
+  );
   const { startsIn, match, turn } = gameTimes(game.clock(useNow()));
   const times = React.useMemo(() => ({ startsIn, match, turn }), [startsIn, match, turn]);
 

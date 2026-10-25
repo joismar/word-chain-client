@@ -152,9 +152,10 @@
 
     function gameScreen(area, { typed = '', mine = true, error = false, words = CHAIN } = {}) {
       const compact = area.rows < 25;
-      const input = compact ? 1 : 3;
+      // Approximation: the app puts the input on the last row above the message (hudClearRows).
+      const input = (area.rows - 1) / 2 - 6;
       const span = (area.cols - 1) / 2;
-      const chainTiles = chain(words, input - 2, compact ? 3 : 6, area).filter((t) => Math.abs(t.c) <= span);
+      const chainTiles = chain(words, input - 2, 5, area).filter((t) => Math.abs(t.c) <= span);
       let slots = field(mine ? typed : '', input, -6, 12, error ? 'rose' : 'stone', mine && !error);
       if (error) slots = slots.map((t) => ({ ...t, shake: true }));
       if (!mine) slots = slots.map((t) => ({ ...t, disabled: true }));
@@ -234,7 +235,7 @@
       { id: 'other-turn', title: 'Vez do outro', note: 'Campo desabilitado sob a corrente; a vez aparece só no placar do topo.', build: (area) => gameScreen(area, { words: CHAIN.slice(0, 2), mine: false }) },
       { id: 'typing', title: 'Corrente longa, digitando', note: 'Seis palavras; a escada passa da largura e corta as mais antigas.', build: (area) => gameScreen(area, { typed: 'OLH' }) },
       { id: 'error', title: 'Palavra inválida', note: 'Shake e rose no campo; mensagem em peça acima dos botões.', build: (area) => gameScreen(area, { typed: 'XYZWQ', error: true }) },
-      { id: 'keyboard', title: 'Minha vez, teclado aberto', note: 'HUD numa linha, 3 palavras.', keyboard: true, build: (area) => gameScreen(area, { typed: 'OLH' }) },
+      { id: 'keyboard', title: 'Minha vez, teclado aberto', note: 'HUD numa linha; campo logo acima das ações.', keyboard: true, build: (area) => gameScreen(area, { typed: 'OLH' }) },
       {
         id: 'end', title: 'Fim', note: 'FIM no título; na grade, só os participantes.',
         build: () => {

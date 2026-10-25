@@ -5,6 +5,8 @@ import type { GameConfig } from '@src/protocol/schema';
 export interface Area {
   rows: number;
   cols: number;
+  /** First and last rows the in-game HUD leaves uncovered; the whole board when absent. */
+  clear?: { top: number; bottom: number };
 }
 
 export type FieldId = 'player' | 'room' | 'word';

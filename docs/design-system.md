@@ -70,7 +70,7 @@ Novos:
 | `countdown.tones` | amber, orange, rose | Tom do número para 3, 2 e 1 (números maiores usam o do 3) |
 | `tile.glyph` | `0.55` da casa | Tamanho da letra |
 | `tile.caret` | inset `0.15`, topo `0.28` acima da base, espessura `0.08` | Cursor no próximo slot |
-| `board.compactRows` | `25` | Abaixo disso (teclado aberto) o HUD vira uma linha e a corrente mostra 3 palavras |
+| `board.compactRows` | `25` | Abaixo disso (teclado aberto ou janela baixa) o HUD vira uma linha |
 
 Só casas **vazias** somem no fade: tiles nunca. Com 15 colunas e `depth 3`, o conteúdo das telas (até 12 colunas de campo) não encosta na faixa mais rala.
 

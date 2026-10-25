@@ -100,7 +100,7 @@ button.piece:focus-visible { outline: var(--hud-focus-ring) solid var(--hud-ink)
 .hud-toast { height: var(--hud-toast-height); padding: 0 var(--hud-toast-padding); font-size: var(--hud-toast-text); letter-spacing: var(--hud-toast-tracking); }
 
 /* Logo: WORD / CHAIN as a staircase of small tiles (face over a darker strip, like the board). */
-.hud-logo { position: relative; width: calc(var(--hud-logo-step) * 8); height: calc(var(--hud-logo-step) * 2); margin-top: var(--hud-logo-top); }
+.hud-logo { position: relative; width: calc(var(--hud-logo-step) * 5 + var(--hud-logo-tile)); height: calc(var(--hud-logo-step) + var(--hud-logo-tile)); margin-top: var(--hud-logo-top); }
 .hud-logo span {
   position: absolute;
   width: var(--hud-logo-tile);

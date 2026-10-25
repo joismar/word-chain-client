@@ -26,10 +26,10 @@ Coordenadas em casas, com (0,0) no centro (como nas cenas). "Grade" = tiles; "HU
 | Sala | Só os participantes: nome no tom do jogador e ✓/✕ uma casa depois do nome mais longo | `<`, título `SALA: <NOME>` + copiar, `⚙`; ações `PRONTO` (soft) e `INICIAR` (primária, só host); convidado pronto vê `ESPERAR` (neutra) |
 | Configurações | (sala por baixo, escurecida) | Drawer em texto: de baixo no celular, pela direita no desktop. Opções atuais: tempo de partida (segmentado `3 MIN`/`5 MIN`) e repetir palavras (switch). Convidado vê só leitura com aviso. A lista é feita para crescer |
 | Contagem | `PARTIDA` (−4), `INICIA EM` (−3), tile do número na linha +3, crescendo 3×3 → 5×5 → 7×7 casas, com pop | Relógio parado, chips sem destaque |
-| Minha vez | Corrente (6 palavras, a mais nova na linha +1) e campo de 12 casas na linha +3 | Relógio, chips (o meu na cor, com segundos e barra); ações `PASSAR` (soft rose) e `ENVIAR ↵` (primária emerald, desabilitada sem texto) |
+| Minha vez | Campo de 12 casas na última linha livre acima da mensagem e das ações; corrente (até 5 palavras, quantas couberem abaixo dos chips) com a mais nova duas linhas acima | Relógio, chips (o meu na cor, com segundos e barra); ações `PASSAR` (soft rose) e `ENVIAR ↵` (primária emerald, desabilitada sem texto) |
 | Vez do outro | Corrente e campo desabilitado (sem cursor, `slot.disabledAlpha`) | Chip de quem joga destacado; ações desabilitadas. Sem `VEZ DE …` |
 | Palavra inválida | Campo em rose com shake | Mensagem `PALAVRA NÃO EXISTE` acima das ações |
-| Teclado aberto | Corrente com 3 palavras, campo na linha +1 | Relógio e chips numa linha só no topo; ações acima do teclado |
+| Teclado aberto | Mesma regra: campo logo acima das ações, corrente com o que couber (até 5) | Relógio e chips numa linha só no topo; ações acima do teclado |
 | Fim | Classificação: posição, nome no tom, pontos (o primeiro em amber) | Título `FIM`; ação `NOVO JOGO` |
 
 A tela "conectando" continua como está (hoje o menu já aparece antes de conectar).
