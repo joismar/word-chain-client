@@ -89,8 +89,12 @@ export function typingCue(before: string, after: string): Cue | null {
   return null;
 }
 
-/** The sound of a HUD or tile action; `ready` is my readiness before the tap. */
-export function actionCue(action: string, ready: boolean): Cue {
+/** Opening and closing the drawer is decoration: no sound (docs/sound-plan.md). */
+const SILENT_ACTIONS = new Set(['settings', 'close-settings']);
+
+/** The sound of a HUD or tile action, if any; `ready` is my readiness before the tap. */
+export function actionCue(action: string, ready: boolean): Cue | null {
+  if (SILENT_ACTIONS.has(action)) return null;
   if (action === 'copy') return { type: 'copy' };
   if (action === 'ready') return { type: 'toggle', on: !ready };
   return { type: 'press' };

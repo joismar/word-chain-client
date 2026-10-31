@@ -61,6 +61,27 @@ describe('createMixer', () => {
     expect(render).not.toHaveBeenCalled();
   });
 
+  it('resumes a context iOS interrupted (phone call, Siri)', () => {
+    const { mixer, ctx, log } = setup();
+    mixer.unlock();
+    (ctx as { state: string }).state = 'interrupted';
+    mixer.unlock();
+    expect(log.resumes).toBe(1);
+  });
+
+  it('keeps the cue of the unlocking gesture while the context starts, but not later ones', () => {
+    const deferred: (() => void)[] = [];
+    const { mixer, render, ctx } = setup({ defer: (fn) => void deferred.push(fn) });
+    // A real context reports 'running' only in a later task, never within the gesture.
+    Object.assign(ctx, { state: 'suspended', resume: () => Promise.resolve() });
+    mixer.unlock();
+    mixer.play({ type: 'key' });
+    expect(render).toHaveBeenCalledTimes(1);
+    deferred.forEach((fn) => fn());
+    mixer.play({ type: 'key' });
+    expect(render).toHaveBeenCalledTimes(1);
+  });
+
   it('starts on, at medium volume', () => {
     const { mixer, render } = setup();
     expect(mixer.settings()).toEqual({ enabled: true, volume: 'medium' });

@@ -23,6 +23,8 @@ export interface MixerDeps {
   render?: typeof playVoices;
   /** After a cue is rendered (the dev log). */
   onPlay?: (cue: Cue) => void;
+  /** Runs `fn` in a later task; ends the unlocking gesture's window. */
+  defer?: (fn: () => void) => void;
   tokens?: SoundTokens;
 }
 
@@ -52,16 +54,20 @@ function load(storage: StorageLike | null): SoundSettings {
 
 /**
  * The page's one AudioContext and its master gain. Nothing plays before a
- * gesture unlocks it, while it is suspended (no burst on resume), while the
- * sound is off, or while the tab is hidden, except my turn (it calls you back).
+ * gesture unlocks it, while it is suspended (no burst on resume) except for
+ * the cues of the unlocking gesture itself, while the sound is off, or while
+ * the tab is hidden, except my turn (it calls you back).
  */
 export function createMixer({
   createContext, storage = null, isHidden = () => false, random = Math.random,
-  render = playVoices, onPlay, tokens = soundTokens,
+  render = playVoices, onPlay, defer = (fn) => setTimeout(fn, 0), tokens = soundTokens,
 }: MixerDeps): Mixer {
   let settings = load(storage);
   let audio: { ctx: AudioContext; master: GainNode } | null = null;
   let unavailable = false;
+  // A context reports 'running' only in a later task: until then, the gesture
+  // that unlocked it may still schedule (its nodes start when it runs).
+  let starting = false;
   const listeners = new Set<() => void>();
 
   return {
@@ -75,14 +81,23 @@ export function createMixer({
           master.connect(ctx.destination);
           audio = { ctx, master };
         }
-        if (audio.ctx.state === 'suspended') audio.ctx.resume().catch(() => {});
+        // 'suspended', or iOS's 'interrupted' after a call or Siri.
+        const state: string = audio.ctx.state;
+        if (state !== 'running' && state !== 'closed') {
+          audio.ctx.resume().catch(() => {});
+          starting = true;
+          defer(() => {
+            starting = false;
+          });
+        }
       } catch {
         unavailable = true;
       }
     },
 
     play(cue) {
-      if (!audio || audio.ctx.state !== 'running' || !settings.enabled) return;
+      if (!audio || !settings.enabled) return;
+      if (audio.ctx.state !== 'running' && !starting) return;
       if (isHidden() && !(cue.type === 'turn' && cue.mine)) return;
       render(audio.ctx, audio.master, audio.ctx.currentTime, planCue(cue, random, tokens), tokens);
       onPlay?.(cue);

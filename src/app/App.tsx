@@ -102,7 +102,8 @@ export function App() {
 
   function onAction(action: string) {
     const ready = state?.players.find((p) => p.id === playerId)?.status === 'ready';
-    sound.play(actionCue(action, ready));
+    const cue = actionCue(action, ready);
+    if (cue) sound.play(cue);
     switch (action) {
       case 'host':
       case 'join':

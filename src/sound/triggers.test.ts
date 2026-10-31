@@ -108,4 +108,9 @@ describe('actionCue', () => {
     expect(actionCue('ready', true)).toEqual({ type: 'toggle', on: false });
     expect(actionCue('pass', false)).toEqual({ type: 'press' });
   });
+
+  it('keeps opening and closing the drawer silent', () => {
+    expect(actionCue('settings', false)).toBeNull();
+    expect(actionCue('close-settings', false)).toBeNull();
+  });
 });
