@@ -3,6 +3,7 @@ import { createActor } from 'xstate';
 import type { ErrorCode, GameState, Player } from '@src/protocol/schema';
 import {
   gameMachine,
+  randomRequestId,
   MAX_TIMEOUT_RETRIES,
   PLAYER_ID_KEY,
   TIMEOUT_FALLBACK_MS,
@@ -411,5 +412,15 @@ describe('deadlines', () => {
     vi.advanceTimersByTime(600_000);
 
     expect(timeouts(game)).toBe(0);
+  });
+});
+
+describe('randomRequestId', () => {
+  it('works where crypto.randomUUID is missing (plain http on a LAN address)', () => {
+    const insecure = { getRandomValues: globalThis.crypto.getRandomValues.bind(globalThis.crypto) } as Crypto;
+    const a = randomRequestId(insecure);
+    const b = randomRequestId(insecure);
+    expect(a).toMatch(/^[0-9a-f]{32}$/);
+    expect(b).not.toBe(a);
   });
 });

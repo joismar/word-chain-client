@@ -84,7 +84,15 @@ const memoryStorage = (): StorageLike => {
   };
 };
 
-const defaultRequestId = () => globalThis.crypto.randomUUID();
+/**
+ * 128 random bits in hex. Not crypto.randomUUID: it only exists in secure
+ * contexts, so a phone opening the dev server by LAN IP over http had none.
+ */
+export function randomRequestId(crypto: Crypto = globalThis.crypto): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+const defaultRequestId = () => randomRequestId();
 
 /** Local time translated to the server's clock. */
 export function serverNow(context: Pick<GameContext, 'clockOffset' | 'now'>): number {
