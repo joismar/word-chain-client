@@ -4,7 +4,7 @@ Jogo multiplayer de corrente de palavras (pt-BR). Front React + Vite falando por
 
 **Refatoração em andamento:** `docs/refactor-plan.md` é a fonte da verdade sobre a arquitetura alvo e as fases (F0–F7, U1, B1–B3). Leia antes de mudar estrutura, estado, renderização ou motion.
 
-**U1 concluída (HUD × tabuleiro); próximas: F6, F7 e B3.** Telas e decisões em `docs/u1-ui-plan.md`; tokens e regras visuais em `docs/design-system.md` (nenhum número visual fora de `theme/palette.ts`, `theme/tokens.ts` e `motion/tokens.ts`); referência viva em `docs/design/index.html` (com `npm run dev`, abra `/docs/design/`).
+**U1 (HUD × tabuleiro) e S1 (sound design) concluídas; próximas: F6, F7 e B3.** Som: `docs/sound-plan.md`, referência viva em `/dev/sound`. Telas e decisões em `docs/u1-ui-plan.md`; tokens e regras visuais em `docs/design-system.md` (nenhum número visual fora de `theme/palette.ts`, `theme/tokens.ts` e `motion/tokens.ts`); referência viva em `docs/design/index.html` (com `npm run dev`, abra `/docs/design/`).
 
 ## Comandos
 
@@ -36,6 +36,7 @@ npm run e2e        # Playwright (desktop + mobile), sobe o Vite na porta 5174 (E
 - HUD (`src/app/hud/`): `Hud` monta barra de título, relógio, chips, mensagem (`role="status"`), ações e `SettingsDrawer` com `Piece`/`PieceButton`. É filho do `GameCanvas`, então acompanha o `visualViewport`. `hud.css` não tem números: lê variáveis de `hudCssVars` e `motionCssVars`, e as cores das peças vêm inline.
 - Fonte: Commit Mono (`@fontsource/commit-mono`, importada em `main.tsx`). `Stage.create` espera `loadTileFont()` antes de instalar o atlas, senão o BitmapText assa a fonte de fallback.
 - `FxLayer` (`engine/FxLayer.ts`): o que não é tile. Partículas quando uma palavra entra na corrente (`stage.play({ type: 'link', ... })`, disparado por `useBoardEffects` quando a corrente cresce) e onda nas células vazias na troca de turno (junto do `pulse`). Planos puros em `motion/fx.ts`; desenha por frame enquanto há algo tocando e mantém o ticker acordado.
+- Som (`src/sound/`, S1): `tokens.ts` (todos os números de som, família Madeira), `cues.ts` (`planCue(cue) → Voice[]`, puro), `synth.ts` (o único que cria nós de áudio) e `mixer.ts` (um `AudioContext` criado ou retomado no gesto; ligado por padrão, volume baixo/médio/alto no drawer, salvo em `word-chain:sound`; com a aba oculta só toca "sua vez"). `triggers.ts` compara dois quadros do jogo (`soundCues`) e `app/useGameSounds.ts` toca; toque, toggle, digitar e aviso saem dos handlers do `App`. O desbloqueio (`installSoundUnlock`) só é instalado no jogo: nas páginas de dev o `AudioContext` no primeiro gesto atrasava o e2e de motion. Em dev, `window.__soundLog` lista os cues tocados (`soundLog(page)` em `e2e/board.ts`); `/dev/sound` toca todos.
 - Em dev, `GameCanvas` expõe os tiles em `window.__boardTiles`; o e2e acha palavras no tabuleiro por ali (`e2e/board.ts`: `findWord`, `clickWord`). O HUD é DOM: `hudButton(page, 'PASSAR')` e `turnChip(page, 'ANA')`.
 - Engine Pixi (`src/engine/`, F2): `Stage` (Application, ciclo de vida serializado por causa do StrictMode), `layout.ts` (geometria do tabuleiro, puro), `TileLayer` (join por `key`; hooks de coreografia recebem o lote inteiro de enter/update/exit), `Tile` (BitmapText tingido), `HiddenInput` (input real e invisível sobre o slot). Demo em `npm run dev` → `/dev/engine`, só em dev.
 - `Stage.setTiles` renderiza na hora quando algo mudou: o hit-testing do Pixi lê transforms que só atualizam no render.
@@ -50,7 +51,7 @@ npm run e2e        # Playwright (desktop + mobile), sobe o Vite na porta 5174 (E
 
 - Texto de UI em pt-BR; código, identificadores e commits em inglês.
 - Commits no padrão Conventional Commits (o repo usa commitizen e semantic-release).
-- Nenhum número mágico de animação fora de `src/motion/tokens.ts`, nem número visual fora de `src/theme/tokens.ts` e `src/theme/palette.ts`.
+- Nenhum número mágico de animação fora de `src/motion/tokens.ts`, nem número visual fora de `src/theme/tokens.ts` e `src/theme/palette.ts`, nem número de som fora de `src/sound/tokens.ts`.
 - Cenas (`src/scenes/*`) são funções puras `(estado, área) → Scene`, testáveis sem canvas.
 - Antes de usar APIs de PixiJS v8, anime.js v4, XState v5 ou zod, confira a doc atual (skills `pixijs-*` e Context7).
 

@@ -177,6 +177,14 @@ A fonte continua num atlas de BitmapText gerado em runtime (48 px × DPR), agora
 - Tokens e regras visuais: `docs/design-system.md`
 - Referência viva: `docs/design/index.html` (com `npm run dev`, abra `/docs/design/`)
 
+### S1 — Sound design
+
+**Concluída.** O jogo era mudo. Cada evento da partida (contagem, digitar, palavra aceita e recusada, troca de turno, relógios, passar, tempo esgotado, fim) e as ações do HUD ganharam um som curto da família "Madeira" (estalo de peça e marimba numa pentatônica de Ré), sintetizado na hora com a Web Audio API, sem arquivos nem dependências. Som e volume ficam no drawer, por aparelho; começa ligado.
+
+- Plano, mapa de eventos e decisões: `docs/sound-plan.md`
+- Plano de implementação: `docs/superpowers/plans/2026-10-30-sound-design.md`
+- Código: `src/sound/` (tokens → cues → synth → mixer, gatilhos em `triggers.ts`); referência viva em `/dev/sound`
+
 ### F6 — Acessibilidade e mobile
 
 - [ ] Região `aria-live` anunciando turno, palavra aceita/recusada, tempo restante (a U1 já tem a região da mensagem no HUD, `role="status"`, e botões com rótulo)
@@ -221,6 +229,8 @@ A fonte continua num atlas de BitmapText gerado em runtime (48 px × DPR), agora
 | `frontend-design` | Anthropic (`claude-plugins-official`) | Direção visual e qualidade de UI |
 | `webapp-testing` | Anthropic (`anthropics/skills`, bundle example-skills) | Playwright para validar telas e animações |
 | `pixijs-skills` | Equipe PixiJS | API do v8 (Application, Ticker, BitmapText, filtros) |
+| `ui-sound-design` | `dannyjpwilliams/ui-sound-design-skill` (MIT) | Síntese de sons de UI com Web Audio, receitas e página de audição |
+| `sounds-on-the-web` | `raphaelsalaja/userinterface-wiki`, seções de áudio (MIT) | Regras de quando tocar som, acessibilidade e Web Audio |
 | Context7 (MCP, já conectado) | — | Docs atuais de anime.js v4, XState v5, zod, Powertools |
 | `word-chain-motion` (a criar) | `skill-creator` | Tokens, coreografias e convenções do grid; mantém o motion consistente entre sessões |
 

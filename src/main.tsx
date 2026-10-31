@@ -7,10 +7,11 @@ import { App } from './app/App.tsx';
 import { installSoundUnlock } from './sound';
 import { GameProvider } from './state/GameProvider.tsx';
 
-// Dev-only playgrounds for the Pixi engine and motion; stripped from production builds.
+// Dev-only playgrounds for the Pixi engine, motion and sound; stripped from production builds.
 const devPages = {
   '/dev/engine': () => import('./dev/EngineDemo.tsx'),
   '/dev/motion': () => import('./dev/MotionPlayground.tsx'),
+  '/dev/sound': () => import('./dev/SoundBoard.tsx'),
 };
 const devPage = import.meta.env.DEV
   ? Object.entries(devPages).find(([path]) => location.pathname.startsWith(path))?.[1]

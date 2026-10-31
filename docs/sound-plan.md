@@ -1,7 +1,7 @@
 # S1 — Sound design
 
-> Fase nova do `docs/refactor-plan.md`, pedida para o MVP (as fases de infra F6, F7 e B3 não bloqueiam). **Aprovado em 2026-10-30: família Madeira, som ligado por padrão.** Plano de implementação em `docs/superpowers/plans/2026-10-30-sound-design.md`.
-> Audição: `docs/sound/index.html` (com `npm run dev`, abra `/docs/sound/`). Nada vai para `src/` antes da aprovação.
+> Fase nova do `docs/refactor-plan.md`, pedida para o MVP (as fases de infra F6, F7 e B3 não bloqueiam). **Concluída em 2026-10-30: família Madeira, som ligado por padrão.** Plano de implementação em `docs/superpowers/plans/2026-10-30-sound-design.md`.
+> Referência viva: `/dev/sound` (com `npm run dev`), todos os cues com os tokens reais e a cena de partida. A página de audição das três famílias (`docs/sound/index.html`) saiu do repositório; está no histórico do git.
 > Skills: `.claude/skills/ui-sound-design` (síntese, receitas, preview) e `.claude/skills/sounds-on-the-web` (regras de quando tocar, acessibilidade e Web Audio).
 
 ## 1. Objetivo
@@ -80,7 +80,7 @@ Espelha `src/motion/`: planos puros testados sem áudio, uma camada fina que toc
 
 - Vitest: `cues.test.ts` (planos em texto, escala, limites de ganho ≤ 0,8 e de duração), `mixer.test.ts` (mute, volume, reduced motion, persistência e aba oculta com um contexto falso).
 - e2e (`e2e/match.spec.ts`, com backend local): depois de uma palavra válida o log tem `link`; depois de uma recusada, `refuse`; antes do primeiro gesto o log está vazio.
-- Ouvido: a página de audição continua como referência viva, como `docs/design/`, lendo os mesmos tokens depois da implementação (`/dev/sound` no lugar do HTML solto).
+- Ouvido: `/dev/sound` toca cada cue com os tokens reais e a cena de partida. O desbloqueio por gesto só é instalado no jogo; a página de dev libera o áudio nos próprios botões (nas outras páginas de dev, criar o `AudioContext` no primeiro gesto atrasava a medição do e2e de motion).
 
 ## 5. Passos
 
@@ -88,11 +88,11 @@ Espelha `src/motion/`: planos puros testados sem áudio, uma camada fina que toc
 - [x] Página de audição com as três famílias e a cena de partida
 - [x] Família escolhida: Madeira, sem ajustes nos eventos
 - [x] Plano aprovado (som ligado por padrão, inclusive com reduced motion)
-- [ ] Plano de implementação (`writing-plans`) a partir deste documento
-- [ ] `sound/tokens.ts`, `cues.ts` (TDD), `synth.ts`, `mixer.ts`
-- [ ] Gatilhos (`useBoardEffects`, `useGameSounds`, toque/toggle) e opções no drawer
-- [ ] e2e com o log de sons; `/dev/sound` lendo os tokens reais
-- [ ] `CLAUDE.md` e `refactor-plan.md` atualizados
+- [x] Plano de implementação (`writing-plans`) a partir deste documento
+- [x] `sound/tokens.ts`, `cues.ts` (TDD), `synth.ts`, `mixer.ts`
+- [x] Gatilhos (`triggers.ts`, `useGameSounds`, toque/toggle/digitar/aviso) e opções no drawer
+- [x] e2e com o log de sons; `/dev/sound` lendo os tokens reais
+- [x] `CLAUDE.md` e `refactor-plan.md` atualizados
 
 ## 6. Padrões aprovados
 
