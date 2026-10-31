@@ -1,15 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { degree, planCue, type Cue } from './cues';
+import { ALL_CUES as ALL } from './testing';
 import { soundTokens } from './tokens';
 
-export const ALL: Cue[] = [
-  { type: 'press' }, { type: 'toggle', on: true }, { type: 'toggle', on: false }, { type: 'copy' },
-  { type: 'room', joined: true }, { type: 'room', joined: false }, { type: 'notice' }, { type: 'count' },
-  { type: 'go' }, { type: 'key' }, { type: 'delete' }, { type: 'link', letters: 3, chain: 2 }, { type: 'refuse' },
-  { type: 'turn', mine: true, color: 7 }, { type: 'turn', mine: false, color: 0 },
-  { type: 'tick', clock: 'turn', urgent: true }, { type: 'tick', clock: 'match', urgent: false },
-  { type: 'pass' }, { type: 'timeout' }, { type: 'end', win: true }, { type: 'end', win: false },
-];
 const notes = (cue: Cue) => planCue(cue, () => 0.5).filter((v) => v.instrument === 'note');
 
 describe('degree', () => {
