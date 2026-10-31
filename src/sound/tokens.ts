@@ -9,6 +9,8 @@ export const soundTokens = {
   scale: { root: 62, steps: [0, 2, 4, 7, 9] },
   /** Master gain per volume setting. */
   volume: { low: 0.4, medium: 0.7, high: 1 },
+  /** Time constant of the master gain glide when the volume changes. */
+  volumeRamp: 0.02,
   /** No single voice goes above this. */
   maxGain: 0.8,
   /** Exponential ramps end here, never at 0 (which throws). */

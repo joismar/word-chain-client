@@ -4,7 +4,10 @@ import '@fontsource/commit-mono/400.css';
 import '@fontsource/commit-mono/600.css';
 import './index.css';
 import { App } from './app/App.tsx';
+import { installSoundUnlock } from './sound';
 import { GameProvider } from './state/GameProvider.tsx';
+
+installSoundUnlock();
 
 // Dev-only playgrounds for the Pixi engine and motion; stripped from production builds.
 const devPages = {
