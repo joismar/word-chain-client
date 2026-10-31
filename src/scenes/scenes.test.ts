@@ -123,11 +123,12 @@ describe('home', () => {
     `);
   });
 
-  it('keeps the menu words when a mode opens, so the letters change in place', () => {
+  it('shares no tiles between the menu and a mode, so the words fade instead of flying', () => {
     const menu = keysOf(homeScene(home(), area).tiles);
-    const host = keysOf(homeScene(home({ mode: 'host' }), area).tiles);
-    expect(host).toEqual(expect.arrayContaining(menu.filter((k) => k.startsWith('first:'))));
-    expect(host.some((k) => k.startsWith('second:'))).toBe(false);
+    for (const mode of ['host', 'join'] as const) {
+      const form = keysOf(homeScene(home({ mode }), area).tiles);
+      expect(form.filter((k) => menu.includes(k))).toEqual([]);
+    }
   });
 
   it('creates a room from one field and disables submit while the request is in flight', () => {

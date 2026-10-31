@@ -18,9 +18,9 @@ export const ROOM_LENGTH = 6;
 const FIELD_COL = -5;
 
 /**
- * Menu with CRIAR / ENTRAR under the logo. Picking one turns the first word
- * into the nickname label (same tiles, new letters) and opens the fields;
- * the submit button goes to the HUD.
+ * Menu with CRIAR / ENTRAR under the logo. Picking one swaps the menu words
+ * for the labels and fields (new keys, so they fade out and in rather than
+ * fly across); the submit button goes to the HUD.
  */
 export function homeScene(state: HomeState, area: Area): Scene {
   const { mode, loading } = state;
@@ -41,8 +41,8 @@ export function homeScene(state: HomeState, area: Area): Scene {
   if (!host) fields.push({ id: 'room', row: 3, col: FIELD_COL, length: ROOM_LENGTH, label: 'Sala', value: state.room });
 
   const tiles = [
-    ...text('first', 'APELIDO', host ? -2 : -4, FIELD_COL, { tone: 'amber' }),
-    ...(host ? [] : text('second', 'SALA', 1, FIELD_COL, { tone: 'amber' })),
+    ...text('player-label', 'APELIDO', host ? -2 : -4, FIELD_COL, { tone: 'amber' }),
+    ...(host ? [] : text('room-label', 'SALA', 1, FIELD_COL, { tone: 'amber' })),
     ...fields.flatMap((field) => fieldTiles(field.id, field, state.focused === field.id, { tone: 'stone' })),
   ];
   return {
