@@ -49,7 +49,7 @@ export function soundCues(prev: SoundFrame | null, next: SoundFrame): Cue[] {
   }
 
   const grew = was && now && now.chain.length === was.chain.length + 1;
-  if (grew) cues.push({ type: 'link', letters: linkLetters(now), chain: now.chain.length - 1 });
+  if (grew) cues.push({ type: 'link', letters: linkLetters(now) });
 
   if (next.lastError !== prev.lastError && next.lastError?.request === 'word') cues.push({ type: 'refuse' });
 

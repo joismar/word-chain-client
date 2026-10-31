@@ -43,7 +43,7 @@ Descartadas na audição: Vidro (sininhos em FM, cauda longa) e Fliperama (8-bit
 | Aviso | `ui.notice` | duas notas iguais, suaves | mensagem no HUD |
 | Contagem | `times.startsIn` 3 → 2 → 1 → 0 | nota curta por número; acorde no JÁ | tile grande com pop |
 | Digitar / apagar | `HiddenInput` muda o texto (mais / menos letras) | `hit` baixinho com variação de altura e volume | letra no slot, cursor |
-| Palavra aceita | `useBoardEffects` quando a corrente cresce (o mesmo ponto do `link`) | escada de *letras em comum + 1* notas; a base sobe com a corrente | voo + partículas |
+| Palavra aceita | `useBoardEffects` quando a corrente cresce (o mesmo ponto do `link`) | escada de *letras em comum + 1* notas, sempre da mesma base: só as letras mudam o som | voo + partículas |
 | Palavra recusada | `lastError.request === 'word'` (o mesmo ponto do `shake`) | dois `thud` descendo, sem buzz | shake + rose |
 | Sua vez | troca de `turnPlayerId` para mim | duas notas subindo, na altura da minha cor | pulso + chip |
 | Vez do outro | troca de `turnPlayerId` para outro | uma nota baixa na cor dele | pulso + chip |
@@ -70,7 +70,7 @@ O protocolo não diz se a vez acabou por `pass` ou `timeout`; a diferença sai d
 Espelha `src/motion/`: planos puros testados sem áudio, uma camada fina que toca.
 
 - `src/sound/tokens.ts`: todos os números (escala, raiz, ganhos, durações, timbres das famílias). Nenhum número de som fora daqui; entra na regra do `CLAUDE.md` junto dos de motion e tema.
-- `src/sound/cues.ts`: `planCue(cue, context) → Voice[]`, puro. Um `Cue` é o evento (`{ type: 'link', letters, chain }`, `{ type: 'turn', mine, color }`, …); um `Voice` é `{ at, instrument, midi | pitch, gain, len }`. Testado com snapshot em texto, como `choreography.test.ts`. A variação aleatória entra por um `random` injetado, para o teste ser determinístico.
+- `src/sound/cues.ts`: `planCue(cue, context) → Voice[]`, puro. Um `Cue` é o evento (`{ type: 'link', letters }`, `{ type: 'turn', mine, color }`, …); um `Voice` é `{ at, instrument, midi | pitch, gain, len }`. Testado com snapshot em texto, como `choreography.test.ts`. A variação aleatória entra por um `random` injetado, para o teste ser determinístico.
 - `src/sound/synth.ts`: o único arquivo que cria nós de áudio. Toca um `Voice[]` num `BaseAudioContext` (o mesmo código renderiza offline, o que permite testar com `OfflineAudioContext` no navegador e exportar WAV).
 - `src/sound/mixer.ts`: o `AudioContext` único, ganho master, desbloqueio no primeiro gesto, mute, volume, reduced motion, regra da aba em segundo plano e persistência. Expõe `sound.play(cue)`.
 - Gatilhos: `src/sound/triggers.ts` compara dois quadros seguidos do jogo (`soundCues(anterior, atual)`, puro e testado) e devolve os cues: contagem, palavra aceita e recusada, troca de turno, passar ou tempo esgotado, ticks, lobby e fim, com a mesma regra do `useBoardEffects` de "só o que mudou enquanto jogava". `app/useGameSounds.ts` toca esses cues. Toque, toggle, digitar e aviso saem direto dos handlers do `App` (`onAction`, `onConfig`, `HiddenInput`, `ui.notice`). O `useBoardEffects` não muda.

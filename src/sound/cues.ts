@@ -11,8 +11,8 @@ export type Cue =
   | { type: 'go' }
   | { type: 'key' }
   | { type: 'delete' }
-  /** `letters` shared with the previous word; `chain` is the new word's index. */
-  | { type: 'link'; letters: number; chain: number }
+  /** `letters` shared with the previous word. */
+  | { type: 'link'; letters: number }
   | { type: 'refuse' }
   /** `color` is the player's index in PlayerColor order. */
   | { type: 'turn'; mine: boolean; color: number }
@@ -56,17 +56,16 @@ function fixed(templates: readonly Template[], tokens: SoundTokens, shift = 0): 
 /** 1 ± amount, from a random number in [0, 1). */
 const vary = (random: number, amount: number) => 1 + (random * 2 - 1) * amount;
 
-function link(letters: number, chain: number, tokens: SoundTokens): Voice[] {
+function link(letters: number, tokens: SoundTokens): Voice[] {
   const { link: t } = tokens;
   const count = Math.min(Math.max(letters, 1), t.maxLetters);
-  const base = t.baseDegree + (chain % t.baseSpan);
   const voices: Voice[] = [];
   for (let i = 0; i <= count; i++) {
     const last = i === count;
     voices.push({
       at: t.start + i * t.step,
       instrument: 'note',
-      midi: degree(base + i, tokens),
+      midi: degree(t.baseDegree + i, tokens),
       gain: last ? t.lastGain : t.gain,
       len: last ? t.lastLen : t.len,
     });
@@ -128,7 +127,7 @@ export function planCue(cue: Cue, random: () => number = Math.random, tokens: So
         gain: key.gain * vary(random(), key.gainVary),
       }];
     }
-    case 'link': return link(cue.letters, cue.chain, tokens);
+    case 'link': return link(cue.letters, tokens);
     case 'tick': return tick(cue.clock, cue.urgent, tokens);
     case 'end': return end(cue.win, tokens);
   }

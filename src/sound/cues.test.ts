@@ -25,13 +25,13 @@ describe('planCue', () => {
     }
   });
 
-  it('climbs one note per shared letter plus one, from a base that walks with the chain', () => {
-    expect(notes({ type: 'link', letters: 2, chain: 0 }).map((v) => v.midi)).toEqual([74, 76, 78]);
-    expect(notes({ type: 'link', letters: 2, chain: 1 })[0].midi).toBe(76);
+  it('climbs one note per shared letter plus one, always from the same base', () => {
+    expect(notes({ type: 'link', letters: 2 }).map((v) => v.midi)).toEqual([74, 76, 78]);
+    expect(notes({ type: 'link', letters: 3 }).map((v) => v.midi)).toEqual([74, 76, 78, 81]);
   });
 
   it('caps the climb at five letters', () => {
-    expect(notes({ type: 'link', letters: 9, chain: 0 })).toHaveLength(6);
+    expect(notes({ type: 'link', letters: 9 })).toHaveLength(6);
   });
 
   it('plays two rising notes on my turn and one quiet note on theirs, pitched by colour', () => {

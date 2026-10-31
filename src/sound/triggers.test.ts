@@ -40,7 +40,7 @@ describe('soundCues', () => {
   it('links a new word with its overlap', () => {
     const next = frame({ game: { chain: chain('casa', 'sapo'), turnPlayerId: 'p2' } });
     expect(soundCues(frame(), next)).toEqual([
-      { type: 'link', letters: 2, chain: 1 },
+      { type: 'link', letters: 2 },
       { type: 'turn', mine: false, color: 1 },
     ]);
   });

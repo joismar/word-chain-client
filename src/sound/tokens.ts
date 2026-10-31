@@ -104,10 +104,9 @@ export const soundTokens = {
 
   /** Each letter typed: a quiet, high hit that varies a little every time. */
   key: { pitch: 1.3, gain: 0.09, pitchVary: 0.06, gainVary: 0.15 },
-  /** A word links into the chain: a climb of shared letters + 1 notes; its base walks up with the chain. */
+  /** A word links into the chain: a climb of shared letters + 1 notes, always from the same base. */
   link: {
     baseDegree: 5,
-    baseSpan: 5,
     maxLetters: 5,
     start: 0.04,
     step: 0.07,

@@ -37,7 +37,7 @@ const GROUPS: { title: string; rows: Row[] }[] = [
         { label: 'apagar', cue: { type: 'delete' } },
       ] },
       { label: 'Palavra aceita', when: 'letras em comum', variants: [1, 2, 3, 4, 5].map((letters) => ({
-        label: String(letters), cue: { type: 'link', letters, chain: 0 },
+        label: String(letters), cue: { type: 'link', letters },
       })) },
       { label: 'Palavra recusada', when: 'com o shake', variants: [{ label: 'ouvir', cue: { type: 'refuse' } }] },
       { label: 'Sua vez', when: 'por cor', variants: colors(true) },
@@ -70,7 +70,7 @@ const SCENE: [number, string, Cue][] = [
   [3900, 'Sua vez', { type: 'turn', mine: true, color: 0 }],
   [4600, 'C', key], [4760, 'CA', key], [4890, 'CAS', key], [5070, 'CASA', key],
   [5600, 'ENVIAR', { type: 'press' }],
-  [5900, 'Palavra aceita', { type: 'link', letters: 2, chain: 1 }],
+  [5900, 'Palavra aceita', { type: 'link', letters: 2 }],
   [7200, 'Vez do azul', { type: 'turn', mine: false, color: 1 }],
   [8600, 'Sua vez', { type: 'turn', mine: true, color: 0 }],
   [9100, 'X', key], [9250, 'XY', key], [9550, 'apaga', { type: 'delete' }], [9800, 'XZ', key],
