@@ -54,6 +54,11 @@ export function turnChip(page: Page, name: string) {
   return page.getByTestId('hud').getByLabel(new RegExp(`^${name}, \\d+ pontos, na vez$`));
 }
 
+/** The cues that actually played, in order (exposed on the dev server). */
+export function soundLog(page: Page): Promise<string[] | undefined> {
+  return page.evaluate(() => (globalThis as { __soundLog?: string[] }).__soundLog);
+}
+
 /** The canvas is up and the first scene is on it. */
 export async function boardReady(page: Page) {
   await expect(page.getByTestId('game-canvas')).toHaveAttribute('data-ready', 'true', { timeout: 15_000 });

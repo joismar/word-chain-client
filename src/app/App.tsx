@@ -4,6 +4,8 @@ import { computeBoard } from '@src/engine/layout';
 import type { EngineEvent } from '@src/engine/types';
 import { useEventSystem } from '@src/hooks/useEventSystem';
 import { sceneFor, type Area, type FieldId } from '@src/scenes';
+import { sound } from '@src/sound';
+import { actionCue, typingCue } from '@src/sound/triggers';
 import { gameTimes } from '@src/scenes/game';
 import { isCompact } from '@src/scenes/text';
 import { useGame, useNow } from '@src/state/useGame';
@@ -13,6 +15,7 @@ import { hudClearRows } from './hud/clearRows';
 import { Hud } from './hud/Hud';
 import { initialUi, uiReducer } from './ui';
 import { useBoardEffects } from './useBoardEffects';
+import { useGameSounds } from './useGameSounds';
 import { useViewport } from './useViewport';
 
 const COPIED_MS = 2_000;
@@ -58,6 +61,7 @@ export function App() {
   React.useEffect(() => subscribe('infoToast', (text: string) => dispatch({ type: 'notice', text })), [subscribe]);
   React.useEffect(() => {
     if (!ui.notice) return;
+    sound.play({ type: 'notice' });
     const id = setTimeout(() => dispatch({ type: 'notice', text: null }), NOTICE_MS);
     return () => clearTimeout(id);
   }, [ui.notice]);
@@ -69,6 +73,7 @@ export function App() {
   }, [ui.copied]);
 
   useBoardEffects(stage, { screen, game: state, lastError: game.lastError, times });
+  useGameSounds({ screen, playerId, game: state, times, lastError: game.lastError });
 
   const scene = React.useMemo(
     () => sceneFor({ screen, game: state, playerId, ui, times, pending }, area),
@@ -95,6 +100,8 @@ export function App() {
   }
 
   function onAction(action: string) {
+    const ready = state?.players.find((p) => p.id === playerId)?.status === 'ready';
+    sound.play(actionCue(action, ready));
     switch (action) {
       case 'host':
       case 'join':
@@ -111,7 +118,7 @@ export function App() {
       case 'copy':
         return copyRoom();
       case 'ready':
-        return game.setReady(state?.players.find((p) => p.id === playerId)?.status !== 'ready');
+        return game.setReady(!ready);
       case 'start':
         return game.start(ui.config);
       case 'pass':
@@ -141,7 +148,11 @@ export function App() {
           maxLength={field.length}
           value={field.value}
           label={field.label}
-          onChange={(value) => dispatch({ type: 'field', id: field.id, value })}
+          onChange={(value) => {
+            const cue = typingCue(field.value, value);
+            if (cue) sound.play(cue);
+            dispatch({ type: 'field', id: field.id, value });
+          }}
           onSubmit={() => onFieldSubmit(field.id)}
           onFocusChange={(focused) => dispatch({ type: 'focus', id: field.id, focused })}
           autoFocus={ui.focusTarget === field.id}
@@ -152,7 +163,10 @@ export function App() {
         hud={scene.hud}
         width={viewport.width}
         onAction={onAction}
-        onConfig={(config) => dispatch({ type: 'config', config })}
+        onConfig={(config) => {
+          sound.play(config.repetition !== undefined ? { type: 'toggle', on: config.repetition } : { type: 'press' });
+          dispatch({ type: 'config', config });
+        }}
       />
     </GameCanvas>
   );

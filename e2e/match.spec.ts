@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { boardReady, clickWord, findWord, hudButton, turnChip } from './board';
+import { boardReady, clickWord, findWord, hudButton, soundLog, turnChip } from './board';
 
 /**
  * A full match between two players against a real backend. Needs E2E_WS_URL,
@@ -101,6 +101,10 @@ test('two players play a match end to end', async ({ browser }) => {
   await ana.page.getByLabel('Palavra').fill(word.toUpperCase());
   await ana.page.keyboard.press('Enter');
   await findWord(bia.page, word.toUpperCase());
+  // Both hear the word link into the chain; Bia hears her turn come.
+  await expect.poll(() => soundLog(ana.page)).toContain('link');
+  await expect.poll(() => soundLog(bia.page)).toContain('link');
+  await expect.poll(() => soundLog(bia.page)).toContain('turn');
   await expect(turnChip(ana.page, 'BIA')).toBeVisible();
   // The reply follows the broadcast, so it may land after the screen updates.
   await expect.poll(() => ana.received.find((m) => m.type === 'ack' && m.payload.points !== null)
@@ -113,6 +117,7 @@ test('two players play a match end to end', async ({ browser }) => {
   await expect.poll(() => bia.received.some((m) => m.type === 'error'
     && (m.payload as { code: string }).code === 'INEXISTENT_WORD')).toBe(true);
   await expect(bia.page.getByRole('status')).toHaveText('PALAVRA NÃO EXISTE');
+  await expect.poll(() => soundLog(bia.page)).toContain('refuse');
   await expect(bia.page.getByLabel('Palavra')).toHaveValue('XYZWQ');
   expect(latestGame(bia).turnPlayerId).toBe(myId(bia));
 

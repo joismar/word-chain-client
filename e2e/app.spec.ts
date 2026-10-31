@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { boardReady, clickWord, expectNoWord, findWord, hudButton } from './board';
+import { boardReady, clickWord, expectNoWord, findWord, hudButton, soundLog } from './board';
 
 // No backend here (the socket points nowhere): the home screen works offline.
 let errors: string[] = [];
@@ -41,4 +41,12 @@ test('asks for the room after the nickname when joining', async ({ page }) => {
   await page.keyboard.type('ana');
   await page.keyboard.press('Enter');
   await expect(page.getByLabel('Sala')).toBeFocused();
+});
+
+test('plays nothing before a gesture and a press after one', async ({ page }) => {
+  expect(await soundLog(page)).toEqual([]);
+  await clickWord(page, 'CRIAR');
+  await expect.poll(() => soundLog(page)).toContain('press');
+  await page.getByLabel('Apelido').fill('Ana');
+  await expect.poll(() => soundLog(page)).toContain('key');
 });
