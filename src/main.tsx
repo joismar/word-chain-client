@@ -7,8 +7,6 @@ import { App } from './app/App.tsx';
 import { installSoundUnlock } from './sound';
 import { GameProvider } from './state/GameProvider.tsx';
 
-installSoundUnlock();
-
 // Dev-only playgrounds for the Pixi engine and motion; stripped from production builds.
 const devPages = {
   '/dev/engine': () => import('./dev/EngineDemo.tsx'),
@@ -18,6 +16,9 @@ const devPage = import.meta.env.DEV
   ? Object.entries(devPages).find(([path]) => location.pathname.startsWith(path))?.[1]
   : undefined;
 const DevPage = devPage ? lazy(devPage) : null;
+
+// Only the game makes sound: elsewhere the first gesture shouldn't pay for an AudioContext.
+if (!DevPage) installSoundUnlock();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

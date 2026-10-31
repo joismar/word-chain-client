@@ -4,7 +4,7 @@ import { computeBoard } from '@src/engine/layout';
 import type { EngineEvent } from '@src/engine/types';
 import { useEventSystem } from '@src/hooks/useEventSystem';
 import { sceneFor, type Area, type FieldId } from '@src/scenes';
-import { sound } from '@src/sound';
+import { sound, useSoundSettings, type SoundSettings } from '@src/sound';
 import { actionCue, typingCue } from '@src/sound/triggers';
 import { gameTimes } from '@src/scenes/game';
 import { isCompact } from '@src/scenes/text';
@@ -37,6 +37,7 @@ export function App() {
   const [ui, dispatch] = React.useReducer(uiReducer, initialUi);
   const [stage, setStage] = React.useState<Stage | null>(null);
   const { subscribe } = useEventSystem();
+  const soundSettings = useSoundSettings();
 
   const viewport = useViewport();
   const board = computeBoard(viewport);
@@ -126,6 +127,16 @@ export function App() {
     }
   }
 
+  /** Turning off plays its toggle first; anything else plays after, at the new setting. */
+  function onSound(patch: Partial<SoundSettings>) {
+    if (patch.enabled === false) {
+      sound.play({ type: 'toggle', on: false });
+      return sound.update(patch);
+    }
+    sound.update(patch);
+    sound.play(patch.enabled ? { type: 'toggle', on: true } : { type: 'press' });
+  }
+
   function onFieldSubmit(id: FieldId) {
     if (id === 'word') submitWord();
     else if (id === 'player' && ui.mode === 'join' && !ui.room) dispatch({ type: 'request-focus', id: 'room' });
@@ -167,6 +178,8 @@ export function App() {
           sound.play(config.repetition !== undefined ? { type: 'toggle', on: config.repetition } : { type: 'press' });
           dispatch({ type: 'config', config });
         }}
+        sound={soundSettings}
+        onSound={onSound}
       />
     </GameCanvas>
   );

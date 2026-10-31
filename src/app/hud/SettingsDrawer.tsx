@@ -1,20 +1,30 @@
 import React from 'react';
 import type { GameConfig } from '@src/protocol/schema';
+import type { SoundSettings, VolumeLevel } from '@src/sound';
 import { TIME_CHOICES } from '../ui';
 import { PieceButton } from './Piece';
 
+const VOLUME_CHOICES: readonly { level: VolumeLevel; label: string }[] = [
+  { level: 'low', label: 'BAIXO' },
+  { level: 'medium', label: 'MÉDIO' },
+  { level: 'high', label: 'ALTO' },
+];
+
 type SettingsDrawerProps = {
   config: GameConfig;
-  /** Only the host changes the settings; everyone else reads them. */
+  /** Only the host changes the room settings; everyone else reads them. */
   editable: boolean;
   /** From the right on wide screens, from the bottom otherwise. */
   side: boolean;
   onChange: (config: Partial<GameConfig>) => void;
+  /** This device's sound, which everyone edits. */
+  sound: SoundSettings;
+  onSound: (patch: Partial<SoundSettings>) => void;
   onClose: () => void;
 };
 
 /** The room settings as plain text over a dimmed screen, one option per row. */
-export function SettingsDrawer({ config, editable, side, onChange, onClose }: SettingsDrawerProps) {
+export function SettingsDrawer({ config, editable, side, onChange, sound, onSound, onClose }: SettingsDrawerProps) {
   const closeRef = React.useRef<HTMLButtonElement>(null);
   const onCloseRef = React.useRef(onClose);
   React.useEffect(() => {
@@ -81,7 +91,46 @@ export function SettingsDrawer({ config, editable, side, onChange, onClose }: Se
           </PieceButton>
         </div>
 
-        {!editable && <div className="note">Só quem criou a sala altera as configurações.</div>}
+        {!editable && <div className="note">Só quem criou a sala altera a partida.</div>}
+
+        <div className="hud-option">
+          <strong>Som</strong>
+          <span>Efeitos sonoros neste aparelho</span>
+          <PieceButton
+            role="switch"
+            aria-checked={sound.enabled}
+            aria-label="Som"
+            className="hud-switch"
+            variant={sound.enabled ? 'solid' : 'neutral'}
+            tone={sound.enabled ? 'emerald' : 'stone'}
+            onClick={() => onSound({ enabled: !sound.enabled })}
+          >
+            <div className="knob" />
+          </PieceButton>
+        </div>
+
+        <div className="hud-option">
+          <strong>Volume</strong>
+          <span>Altura dos efeitos</span>
+          <div className="hud-segmented" role="radiogroup" aria-label="Volume">
+            {VOLUME_CHOICES.map(({ level, label }) => {
+              const on = sound.volume === level;
+              return (
+                <PieceButton
+                  key={level}
+                  role="radio"
+                  aria-checked={on}
+                  variant={on ? 'solid' : sound.enabled ? 'neutral' : 'disabled'}
+                  tone={on ? 'sky' : 'stone'}
+                  disabled={!sound.enabled}
+                  onClick={() => onSound({ volume: level })}
+                >
+                  {label}
+                </PieceButton>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </>
   );

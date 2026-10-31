@@ -2,6 +2,7 @@ import React from 'react';
 import { motionCssVars } from '@src/motion/tokens';
 import type { GameConfig } from '@src/protocol/schema';
 import type { Hud as HudSpec, HudAction, HudPlayer, HudTime } from '@src/scenes';
+import type { SoundSettings } from '@src/sound';
 import {
   ACTIVE_MINI, css, HUD_COLORS, METER_ALPHA, SCRIM_ALPHA, TONE_COLORS, tileColors, type PieceVariant,
 } from '@src/theme/palette';
@@ -16,6 +17,8 @@ type HudProps = {
   width: number;
   onAction: (action: string) => void;
   onConfig: (config: Partial<GameConfig>) => void;
+  sound: SoundSettings;
+  onSound: (patch: Partial<SoundSettings>) => void;
 };
 
 const logo = tileColors('amber');
@@ -116,7 +119,7 @@ function actionVariant(action: HudAction): PieceVariant {
  * a notice, the action row and the settings drawer. Laid over the canvas;
  * only the pieces take the pointer.
  */
-export function Hud({ hud, width, onAction, onConfig }: HudProps) {
+export function Hud({ hud, width, onAction, onConfig, sound, onSound }: HudProps) {
   const { compact } = hud;
   const bar = hud.back || hud.title || hud.settings || hud.logo || (compact && hud.clock);
 
@@ -205,6 +208,8 @@ export function Hud({ hud, width, onAction, onConfig }: HudProps) {
           editable={hud.drawer.editable}
           side={width >= drawerTokens.sideMinWidth}
           onChange={onConfig}
+          sound={sound}
+          onSound={onSound}
           onClose={() => onAction('close-settings')}
         />
       )}

@@ -84,6 +84,20 @@ test('two players play a match end to end', async ({ browser }) => {
   await expect(hudButton(bia.page, 'INICIAR')).toHaveCount(0);
   await findWord(ana.page, 'BIA');
 
+  // Sound is per device: the guest turns it off and on in the drawer.
+  await hudButton(bia.page, 'Configurações').click();
+  const soundSwitch = bia.page.getByRole('switch', { name: 'Som' });
+  await expect(soundSwitch).toBeEnabled();
+  await soundSwitch.click();
+  await expect(soundSwitch).toHaveAttribute('aria-checked', 'false');
+  expect(await bia.page.evaluate(() => localStorage.getItem('word-chain:sound'))).toContain('"enabled":false');
+  for (const radio of await bia.page.getByRole('radiogroup', { name: 'Volume' }).getByRole('radio').all()) {
+    await expect(radio).toBeDisabled();
+  }
+  await soundSwitch.click();
+  await expect(soundSwitch).toHaveAttribute('aria-checked', 'true');
+  await bia.page.getByRole('button', { name: 'Fechar', exact: true }).click();
+
   // Both ready, Ana starts; the start countdown shows before play.
   await hudButton(ana.page, 'PRONTO').click();
   await hudButton(bia.page, 'PRONTO').click();
