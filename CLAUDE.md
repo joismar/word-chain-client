@@ -2,9 +2,9 @@
 
 Jogo multiplayer de corrente de palavras (pt-BR). Front React + Vite falando por WebSocket com o backend em `../word-chain-backend` (AWS API Gateway WebSocket + Lambda Python + DynamoDB).
 
-**Refatoração em andamento:** `docs/refactor-plan.md` é a fonte da verdade sobre a arquitetura alvo e as fases (F0–F7, U1, B1–B3). Leia antes de mudar estrutura, estado, renderização ou motion.
+**Refatoração em andamento:** `docs/refactor-plan.md` é a fonte da verdade sobre a arquitetura alvo e as fases do front (F0–F7, U1, S1). Leia antes de mudar estrutura, estado, renderização ou motion. O backend é um projeto à parte, com `CLAUDE.md` e plano próprios (`../word-chain-backend/docs/backend-plan.md`, fases B1–B3).
 
-**U1 (HUD × tabuleiro) e S1 (sound design) concluídas; próximas: F6, F7 e B3.** Som: `docs/sound-plan.md`, referência viva em `/dev/sound`. Telas e decisões em `docs/u1-ui-plan.md`; tokens e regras visuais em `docs/design-system.md` (nenhum número visual fora de `theme/palette.ts`, `theme/tokens.ts` e `motion/tokens.ts`); referência viva em `docs/design/index.html` (com `npm run dev`, abra `/docs/design/`).
+**U1 (HUD × tabuleiro) e S1 (sound design) concluídas; próximas: F6 e F7 (e B3 no backend).** Som: `docs/sound-plan.md`, referência viva em `/dev/sound`. Telas e decisões em `docs/u1-ui-plan.md`; tokens e regras visuais em `docs/design-system.md` (nenhum número visual fora de `theme/palette.ts`, `theme/tokens.ts` e `motion/tokens.ts`); referência viva em `docs/design/index.html` (com `npm run dev`, abra `/docs/design/`).
 
 ## Comandos
 
@@ -20,7 +20,13 @@ npm run e2e        # Playwright (desktop + mobile), sobe o Vite na porta 5174 (E
 
 - `VITE_WS_URL` (obrigatória, `ws://` ou `wss://`). `.env` traz o default de dev; sobrescreva em `.env.local`.
 - O e2e aponta para um socket inalcançável (`ws://127.0.0.1:9`) para nunca tocar o backend real. Use `E2E_WS_URL` para apontar para um backend de teste; sem ele, `e2e/match.spec.ts` é pulado.
-- Backend local para testar ponta a ponta sem deploy: em `../word-chain-backend/lambda`, `.venv/Scripts/python -m local.server --port 3001`, depois `E2E_WS_URL=ws://localhost:3001 npm run e2e` (ou `VITE_WS_URL` no `.env.local` para jogar no navegador).
+- Backend local para testar ponta a ponta sem deploy: em `../word-chain-backend/lambda`, `.venv/Scripts/python -u -m local.server --port 3001`, depois `E2E_WS_URL=ws://localhost:3001 npm run e2e` (ou `VITE_WS_URL` no `.env.local` para jogar no navegador).
+- No celular: rode o servidor local com `--host 0.0.0.0` e aponte `VITE_WS_URL` para o IP da máquina na rede. Aberta por `http://<ip>`, a página não é contexto seguro: nada de `crypto.randomUUID`, `navigator.clipboard` e outras APIs só de https. O firewall do Windows bloqueia o Node 22 nesta máquina, então o Vite não fica acessível na rede; sirva um `npm run build` (com o `VITE_WS_URL` da rede) pelo Python (`python -m http.server 5180 --bind 0.0.0.0 --directory dist`).
+
+## Backend
+
+- Trabalho no backend se faz no projeto dele (`../word-chain-backend`, com `CLAUDE.md` próprio), não deste repositório. Para uma tarefa daqui que precisa de mudança lá, abra uma sessão na pasta do backend; leitura pontual de um arquivo de lá pode ser feita daqui.
+- Mudança de protocolo começa no backend (modelos pydantic → `export_schema` → commit) e só depois chega aqui por `npm run protocol:sync`. Nunca edite `v2.schema.json` à mão.
 
 ## Estado atual do código (pós-U1)
 

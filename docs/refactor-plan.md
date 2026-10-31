@@ -201,24 +201,7 @@ A fonte continua num atlas de BitmapText gerado em runtime (48 px × DPR), agora
 
 ## 5. Backend (redesenho em paralelo) - ../word-chain-backend
 
-### B1 — Hotfix (antes de F1, destrava os testes ponta a ponta)
-- [x] `start(time, repetition)` aceitando a config real; persistir `config` na sessão e enviá-la no `GameData`
-- [x] Wordlist carregada **uma vez por container** (escopo de módulo) num `set`/`frozenset`
-- [x] Python 3.13 no CI e no runtime da Lambda
-
-### B2 — Protocolo v2 e servidor autoritativo
-- [x] Envelope versionado: `{ v: 2, type, payload, requestId }`; erros com `code` estável (`INEXISTENT_SESSION`, `INVALID_TURN`…) além da mensagem pt-BR
-- [x] Schema único do protocolo (JSON Schema) → pydantic v2 no back, zod no front
-- [x] **Prazos no servidor:** a sessão guarda `turn_deadline` e `ends_at`. Toda mensagem recebida valida os prazos primeiro (troca o turno ou encerra a partida se venceram). O cliente pode mandar `timeout` quando o prazo vence localmente, e o servidor só aceita se o prazo dele também já passou. Isso resolve os travamentos sem precisar de infraestrutura nova
-  - Opcional, numa fase futura: Step Functions (Wait state) para encerrar partidas mesmo sem nenhum cliente conectado
-- [x] Escritas condicionais no DynamoDB (`version` + `ConditionExpression`) contra jogadas simultâneas
-- [x] Broadcast em paralelo e limpeza de conexões `GoneException`
-- [x] AWS Lambda Powertools (logs estruturados, tracing) no lugar de `print(json.dumps(event))`
-
-### B3 — Infraestrutura como código
-
-- [ ] Versionar API Gateway WebSocket, Lambda, tabelas `sessions`/`players` + GSI `name-index` e TTL (SAM ou CDK, **decisão pendente**)
-- [ ] Ambientes `dev`/`prod`; deploy via OIDC do GitHub (sem access keys fixas nos secrets)
+O plano do backend (B1 e B2 concluídas, B3 pendente) e as decisões dele foram movidos para `../word-chain-backend/docs/backend-plan.md`, junto do `CLAUDE.md` do backend. O contrato entre os dois é o protocolo: o backend exporta `v2.schema.json` e o front copia com `npm run protocol:sync`.
 
 ---
 
@@ -241,7 +224,6 @@ Ler o SKILL.md de cada skill de terceiros antes de instalar.
 ## 7. Decisões pendentes
 
 1. ~~Fonte~~: Commit Mono (F5)
-2. IaC: SAM ou CDK
-3. Backend continua em Python ou migra para TypeScript (Node 22) para compartilhar tipos diretamente com o front. A recomendação atual é **Python + JSON Schema**, por ser a menor ruptura
-4. O que fazer com `.agents/`: remover ou manter fora do fluxo do Claude Code
-5. ~~Estilo da UI (U1)~~: grade atual com fade pixelado nas bordas, tiles com faixa de sombra e HUD em DOM (`docs/u1-ui-plan.md`)
+2. ~~IaC e linguagem do backend~~: movidas para `../word-chain-backend/docs/backend-plan.md`
+3. O que fazer com `.agents/`: remover ou manter fora do fluxo do Claude Code
+4. ~~Estilo da UI (U1)~~: grade atual com fade pixelado nas bordas, tiles com faixa de sombra e HUD em DOM (`docs/u1-ui-plan.md`)
