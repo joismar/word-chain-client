@@ -1,0 +1,169 @@
+/*
+ * HUD pieces around the board. Every number comes in as a custom property
+ * from src/theme/tokens.ts (hudCssVars), src/motion/tokens.ts (motionCssVars)
+ * and src/theme/palette.ts (piece colours, set inline per piece).
+ */
+
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--hud-ink);
+  font-family: "Commit Mono", ui-monospace, monospace;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.hud-row {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hud-row > * { pointer-events: auto; }
+
+.hud-bar {
+  position: absolute;
+  top: var(--hud-inset-top);
+  left: var(--hud-inset-side);
+  right: var(--hud-inset-side);
+  min-height: var(--hud-icon);
+  display: grid;
+  grid-template-columns: var(--hud-icon) 1fr var(--hud-icon);
+  gap: var(--hud-gap);
+}
+.hud-bar > * { pointer-events: auto; }
+.hud-bar-middle { justify-self: center; display: flex; align-items: center; gap: var(--hud-gap); min-width: 0; }
+.hud-bar.compact { grid-template-columns: auto 1fr; }
+.hud-bar.compact .hud-bar-middle { justify-self: end; gap: var(--hud-compact-gap); }
+
+.hud-clock-row { top: var(--hud-inset-top); left: 0; right: 0; }
+.hud-players { top: var(--hud-players-top); left: var(--hud-inset-side); right: var(--hud-inset-side); gap: var(--hud-chip-gap); flex-wrap: wrap; }
+.hud-actions { bottom: var(--hud-inset-bottom); left: var(--hud-inset-bottom-side); right: var(--hud-inset-bottom-side); gap: var(--hud-gap); }
+.hud-toast-row { bottom: var(--hud-toast-bottom); left: 0; right: 0; }
+
+/* One material for every piece: a flat face, a little rounding and a hard shadow underneath. */
+.piece {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--hud-piece-gap);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--hud-radius);
+  background: var(--piece-face);
+  color: var(--piece-text);
+  box-shadow: 0 var(--hud-shadow) 0 var(--piece-shadow);
+  font: inherit;
+  letter-spacing: var(--hud-piece-tracking);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: translate var(--motion-press) ease-out, box-shadow var(--motion-press) ease-out;
+}
+button.piece { cursor: pointer; }
+button.piece:active:not(:disabled), .piece[data-variant='disabled'] {
+  translate: 0 var(--hud-shadow);
+  box-shadow: none;
+}
+button.piece:disabled { cursor: default; }
+button.piece:focus-visible { outline: var(--hud-focus-ring) solid var(--hud-ink); outline-offset: var(--hud-focus-ring); }
+
+.hud-icon { width: var(--hud-icon); height: var(--hud-icon); font-size: var(--hud-icon-glyph); }
+.hud-title { font-size: var(--hud-title-text); letter-spacing: var(--hud-title-tracking); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hud-copy { width: var(--hud-copy); height: var(--hud-copy); flex: none; }
+.hud-copy svg { width: var(--hud-copy-icon); height: var(--hud-copy-icon); }
+
+.hud-button { flex: 1; max-width: var(--hud-button-max-width); height: var(--hud-button-height); font-size: var(--hud-button-text); letter-spacing: var(--hud-button-tracking); }
+.hud-button .glyph { font-size: var(--hud-button-glyph); }
+
+.hud-clock { min-width: var(--hud-clock-min-width); height: var(--hud-clock-height); padding: 0 var(--hud-clock-padding); font-size: var(--hud-clock-text); font-variant-numeric: tabular-nums; }
+.hud-meter { position: absolute; left: 0; bottom: 0; height: var(--hud-meter); background: currentColor; opacity: var(--hud-meter-alpha); }
+
+.hud-chip { height: var(--hud-chip-height); padding: 0 var(--hud-chip-padding-end) 0 var(--hud-chip-padding-start); font-size: var(--hud-chip-text); }
+.hud-chip .mini {
+  width: var(--hud-chip-mini);
+  height: var(--hud-chip-mini);
+  display: grid;
+  place-items: center;
+  border-radius: calc(var(--hud-radius) * var(--hud-mini-radius));
+  background: var(--mini-face);
+  color: var(--mini-text);
+  font-size: var(--hud-chip-mini-text);
+}
+.hud-chip .score { font-weight: 400; opacity: var(--hud-score-alpha); font-variant-numeric: tabular-nums; }
+.hud-chip .secs { font-variant-numeric: tabular-nums; }
+.hud-chip.compact { height: var(--hud-chip-compact-height); font-size: var(--hud-chip-compact-text); gap: var(--hud-compact-gap); padding-right: var(--hud-chip-compact-padding-end); }
+.hud-chip.compact .mini { width: var(--hud-chip-compact-mini); height: var(--hud-chip-compact-mini); font-size: var(--hud-chip-compact-mini-text); }
+
+.hud-toast { height: var(--hud-toast-height); padding: 0 var(--hud-toast-padding); font-size: var(--hud-toast-text); letter-spacing: var(--hud-toast-tracking); }
+
+/* Logo: WORD / CHAIN as a staircase of small tiles (face over a darker strip, like the board). */
+.hud-logo { position: relative; width: calc(var(--hud-logo-step) * 5 + var(--hud-logo-tile)); height: calc(var(--hud-logo-step) + var(--hud-logo-tile)); margin-top: var(--hud-logo-top); }
+.hud-logo span {
+  position: absolute;
+  width: var(--hud-logo-tile);
+  height: var(--hud-logo-tile);
+  display: grid;
+  place-items: center;
+  padding-bottom: calc(var(--tile-shadow) * var(--hud-logo-tile));
+  box-sizing: border-box;
+  border-radius: calc(var(--tile-radius) * var(--hud-logo-tile));
+  background: var(--logo-face);
+  color: var(--logo-text);
+  box-shadow: inset 0 calc(-1 * var(--tile-shadow) * var(--hud-logo-tile)) 0 var(--logo-shadow);
+  font-size: var(--hud-logo-glyph);
+}
+
+/* ------------------------------------------------------- settings drawer */
+
+.hud-scrim { position: absolute; inset: 0; pointer-events: auto; background: var(--hud-scrim-color); border: 0; padding: 0; animation: hud-fade var(--motion-drawer) ease-out; }
+.hud-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: auto;
+  display: grid;
+  gap: var(--drawer-gap);
+  padding: var(--drawer-padding-top) var(--drawer-padding-side) var(--drawer-padding-bottom);
+  background: var(--drawer-surface-color);
+  border-radius: var(--drawer-radius) var(--drawer-radius) 0 0;
+  box-shadow: 0 calc(-1 * var(--drawer-divider)) 0 var(--drawer-divider-color);
+  font-weight: 400;
+  animation: hud-rise var(--motion-drawer) ease-out;
+}
+.hud-sheet.side {
+  left: auto;
+  top: 0;
+  width: var(--drawer-side-width);
+  align-content: start;
+  padding-top: var(--drawer-side-padding-top);
+  border-radius: var(--drawer-radius) 0 0 var(--drawer-radius);
+  animation-name: hud-slide;
+}
+.hud-sheet .handle { justify-self: center; width: var(--drawer-handle-width); height: var(--drawer-handle-height); border-radius: calc(var(--drawer-handle-height) / 2); background: var(--drawer-handle-color); margin-bottom: var(--drawer-padding-top); }
+.hud-sheet.side .handle { display: none; }
+.hud-sheet header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--drawer-header-gap); }
+.hud-sheet h2 { margin: 0; font-size: var(--drawer-option-title); font-weight: 600; letter-spacing: var(--hud-title-tracking); }
+.hud-sheet .close { width: var(--hud-close); height: var(--hud-close); font-size: var(--drawer-close-glyph); }
+.hud-option { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--drawer-gap) var(--drawer-option-gap); padding: var(--drawer-option-padding) 0; border-top: var(--drawer-divider) solid var(--drawer-divider-color); }
+.hud-option strong { font-size: var(--drawer-option-title); font-weight: 600; }
+.hud-option span { grid-column: 1; font-size: var(--drawer-option-text); color: var(--hud-muted); }
+.hud-option > :last-child { grid-column: 2; grid-row: 1 / span 2; }
+.hud-segmented { display: flex; gap: var(--hud-compact-gap); }
+.hud-segmented .piece { height: var(--drawer-segmented-height); padding: 0 var(--drawer-segmented-padding); font-size: var(--drawer-segmented-text); }
+.hud-switch { width: var(--drawer-switch-width); height: var(--drawer-switch-height); justify-content: flex-start; padding: 0 var(--drawer-switch-padding); }
+.hud-switch[aria-checked='true'] { justify-content: flex-end; }
+.hud-switch .knob { width: var(--drawer-knob); height: var(--drawer-knob); border-radius: calc(var(--hud-radius) * var(--hud-knob-radius)); background: currentColor; }
+.hud-sheet .note { font-size: var(--drawer-option-text); color: var(--hud-muted); padding-top: var(--drawer-header-gap); }
+
+@keyframes hud-fade { from { opacity: 0; } }
+@keyframes hud-rise { from { translate: 0 100%; } }
+@keyframes hud-slide { from { translate: 100% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .piece { transition: none; }
+  .hud-sheet, .hud-sheet.side, .hud-scrim { animation: hud-fade var(--motion-fade) ease-out; }
+}

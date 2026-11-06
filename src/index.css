@@ -1,16 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+@import "tailwindcss";
 
 :root {
-  font-family: "DM Mono", monospace;
+  font-family: "Commit Mono", ui-monospace, monospace;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
   color: rgba(240, 240, 240, 0.87);
-  background-color: #262626;
+  /* BOARD_COLORS.background in src/theme/palette.ts */
+  background-color: oklch(26.8% 0.007 34.3);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

@@ -1,0 +1,36 @@
+/** Colour family of a tile; the palette maps each to concrete colours. */
+export type TileTone = 'stone' | 'brown' | 'amber' | 'orange' | 'rose' | 'pink' | 'purple' | 'sky' | 'emerald';
+
+/**
+ * One letter cell on the board. Scenes return a list of these; the engine
+ * diffs them by `key` so a tile that keeps its key moves instead of popping.
+ */
+export interface TileSpec {
+  /** Stable identity across renders, unique within a scene. */
+  key: string;
+  char: string;
+  /** Board coordinates, (0,0) is the centre cell. */
+  row: number;
+  col: number;
+  tone?: TileTone;
+  /** `slot` is an empty input cell; `active` marks where the next letter goes. */
+  variant?: 'solid' | 'slot';
+  active?: boolean;
+  /** A slot of a field that can't take input right now (dimmer, no caret). */
+  disabled?: boolean;
+  /** Side in cells (odd) of a big tile centred on (row, col), like the countdown number. */
+  span?: number;
+  /** Tiles with an action are clickable; tiles sharing it act as one button. */
+  action?: string;
+}
+
+/** The specs entering, updating and exiting in one sync. */
+export interface Batch {
+  enter: readonly TileSpec[];
+  update: readonly { prev: TileSpec; next: TileSpec }[];
+  exit: readonly TileSpec[];
+}
+
+export type EngineEvent =
+  | { type: 'tap'; action: string; key: string }
+  | { type: 'hover'; action: string | null; key: string | null };
